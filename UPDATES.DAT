@@ -1,0 +1,58 @@
+
+;	Mark Manning			Simulacron I			
+;---------------------------------------------------------------------------
+;	Release : lexQB-0.1.1	Sat 01/23/2016 18:53:19.19 
+Made it so all command return a value.
+
+Modified the main program so it now has a loop which is
+executed until the end of the input file.  Every time
+something is found it is returned along with its ENUM.
+The ENUM number is then printed out.
+
+--------------------------------------------------------------------------------
+;	Mark Manning			Simulacron I			
+;---------------------------------------------------------------------------
+;	Release : lexQB-0.1		Fri 01/15/2016 10:27:37.73 
+
+This is the first actual release of the software to the
+QB64 community. (In a manner of speaking.  Maybe I should
+say the first official release? Oh well, 99 years from
+now no one will even remember me or think or care about
+it so I'm not going to worry about it now.)
+
+
+In this release I have put in the &B###, &O####, and &H####
+commands.  I also had to put in something to define a
+binary, octal, and hex variable (well, I already had
+xdigit so I used that instead of creating a new define actually).
+I tested this by putting in the following:
+
+    a = &b012345    which gave variable, equal sign, binary number, integer number (2345)
+    a = &o1234567890 which gave variable, equal sign, octal number, integer number (89)
+    a = &h0123456789abcdefghijk which gave variable, equal sign, hexadecimal number, and standard variable (ghijk)
+
+So those are working.
+
+I also changed the string that looks for a float to just
+use {float} because that already had the definition of a
+float in it.
+
+I also changed the string that looks for integer numbers
+to just use {digit}+ because digit was already defined.
+
+I also changed the PHP program (CMDS.PHP) so it auto
+populates BAS.L with what it creates (rather than I do it
+by hand) and also replaces the TEST.BAS file with the new
+TEST.BAS information.  I got tired of doing it by hand.
+There are two new lines BEFORE the lex code.  One says "DO
+NOT REMOVE" the next line which says "BEGIN LEX" and two
+lines after the lex code that says "END LEX" and another
+"DO NOT REMOVE" comment.  The PHP script now looks for the
+BEGIN and END tags, yanks out whatever is between them,
+and replaces it with the new set of commands.  So DO NOT
+put anything in between those two tags unless you just
+like to have things deleted without notice.
+
+Removed the LEX.DAT file and the TEST.DAT file since they
+are no longer needed.
+
