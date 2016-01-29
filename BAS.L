@@ -23,15 +23,22 @@ num_var			({letter}_][[:alnum:]_]*)
 str_var			([[:alpha:]_][[:alnum:]_]*[$]?)
 blank			([[:blank:]])
 space			([[:space:]])
+ws				({blank}|{space})
+rem				([rR][eE][mM]|['])
 
 %option noyywrap nodefault yylineno case-insensitive
 
-%x IFILE
+%x INCL
 
 	/*	Symbol Table	*/
 	/*	This is taken directly from the Flex/Bison manual from O'Reilly	*/
 
 %{
+	/*	Defines	*/
+
+#define MAX_INCLUDE_DEPTH 1000
+#define NHASH 9997
+
 #include	<stdio.h>
 #include	<stdlib.h>
 #include	"y.tab.h"
@@ -48,29 +55,14 @@ struct ref {
 	int lineno;
 	};
 
-	/*	Simple symtab of fixed size	*/
-
-#define NHASH 9997
-
 struct symbol symtab[NHASH];
 struct symbol *lookup(char*);
 
-void addref(int, char*, char*, int);
-char *curfilename;			/*	name of current input file	*/
+int	include_stack_ptr = 0;
+
+YY_BUFFER_STATE	include_stack[ 1000 ];
 
 	/*	include file stack	*/
-
-struct bufstack {
-	struct bufstack *prev;	/*	previous entry					*/
-	YY_BUFFER_STATE bs;		/*	saved buffer					*/
-	int lineno;				/*	saved line number in this file	*/
-	char *filename;			/*	name of this file				*/
-	FILE *f;				/*	current file					*/
-	} *curbs;
-
-int newfile(char *fn);
-int popfile(void);
-int defining;				/*	names are probably definitions	*/
 
 void	yyerror( char * );
 
@@ -1215,22 +1207,40 @@ struct {
 %%
 	/*	Rules	*/
 
-^"#"[\s]*[iI][nN][cC][lL][uU][dD][eE][\s]*[\"<]	{	BEGIN IFILE;	}
-<IFILE>[^\s\">]+	{
-printf( "---> In INCLUDE\n" );
-						{	int c;
-							while ((c = input()) && c != '\n');
-						}
-						yylineno++;
-						if( !newfile(yytext) ){ yyterminate(); }
-						BEGIN INITIAL;
-					}
+	/*
+	The following was taken from http://flex.sourceforge.net/manual/Multiple-Input-Buffers.html
+	because it was a lot simpler than what was in the Flex/Bison book.
+	*/
 
-<IFILE>.|\n			{
-						fprintf( stderr, "%4d bad include line\n", yylineno );
-					}
+\$[iI][nN][cC][lL][uU][dD][eE]{ws}*[\"<]	{	BEGIN INCL;	}
 
-<<EOF>>				{ if( !popfile() ){ printf("Terminating : line=%d\n", nline);yyterminate(); } }
+<INCL>[^{ws}*\">]+   { /* got the include file name */
+printf( "---> Entering INCLUDE\n" );
+	if( include_stack_ptr >= MAX_INCLUDE_DEPTH ){
+		fprintf( stderr, "Includes nested too deeply" );
+		exit( 1 );
+		}
+
+	include_stack[include_stack_ptr++] = YY_CURRENT_BUFFER;
+
+	yyin = fopen( yytext, "r" );
+
+	if( ! yyin ){ printf( "*****ERROR : No Input File - Aborting\n" ); exit; }
+
+	yy_switch_to_buffer( yy_create_buffer( yyin, YY_BUF_SIZE ) );
+
+	BEGIN(INITIAL);
+	}
+
+<<EOF>> {
+printf( "<--- Exiting INCLUDE\n" );
+
+   if( --include_stack_ptr < 0 ){ yyterminate(); }
+	   else{
+		   yy_delete_buffer( YY_CURRENT_BUFFER );
+		   yy_switch_to_buffer( include_stack[include_stack_ptr] );
+		   }
+   }
 
 	/*	+++++	DO NOT REMOVE THE NEXT LINE!!!	+++++	*/
 	/*	BEGIN LEX	*/
@@ -1489,10 +1499,10 @@ _[dD][eE][lL][aA][yY]                                       {	printf("_DELAY => 
 [sS][iI][nN][gG][lL][eE]                                    {	printf("SINGLE => %s\n", yytext); nchar += yyleng; return ENUM_QB_SINGLE; }
 _[aA][tT][aA][nN][hH]                                       {	printf("_ATANH => %s\n", yytext); nchar += yyleng; return ENUM_QB__ATANH; }
 [cC][hH][rR]\$                                              {	printf("CHR$ => %s\n", yytext); nchar += yyleng; return ENUM_QB_CHR_DS; }
-[oO][nN]\s+[kK][eE][yY]                                     {	printf("ON KEY => %s\n", yytext); nchar += yyleng; return ENUM_QB_ON_KEY; }
+[oO][nN]{ws}+[kK][eE][yY]                                   {	printf("ON KEY => %s\n", yytext); nchar += yyleng; return ENUM_QB_ON_KEY; }
 [pP][rR][eE][sS][eE][tT]                                    {	printf("PRESET => %s\n", yytext); nchar += yyleng; return ENUM_QB_PRESET; }
 [cC][iI][rR][cC][lL][eE]                                    {	printf("CIRCLE => %s\n", yytext); nchar += yyleng; return ENUM_QB_CIRCLE; }
-[dD][eE][fF]\s+[fF][nN]                                     {	printf("DEF FN => %s\n", yytext); nchar += yyleng; return ENUM_QB_DEF_FN; }
+[dD][eE][fF]{ws}+[fF][nN]                                   {	printf("DEF FN => %s\n", yytext); nchar += yyleng; return ENUM_QB_DEF_FN; }
 [lL][pP][rR][iI][nN][tT]                                    {	printf("LPRINT => %s\n", yytext); nchar += yyleng; return ENUM_QB_LPRINT; }
 [sS][iI][gG][nN][aA][lL]                                    {	printf("SIGNAL => %s\n", yytext); nchar += yyleng; return ENUM_QB_SIGNAL; }
 [sS][tT][aA][tT][iI][cC]                                    {	printf("STATIC => %s\n", yytext); nchar += yyleng; return ENUM_QB_STATIC; }
@@ -1509,7 +1519,7 @@ _[aA][rR][cC][sS][cC]                                       {	printf("_ARCSC => 
 _[aA][tT][aA][nN]2                                          {	printf("_ATAN2 => %s\n", yytext); nchar += yyleng; return ENUM_QB__ATAN2; }
 [sS][tT][rR][iI][nN][gG]                                    {	printf("STRING => %s\n", yytext); nchar += yyleng; return ENUM_QB_STRING; }
 [mM][kK][sS]\$                                              {	printf("MKS$ => %s\n", yytext); nchar += yyleng; return ENUM_QB_MKS_DS; }
-[eE][nN][dD]\s+[iI][fF]                                     {	printf("END IF => %s\n", yytext); nchar += yyleng; return ENUM_QB_END_IF; }
+[eE][nN][dD]{ws}+[iI][fF]                                   {	printf("END IF => %s\n", yytext); nchar += yyleng; return ENUM_QB_END_IF; }
 [dD][eE][fF][iI][nN][tT]                                    {	printf("DEFINT => %s\n", yytext); nchar += yyleng; return ENUM_QB_DEFINT; }
 [dD][eE][fF][lL][nN][gG]                                    {	printf("DEFLNG => %s\n", yytext); nchar += yyleng; return ENUM_QB_DEFLNG; }
 [dD][eE][fF][dD][bB][lL]                                    {	printf("DEFDBL => %s\n", yytext); nchar += yyleng; return ENUM_QB_DEFDBL; }
@@ -1524,8 +1534,8 @@ _[aA][tT][aA][nN]2                                          {	printf("_ATAN2 => 
 [dD][oO][uU][bB][lL][eE]                                    {	printf("DOUBLE => %s\n", yytext); nchar += yyleng; return ENUM_QB_DOUBLE; }
 [uU][eE][vV][eE][nN][tT]                                    {	printf("UEVENT => %s\n", yytext); nchar += yyleng; return ENUM_QB_UEVENT; }
 [dD][iI][rR]\$                                              {	printf("DIR$ => %s\n", yytext); nchar += yyleng; return ENUM_QB_DIR_DS; }
-[oO][nN]\s+[cC][oO][mM]                                     {	printf("ON COM => %s\n", yytext); nchar += yyleng; return ENUM_QB_ON_COM; }
-[oO][nN]\s+[pP][eE][nN]                                     {	printf("ON PEN => %s\n", yytext); nchar += yyleng; return ENUM_QB_ON_PEN; }
+[oO][nN]{ws}+[cC][oO][mM]                                   {	printf("ON COM => %s\n", yytext); nchar += yyleng; return ENUM_QB_ON_COM; }
+[oO][nN]{ws}+[pP][eE][nN]                                   {	printf("ON PEN => %s\n", yytext); nchar += yyleng; return ENUM_QB_ON_PEN; }
 \$[lL][eE][tT]                                              {	printf("$LET => %s\n", yytext); nchar += yyleng; return ENUM_QB_DS_LET; }
 _[rR][oO][uU][nN][dD]                                       {	printf("_ROUND => %s\n", yytext); nchar += yyleng; return ENUM_QB__ROUND; }
 _[gG][rR][eE][eE][nN]                                       {	printf("_GREEN => %s\n", yytext); nchar += yyleng; return ENUM_QB__GREEN; }
@@ -1545,7 +1555,7 @@ _[fF][lL][oO][aA][tT]                                       {	printf("_FLOAT => 
 _[mM][oO][uU][sS][eE][xX]                                   {	printf("_MOUSEX => %s\n", yytext); nchar += yyleng; return ENUM_QB__MOUSEX; }
 [dD][eE][cC][lL][aA][rR][eE]                                {	printf("DECLARE => %s\n", yytext); nchar += yyleng; return ENUM_QB_DECLARE; }
 _[mM][oO][uU][sS][eE][yY]                                   {	printf("_MOUSEY => %s\n", yytext); nchar += yyleng; return ENUM_QB__MOUSEY; }
-[dD][eE][fF]\s+[sS][eE][gG]                                 {	printf("DEF SEG => %s\n", yytext); nchar += yyleng; return ENUM_QB_DEF_SEG; }
+[dD][eE][fF]{ws}+[sS][eE][gG]                               {	printf("DEF SEG => %s\n", yytext); nchar += yyleng; return ENUM_QB_DEF_SEG; }
 _[rR][eE][sS][iI][zZ][eE]                                   {	printf("_RESIZE => %s\n", yytext); nchar += yyleng; return ENUM_QB__RESIZE; }
 _[bB][uU][tT][tT][oO][nN]                                   {	printf("_BUTTON => %s\n", yytext); nchar += yyleng; return ENUM_QB__BUTTON; }
 _[rR][gG][bB][aA]32                                         {	printf("_RGBA32 => %s\n", yytext); nchar += yyleng; return ENUM_QB__RGBA32; }
@@ -1559,9 +1569,9 @@ _[aA][rR][cC][cC][oO][tT]                                   {	printf("_ARCCOT =>
 _glEnd                                                      {	printf("_glEnd => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glEnd; }
 [rR][eE][sS][tT][oO][rR][eE]                                {	printf("RESTORE => %s\n", yytext); nchar += yyleng; return ENUM_QB_RESTORE; }
 _[mM][eE][mM][nN][eE][wW]                                   {	printf("_MEMNEW => %s\n", yytext); nchar += yyleng; return ENUM_QB__MEMNEW; }
-[oO][nN]\s+[gG][oO][tT][oO]                                 {	printf("ON GOTO => %s\n", yytext); nchar += yyleng; return ENUM_QB_ON_GOTO; }
-[oO][nN]\s+[pP][lL][aA][yY]                                 {	printf("ON PLAY => %s\n", yytext); nchar += yyleng; return ENUM_QB_ON_PLAY; }
-[eE][lL][sS][eE]\s+[iI][fF]                                 {	printf("ELSE IF => %s\n", yytext); nchar += yyleng; return ENUM_QB_ELSE_IF; }
+[oO][nN]{ws}+[gG][oO][tT][oO]                               {	printf("ON GOTO => %s\n", yytext); nchar += yyleng; return ENUM_QB_ON_GOTO; }
+[oO][nN]{ws}+[pP][lL][aA][yY]                               {	printf("ON PLAY => %s\n", yytext); nchar += yyleng; return ENUM_QB_ON_PLAY; }
+[eE][lL][sS][eE]{ws}+[iI][fF]                               {	printf("ELSE IF => %s\n", yytext); nchar += yyleng; return ENUM_QB_ELSE_IF; }
 _[sS][nN][dD][bB][aA][lL]                                   {	printf("_SNDBAL => %s\n", yytext); nchar += yyleng; return ENUM_QB__SNDBAL; }
 _[mM][eE][mM][pP][uU][tT]                                   {	printf("_MEMPUT => %s\n", yytext); nchar += yyleng; return ENUM_QB__MEMPUT; }
 _[bB][lL][uU][eE]32                                         {	printf("_BLUE32 => %s\n", yytext); nchar += yyleng; return ENUM_QB__BLUE32; }
@@ -1569,25 +1579,25 @@ _[aA][rR][cC][sS][eE][cC]                                   {	printf("_ARCSEC =>
 _[sS][oO][uU][rR][cC][eE]                                   {	printf("_SOURCE => %s\n", yytext); nchar += yyleng; return ENUM_QB__SOURCE; }
 _[cC][wW][dD]\$                                             {	printf("_CWD$ => %s\n", yytext); nchar += yyleng; return ENUM_QB__CWD_DS; }
 _[sS][nN][dD][rR][aA][wW]                                   {	printf("_SNDRAW => %s\n", yytext); nchar += yyleng; return ENUM_QB__SNDRAW; }
-[cC][aA][sS][eE]\s+[iI][sS]                                 {	printf("CASE IS => %s\n", yytext); nchar += yyleng; return ENUM_QB_CASE_IS; }
+[cC][aA][sS][eE]{ws}+[iI][sS]                               {	printf("CASE IS => %s\n", yytext); nchar += yyleng; return ENUM_QB_CASE_IS; }
 _[sS][tT][rR][cC][mM][pP]                                   {	printf("_STRCMP => %s\n", yytext); nchar += yyleng; return ENUM_QB__STRCMP; }
 _[dD][eE][fF][iI][nN][eE]                                   {	printf("_DEFINE => %s\n", yytext); nchar += yyleng; return ENUM_QB__DEFINE; }
 _[sS][nN][dD][lL][eE][nN]                                   {	printf("_SNDLEN => %s\n", yytext); nchar += yyleng; return ENUM_QB__SNDLEN; }
 _[sS][nN][dD][vV][oO][lL]                                   {	printf("_SNDVOL => %s\n", yytext); nchar += yyleng; return ENUM_QB__SNDVOL; }
-[oO][nN]\s+[gG][oO][sS][uU][bB]                             {	printf("ON GOSUB => %s\n", yytext); nchar += yyleng; return ENUM_QB_ON_GOSUB; }
-[oO][nN]\s+[tT][iI][mM][eE][rR]                             {	printf("ON TIMER => %s\n", yytext); nchar += yyleng; return ENUM_QB_ON_TIMER; }
-[oO][nN]\s+[eE][rR][rR][oO][rR]                             {	printf("ON ERROR => %s\n", yytext); nchar += yyleng; return ENUM_QB_ON_ERROR; }
+[oO][nN]{ws}+[gG][oO][sS][uU][bB]                           {	printf("ON GOSUB => %s\n", yytext); nchar += yyleng; return ENUM_QB_ON_GOSUB; }
+[oO][nN]{ws}+[tT][iI][mM][eE][rR]                           {	printf("ON TIMER => %s\n", yytext); nchar += yyleng; return ENUM_QB_ON_TIMER; }
+[oO][nN]{ws}+[eE][rR][rR][oO][rR]                           {	printf("ON ERROR => %s\n", yytext); nchar += yyleng; return ENUM_QB_ON_ERROR; }
 _[sS][nN][dD][rR][aA][tT][eE]                               {	printf("_SNDRATE => %s\n", yytext); nchar += yyleng; return ENUM_QB__SNDRATE; }
 [lL][tT][rR][iI][mM]\$                                      {	printf("LTRIM$ => %s\n", yytext); nchar += yyleng; return ENUM_QB_LTRIM_DS; }
-[oO][nN]\s+[sS][tT][rR][iI][gG]                             {	printf("ON STRIG => %s\n", yytext); nchar += yyleng; return ENUM_QB_ON_STRIG; }
+[oO][nN]{ws}+[sS][tT][rR][iI][gG]                           {	printf("ON STRIG => %s\n", yytext); nchar += yyleng; return ENUM_QB_ON_STRIG; }
 _[sS][nN][dD][pP][lL][aA][yY]                               {	printf("_SNDPLAY => %s\n", yytext); nchar += yyleng; return ENUM_QB__SNDPLAY; }
-[gG][eE][tT]\s+[qQ][bB]64                                   {	printf("GET QB64 => %s\n", yytext); nchar += yyleng; return ENUM_QB_GET_QB64; }
-[gG][eE][tT]\s+[fF][iI][lL][eE]                             {	printf("GET FILE => %s\n", yytext); nchar += yyleng; return ENUM_QB_GET_FILE; }
+[gG][eE][tT]{ws}+[qQ][bB]64                                 {	printf("GET QB64 => %s\n", yytext); nchar += yyleng; return ENUM_QB_GET_QB64; }
+[gG][eE][tT]{ws}+[fF][iI][lL][eE]                           {	printf("GET FILE => %s\n", yytext); nchar += yyleng; return ENUM_QB_GET_FILE; }
 [fF][rR][eE][eE][fF][iI][lL][eE]                            {	printf("FREEFILE => %s\n", yytext); nchar += yyleng; return ENUM_QB_FREEFILE; }
 [iI][nN][kK][eE][yY]\$                                      {	printf("INKEY$ => %s\n", yytext); nchar += yyleng; return ENUM_QB_INKEY_DS; }
 [iI][nN][pP][uU][tT]\$                                      {	printf("INPUT$ => %s\n", yytext); nchar += yyleng; return ENUM_QB_INPUT_DS; }
 [lL][cC][aA][sS][eE]\$                                      {	printf("LCASE$ => %s\n", yytext); nchar += yyleng; return ENUM_QB_LCASE_DS; }
-[kK][eE][yY]\s+[lL][iI][sS][tT]                             {	printf("KEY LIST => %s\n", yytext); nchar += yyleng; return ENUM_QB_KEY_LIST; }
+[kK][eE][yY]{ws}+[lL][iI][sS][tT]                           {	printf("KEY LIST => %s\n", yytext); nchar += yyleng; return ENUM_QB_KEY_LIST; }
 [iI][oO][cC][tT][lL]\$                                      {	printf("IOCTL$ => %s\n", yytext); nchar += yyleng; return ENUM_QB_IOCTL_DS; }
 _glHint                                                     {	printf("_glHint => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glHint; }
 _glFogf                                                     {	printf("_glFogf => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glFogf; }
@@ -1602,20 +1612,20 @@ _[dD][eE][vV][iI][cC][eE][sS]                               {	printf("_DEVICES =
 [rR][tT][rR][iI][mM]\$                                      {	printf("RTRIM$ => %s\n", yytext); nchar += yyleng; return ENUM_QB_RTRIM_DS; }
 [rR][iI][gG][hH][tT]\$                                      {	printf("RIGHT$ => %s\n", yytext); nchar += yyleng; return ENUM_QB_RIGHT_DS; }
 _[sS][nN][dD][sS][tT][oO][pP]                               {	printf("_SNDSTOP => %s\n", yytext); nchar += yyleng; return ENUM_QB__SNDSTOP; }
-[fF][oO][rR]\s+[fF][iI][lL][eE]                             {	printf("FOR FILE => %s\n", yytext); nchar += yyleng; return ENUM_QB_FOR_FILE; }
-[nN][eE][wW]\s+[lL][iI][nN][eE]                             {	printf("NEW LINE => %s\n", yytext); nchar += yyleng; return ENUM_QB_NEW_LINE; }
+[fF][oO][rR]{ws}+[fF][iI][lL][eE]                           {	printf("FOR FILE => %s\n", yytext); nchar += yyleng; return ENUM_QB_FOR_FILE; }
+[nN][eE][wW]{ws}+[lL][iI][nN][eE]                           {	printf("NEW LINE => %s\n", yytext); nchar += yyleng; return ENUM_QB_NEW_LINE; }
 _[mM][eE][mM][fF][rR][eE][eE]                               {	printf("_MEMFREE => %s\n", yytext); nchar += yyleng; return ENUM_QB__MEMFREE; }
 _[mM][eE][mM][fF][iI][lL][lL]                               {	printf("_MEMFILL => %s\n", yytext); nchar += yyleng; return ENUM_QB__MEMFILL; }
 _[mM][eE][mM][cC][oO][pP][yY]                               {	printf("_MEMCOPY => %s\n", yytext); nchar += yyleng; return ENUM_QB__MEMCOPY; }
-[pP][uU][tT]\s+[qQ][bB]64                                   {	printf("PUT QB64 => %s\n", yytext); nchar += yyleng; return ENUM_QB_PUT_QB64; }
-[pP][uU][tT]\s+[fF][iI][lL][eE]                             {	printf("PUT FILE => %s\n", yytext); nchar += yyleng; return ENUM_QB_PUT_FILE; }
-[oO][pP][eE][nN]\s+[cC][oO][mM]                             {	printf("OPEN COM => %s\n", yytext); nchar += yyleng; return ENUM_QB_OPEN_COM; }
+[pP][uU][tT]{ws}+[qQ][bB]64                                 {	printf("PUT QB64 => %s\n", yytext); nchar += yyleng; return ENUM_QB_PUT_QB64; }
+[pP][uU][tT]{ws}+[fF][iI][lL][eE]                           {	printf("PUT FILE => %s\n", yytext); nchar += yyleng; return ENUM_QB_PUT_FILE; }
+[oO][pP][eE][nN]{ws}+[cC][oO][mM]                           {	printf("OPEN COM => %s\n", yytext); nchar += yyleng; return ENUM_QB_OPEN_COM; }
 _glFogi                                                     {	printf("_glFogi => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glFogi; }
 _[sS][nN][dD][lL][oO][oO][pP]                               {	printf("_SNDLOOP => %s\n", yytext); nchar += yyleng; return ENUM_QB__SNDLOOP; }
 _[sS][nN][dD][cC][oO][pP][yY]                               {	printf("_SNDCOPY => %s\n", yytext); nchar += yyleng; return ENUM_QB__SNDCOPY; }
 _[cC][oO][nN][sS][oO][lL][eE]                               {	printf("_CONSOLE => %s\n", yytext); nchar += yyleng; return ENUM_QB__CONSOLE; }
 [fF][iI][lL][eE][aA][tT][tT][rR]                            {	printf("FILEATTR => %s\n", yytext); nchar += yyleng; return ENUM_QB_FILEATTR; }
-[eE][nN][dD]\s+[tT][yY][pP][eE]                             {	printf("END TYPE => %s\n", yytext); nchar += yyleng; return ENUM_QB_END_TYPE; }
+[eE][nN][dD]{ws}+[tT][yY][pP][eE]                           {	printf("END TYPE => %s\n", yytext); nchar += yyleng; return ENUM_QB_END_TYPE; }
 _[sS][cC][rR][eE][eE][nN][yY]                               {	printf("_SCREENY => %s\n", yytext); nchar += yyleng; return ENUM_QB__SCREENY; }
 [eE][rR][dD][eE][vV]\$                                      {	printf("ERDEV$ => %s\n", yytext); nchar += yyleng; return ENUM_QB_ERDEV_DS; }
 _[sS][cC][rR][eE][eE][nN][xX]                               {	printf("_SCREENX => %s\n", yytext); nchar += yyleng; return ENUM_QB__SCREENX; }
@@ -1633,7 +1643,7 @@ _glAccum                                                    {	printf("_glAccum =
 \$[eE][lL][sS][eE][iI][fF]                                  {	printf("$ELSEIF => %s\n", yytext); nchar += yyleng; return ENUM_QB_DS_ELSEIF; }
 _glClear                                                    {	printf("_glClear => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glClear; }
 _glFogiv                                                    {	printf("_glFogiv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glFogiv; }
-[oO][nN]\s+[uU][eE][vV][eE][nN][tT]                         {	printf("ON UEVENT => %s\n", yytext); nchar += yyleng; return ENUM_QB_ON_UEVENT; }
+[oO][nN]{ws}+[uU][eE][vV][eE][nN][tT]                       {	printf("ON UEVENT => %s\n", yytext); nchar += yyleng; return ENUM_QB_ON_UEVENT; }
 _glOrtho                                                    {	printf("_glOrtho => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glOrtho; }
 \$[sS][tT][aA][tT][iI][cC]                                  {	printf("$STATIC => %s\n", yytext); nchar += yyleng; return ENUM_QB_DS_STATIC; }
 [mM][kK][sS][mM][bB][fF]\$                                  {	printf("MKSMBF$ => %s\n", yytext); nchar += yyleng; return ENUM_QB_MKSMBF_DS; }
@@ -1651,7 +1661,7 @@ _glBegin                                                    {	printf("_glBegin =
 \$[rR][eE][sS][iI][zZ][eE]                                  {	printf("$RESIZE => %s\n", yytext); nchar += yyleng; return ENUM_QB_DS_RESIZE; }
 [vV][aA][rR][pP][tT][rR]\$                                  {	printf("VARPTR$ => %s\n", yytext); nchar += yyleng; return ENUM_QB_VARPTR_DS; }
 _[lL][oO][aA][dD][fF][oO][nN][tT]                           {	printf("_LOADFONT => %s\n", yytext); nchar += yyleng; return ENUM_QB__LOADFONT; }
-[cC][aA][sS][eE]\s+[eE][lL][sS][eE]                         {	printf("CASE ELSE => %s\n", yytext); nchar += yyleng; return ENUM_QB_CASE_ELSE; }
+[cC][aA][sS][eE]{ws}+[eE][lL][sS][eE]                       {	printf("CASE ELSE => %s\n", yytext); nchar += yyleng; return ENUM_QB_CASE_ELSE; }
 _glRectd                                                    {	printf("_glRectd => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glRectd; }
 _[sS][nN][dD][cC][lL][oO][sS][eE]                           {	printf("_SNDCLOSE => %s\n", yytext); nchar += yyleng; return ENUM_QB__SNDCLOSE; }
 _[pP][rR][eE][sS][eE][rR][vV][eE]                           {	printf("_PRESERVE => %s\n", yytext); nchar += yyleng; return ENUM_QB__PRESERVE; }
@@ -1664,7 +1674,7 @@ _[lL][aA][sS][tT][aA][xX][iI][sS]                           {	printf("_LASTAXIS 
 _[iI][nN][tT][eE][gG][eE][rR]64                             {	printf("_INTEGER64 => %s\n", yytext); nchar += yyleng; return ENUM_QB__INTEGER64; }
 _[mM][eE][mM][eE][xX][iI][sS][tT][sS]                       {	printf("_MEMEXISTS => %s\n", yytext); nchar += yyleng; return ENUM_QB__MEMEXISTS; }
 _[sS][nN][dD][gG][eE][tT][pP][oO][sS]                       {	printf("_SNDGETPOS => %s\n", yytext); nchar += yyleng; return ENUM_QB__SNDGETPOS; }
-[wW][hH][iI][lL][eE]\s+[wW][eE][nN][dD]                     {	printf("WHILE WEND => %s\n", yytext); nchar += yyleng; return ENUM_QB_WHILE_WEND; }
+[wW][hH][iI][lL][eE]{ws}+[wW][eE][nN][dD]                   {	printf("WHILE WEND => %s\n", yytext); nchar += yyleng; return ENUM_QB_WHILE_WEND; }
 [eE][nN][vV][iI][rR][oO][nN]\$                              {	printf("ENVIRON$ => %s\n", yytext); nchar += yyleng; return ENUM_QB_ENVIRON_DS; }
 _glEnable                                                   {	printf("_glEnable => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glEnable; }
 _[lL][aA][sS][tT][wW][hH][eE][eE][lL]                       {	printf("_LASTWHEEL => %s\n", yytext); nchar += yyleng; return ENUM_QB__LASTWHEEL; }
@@ -1673,13 +1683,13 @@ _[cC][oO][pP][yY][iI][mM][aA][gG][eE]                       {	printf("_COPYIMAGE
 _[dD][eE][vV][iI][cC][eE]\$                                 {	printf("_DEVICE$ => %s\n", yytext); nchar += yyleng; return ENUM_QB__DEVICE_DS; }
 _[sS][nN][dD][rR][aA][wW][lL][eE][nN]                       {	printf("_SNDRAWLEN => %s\n", yytext); nchar += yyleng; return ENUM_QB__SNDRAWLEN; }
 _[dD][oO][nN][tT][bB][lL][eE][nN][dD]                       {	printf("_DONTBLEND => %s\n", yytext); nchar += yyleng; return ENUM_QB__DONTBLEND; }
-[pP][rR][iI][nN][tT]\s+[qQ][bB]64                           {	printf("PRINT QB64 => %s\n", yytext); nchar += yyleng; return ENUM_QB_PRINT_QB64; }
+[pP][rR][iI][nN][tT]{ws}+[qQ][bB]64                         {	printf("PRINT QB64 => %s\n", yytext); nchar += yyleng; return ENUM_QB_PRINT_QB64; }
 _[sS][hH][eE][lL][lL][hH][iI][dD][eE]                       {	printf("_SHELLHIDE => %s\n", yytext); nchar += yyleng; return ENUM_QB__SHELLHIDE; }
-[pP][rR][iI][nN][tT]\s+[fF][iI][lL][eE]                     {	printf("PRINT FILE => %s\n", yytext); nchar += yyleng; return ENUM_QB_PRINT_FILE; }
+[pP][rR][iI][nN][tT]{ws}+[fF][iI][lL][eE]                   {	printf("PRINT FILE => %s\n", yytext); nchar += yyleng; return ENUM_QB_PRINT_FILE; }
 _[dD][iI][rR][eE][xX][iI][sS][tT][sS]                       {	printf("_DIREXISTS => %s\n", yytext); nchar += yyleng; return ENUM_QB__DIREXISTS; }
-[vV][iI][eE][wW]\s+[pP][rR][iI][nN][tT]                     {	printf("VIEW PRINT => %s\n", yytext); nchar += yyleng; return ENUM_QB_VIEW_PRINT; }
+[vV][iI][eE][wW]{ws}+[pP][rR][iI][nN][tT]                   {	printf("VIEW PRINT => %s\n", yytext); nchar += yyleng; return ENUM_QB_VIEW_PRINT; }
 \$[dD][yY][nN][aA][mM][iI][cC]                              {	printf("$DYNAMIC => %s\n", yytext); nchar += yyleng; return ENUM_QB_DS_DYNAMIC; }
-[sS][hH][eE][lL][lL]\s+[qQ][bB]64                           {	printf("SHELL QB64 => %s\n", yytext); nchar += yyleng; return ENUM_QB_SHELL_QB64; }
+[sS][hH][eE][lL][lL]{ws}+[qQ][bB]64                         {	printf("SHELL QB64 => %s\n", yytext); nchar += yyleng; return ENUM_QB_SHELL_QB64; }
 _[sS][nN][dD][sS][eE][tT][pP][oO][sS]                       {	printf("_SNDSETPOS => %s\n", yytext); nchar += yyleng; return ENUM_QB__SNDSETPOS; }
 _[mM][oO][uU][sS][eE][sS][hH][oO][wW]                       {	printf("_MOUSESHOW => %s\n", yytext); nchar += yyleng; return ENUM_QB__MOUSESHOW; }
 _glIndexi                                                   {	printf("_glIndexi => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glIndexi; }
@@ -1687,7 +1697,7 @@ _glIndexi                                                   {	printf("_glIndexi 
 _[sS][nN][dD][pP][aA][uU][sS][eE][dD]                       {	printf("_SNDPAUSED => %s\n", yytext); nchar += yyleng; return ENUM_QB__SNDPAUSED; }
 \$[cC][oO][nN][sS][oO][lL][eE]                              {	printf("$CONSOLE => %s\n", yytext); nchar += yyleng; return ENUM_QB_DS_CONSOLE; }
 _glIndexf                                                   {	printf("_glIndexf => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glIndexf; }
-[lL][iI][nN][eE]\s+[iI][nN][pP][uU][tT]                     {	printf("LINE INPUT => %s\n", yytext); nchar += yyleng; return ENUM_QB_LINE_INPUT; }
+[lL][iI][nN][eE]{ws}+[iI][nN][pP][uU][tT]                   {	printf("LINE INPUT => %s\n", yytext); nchar += yyleng; return ENUM_QB_LINE_INPUT; }
 _[pP][iI][xX][eE][lL][sS][iI][zZ][eE]                       {	printf("_PIXELSIZE => %s\n", yytext); nchar += yyleng; return ENUM_QB__PIXELSIZE; }
 _[eE][rR][rR][oO][rR][lL][iI][nN][eE]                       {	printf("_ERRORLINE => %s\n", yytext); nchar += yyleng; return ENUM_QB__ERRORLINE; }
 _glIndexs                                                   {	printf("_glIndexs => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glIndexs; }
@@ -1696,22 +1706,21 @@ _[cC][oO][nN][nN][eE][cC][tT][eE][dD]                       {	printf("_CONNECTED
 _glRectdv                                                   {	printf("_glRectdv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glRectdv; }
 _glRectfv                                                   {	printf("_glRectfv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glRectfv; }
 _glIsList                                                   {	printf("_glIsList => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glIsList; }
-[iI][nN][pP][uU][tT]\s+[qQ][bB]64                           {	printf("INPUT QB64 => %s\n", yytext); nchar += yyleng; return ENUM_QB_INPUT_QB64; }
-\$[iI][nN][cC][lL][uU][dD][eE]                              {	printf("$INCLUDE => %s\n", yytext); nchar += yyleng; return ENUM_QB_DS_INCLUDE; }
+[iI][nN][pP][uU][tT]{ws}+[qQ][bB]64                         {	printf("INPUT QB64 => %s\n", yytext); nchar += yyleng; return ENUM_QB_INPUT_QB64; }
 _glIndexd                                                   {	printf("_glIndexd => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glIndexd; }
 [cC][oO][mM][mM][aA][nN][dD]\$                              {	printf("COMMAND$ => %s\n", yytext); nchar += yyleng; return ENUM_QB_COMMAND_DS; }
 _[fF][rR][eE][eE][tT][iI][mM][eE][rR]                       {	printf("_FREETIMER => %s\n", yytext); nchar += yyleng; return ENUM_QB__FREETIMER; }
 _glRectiv                                                   {	printf("_glRectiv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glRectiv; }
 _[fF][rR][eE][eE][iI][mM][aA][gG][eE]                       {	printf("_FREEIMAGE => %s\n", yytext); nchar += yyleng; return ENUM_QB__FREEIMAGE; }
 _[lL][oO][aA][dD][iI][mM][aA][gG][eE]                       {	printf("_LOADIMAGE => %s\n", yytext); nchar += yyleng; return ENUM_QB__LOADIMAGE; }
-[wW][rR][iI][tT][eE]\s+[fF][iI][lL][eE]                     {	printf("WRITE FILE => %s\n", yytext); nchar += yyleng; return ENUM_QB_WRITE_FILE; }
+[wW][rR][iI][tT][eE]{ws}+[fF][iI][lL][eE]                   {	printf("WRITE FILE => %s\n", yytext); nchar += yyleng; return ENUM_QB_WRITE_FILE; }
 _[mM][oO][uU][sS][eE][hH][iI][dD][eE]                       {	printf("_MOUSEHIDE => %s\n", yytext); nchar += yyleng; return ENUM_QB__MOUSEHIDE; }
 _[mM][oO][uU][sS][eE][mM][oO][vV][eE]                       {	printf("_MOUSEMOVE => %s\n", yytext); nchar += yyleng; return ENUM_QB__MOUSEMOVE; }
 _glScalef                                                   {	printf("_glScalef => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glScalef; }
 _glBitmap                                                   {	printf("_glBitmap => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glBitmap; }
 _glLighti                                                   {	printf("_glLighti => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glLighti; }
 _glScaled                                                   {	printf("_glScaled => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glScaled; }
-\$[eE][lL][sS][eE]\s+[iI][fF]                               {	printf("$ELSE IF => %s\n", yytext); nchar += yyleng; return ENUM_QB_DS_ELSE_IF; }
+\$[eE][lL][sS][eE]{ws}+[iI][fF]                             {	printf("$ELSE IF => %s\n", yytext); nchar += yyleng; return ENUM_QB_DS_ELSE_IF; }
 _glRectsv                                                   {	printf("_glRectsv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glRectsv; }
 _[fF][oO][nN][tT][wW][iI][dD][tT][hH]                       {	printf("_FONTWIDTH => %s\n", yytext); nchar += yyleng; return ENUM_QB__FONTWIDTH; }
 _glColor4i                                                  {	printf("_glColor4i => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glColor4i; }
@@ -1722,13 +1731,13 @@ _glPopName                                                  {	printf("_glPopName
 _glColor3f                                                  {	printf("_glColor3f => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glColor3f; }
 _[fF][iI][lL][eE][eE][xX][iI][sS][tT][sS]                   {	printf("_FILEEXISTS => %s\n", yytext); nchar += yyleng; return ENUM_QB__FILEEXISTS; }
 _glColor4f                                                  {	printf("_glColor4f => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glColor4f; }
-[sS][eE][lL][eE][cC][tT]\s+[cC][aA][sS][eE]                 {	printf("SELECT CASE => %s\n", yytext); nchar += yyleng; return ENUM_QB_SELECT_CASE; }
+[sS][eE][lL][eE][cC][tT]{ws}+[cC][aA][sS][eE]               {	printf("SELECT CASE => %s\n", yytext); nchar += yyleng; return ENUM_QB_SELECT_CASE; }
 _[lL][aA][sS][tT][bB][uU][tT][tT][oO][nN]                   {	printf("_LASTBUTTON => %s\n", yytext); nchar += yyleng; return ENUM_QB__LASTBUTTON; }
 _glTexGenf                                                  {	printf("_glTexGenf => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glTexGenf; }
 _glColor4d                                                  {	printf("_glColor4d => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glColor4d; }
 _glColor3s                                                  {	printf("_glColor3s => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glColor3s; }
 _glTexGend                                                  {	printf("_glTexGend => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glTexGend; }
-[oO][pP][tT][iI][oO][nN]\s+[bB][aA][sS][eE]                 {	printf("OPTION BASE => %s\n", yytext); nchar += yyleng; return ENUM_QB_OPTION_BASE; }
+[oO][pP][tT][iI][oO][nN]{ws}+[bB][aA][sS][eE]               {	printf("OPTION BASE => %s\n", yytext); nchar += yyleng; return ENUM_QB_OPTION_BASE; }
 _[mM][oO][uU][sS][eE][wW][hH][eE][eE][lL]                   {	printf("_MOUSEWHEEL => %s\n", yytext); nchar += yyleng; return ENUM_QB__MOUSEWHEEL; }
 _glScissor                                                  {	printf("_glScissor => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glScissor; }
 _glRotatef                                                  {	printf("_glRotatef => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glRotatef; }
@@ -1755,8 +1764,8 @@ _[pP][rR][iI][nN][tT][wW][iI][dD][tT][hH]                   {	printf("_PRINTWIDT
 _glColor3d                                                  {	printf("_glColor3d => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glColor3d; }
 _[sS][nN][dD][oO][pP][eE][nN][rR][aA][wW]                   {	printf("_SNDOPENRAW => %s\n", yytext); nchar += yyleng; return ENUM_QB__SNDOPENRAW; }
 _glColor4s                                                  {	printf("_glColor4s => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glColor4s; }
-[wW][hH][iI][tT][eE]\s+[sS][pP][aA][cC][eE]                 {	printf("WHITE SPACE => %s\n", yytext); nchar += yyleng; return ENUM_QB_WHITE_SPACE; }
-[pP][rR][iI][nN][tT]\s+[uU][sS][iI][nN][gG]                 {	printf("PRINT USING => %s\n", yytext); nchar += yyleng; return ENUM_QB_PRINT_USING; }
+[wW][hH][iI][tT][eE]{ws}+[sS][pP][aA][cC][eE]               {	printf("WHITE SPACE => %s\n", yytext); nchar += yyleng; return ENUM_QB_WHITE_SPACE; }
+[pP][rR][iI][nN][tT]{ws}+[uU][sS][iI][nN][gG]               {	printf("PRINT USING => %s\n", yytext); nchar += yyleng; return ENUM_QB_PRINT_USING; }
 _glNewList                                                  {	printf("_glNewList => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glNewList; }
 _glTexEnvi                                                  {	printf("_glTexEnvi => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glTexEnvi; }
 _glLogicOp                                                  {	printf("_glLogicOp => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glLogicOp; }
@@ -1799,12 +1808,12 @@ _glColor4fv                                                 {	printf("_glColor4f
 _glColor4dv                                                 {	printf("_glColor4dv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glColor4dv; }
 _glColor3iv                                                 {	printf("_glColor3iv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glColor3iv; }
 _glViewport                                                 {	printf("_glViewport => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glViewport; }
-[bB][iI][tT]\s+[vV][aA][rR][iI][aA][bB][lL][eE]             {	printf("BIT VARIABLE => %s\n", yytext); nchar += yyleng; return ENUM_QB_BIT_VARIABLE; }
+[bB][iI][tT]{ws}+[vV][aA][rR][iI][aA][bB][lL][eE]           {	printf("BIT VARIABLE => %s\n", yytext); nchar += yyleng; return ENUM_QB_BIT_VARIABLE; }
 _glTexGenfv                                                 {	printf("_glTexGenfv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glTexGenfv; }
 _[pP][rR][iI][nN][tT][sS][tT][rR][iI][nN][gG]               {	printf("_PRINTSTRING => %s\n", yytext); nchar += yyleng; return ENUM_QB__PRINTSTRING; }
 _glVertex3d                                                 {	printf("_glVertex3d => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glVertex3d; }
-[pP][uU][tT]\s+[gG][rR][aA][pP][hH][iI][cC][sS]             {	printf("PUT GRAPHICS => %s\n", yytext); nchar += yyleng; return ENUM_QB_PUT_GRAPHICS; }
-[nN][oO][tT]\s+[eE][qQ][uU][aA][lL]\s+[tT][oO]              {	printf("NOT EQUAL TO => %s\n", yytext); nchar += yyleng; return ENUM_QB_NOT_EQUAL_TO; }
+[pP][uU][tT]{ws}+[gG][rR][aA][pP][hH][iI][cC][sS]           {	printf("PUT GRAPHICS => %s\n", yytext); nchar += yyleng; return ENUM_QB_PUT_GRAPHICS; }
+[nN][oO][tT]{ws}+[eE][qQ][uU][aA][lL]{ws}+[tT][oO]          {	printf("NOT EQUAL TO => %s\n", yytext); nchar += yyleng; return ENUM_QB_NOT_EQUAL_TO; }
 _[sS][cC][rR][eE][eE][nN][cC][lL][iI][cC][kK]               {	printf("_SCREENCLICK => %s\n", yytext); nchar += yyleng; return ENUM_QB__SCREENCLICK; }
 _glVertex4i                                                 {	printf("_glVertex4i => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glVertex4i; }
 _glVertex4s                                                 {	printf("_glVertex4s => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glVertex4s; }
@@ -1821,12 +1830,12 @@ _glVertex4d                                                 {	printf("_glVertex4
 _[sS][nN][dD][pP][lL][aA][yY][cC][oO][pP][yY]               {	printf("_SNDPLAYCOPY => %s\n", yytext); nchar += yyleng; return ENUM_QB__SNDPLAYCOPY; }
 _glVertex3i                                                 {	printf("_glVertex3i => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glVertex3i; }
 _glVertex4f                                                 {	printf("_glVertex4f => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glVertex4f; }
-_[oO][fF][fF][sS][eE][tT]\s+[tT][yY][pP][eE]                {	printf("_OFFSET TYPE => %s\n", yytext); nchar += yyleng; return ENUM_QB__OFFSET_TYPE; }
-[lL][pP][rR][iI][nN][tT]\s+[uU][sS][iI][nN][gG]             {	printf("LPRINT USING => %s\n", yytext); nchar += yyleng; return ENUM_QB_LPRINT_USING; }
+_[oO][fF][fF][sS][eE][tT]{ws}+[tT][yY][pP][eE]              {	printf("_OFFSET TYPE => %s\n", yytext); nchar += yyleng; return ENUM_QB__OFFSET_TYPE; }
+[lL][pP][rR][iI][nN][tT]{ws}+[uU][sS][iI][nN][gG]           {	printf("LPRINT USING => %s\n", yytext); nchar += yyleng; return ENUM_QB_LPRINT_USING; }
 _glTexGeniv                                                 {	printf("_glTexGeniv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glTexGeniv; }
 _glTexGendv                                                 {	printf("_glTexGendv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glTexGendv; }
 _[rR][eE][sS][iI][zZ][eE][wW][iI][dD][tT][hH]               {	printf("_RESIZEWIDTH => %s\n", yytext); nchar += yyleng; return ENUM_QB__RESIZEWIDTH; }
-[wW][rR][iI][tT][eE]\s+[sS][cC][rR][eE][eE][nN]             {	printf("WRITE SCREEN => %s\n", yytext); nchar += yyleng; return ENUM_QB_WRITE_SCREEN; }
+[wW][rR][iI][tT][eE]{ws}+[sS][cC][rR][eE][eE][nN]           {	printf("WRITE SCREEN => %s\n", yytext); nchar += yyleng; return ENUM_QB_WRITE_SCREEN; }
 _[dD][eE][pP][tT][hH][bB][uU][fF][fF][eE][rR]               {	printf("_DEPTHBUFFER => %s\n", yytext); nchar += yyleng; return ENUM_QB__DEPTHBUFFER; }
 _[sS][cC][rR][eE][eE][nN][iI][mM][aA][gG][eE]               {	printf("_SCREENIMAGE => %s\n", yytext); nchar += yyleng; return ENUM_QB__SCREENIMAGE; }
 _glVertex2f                                                 {	printf("_glVertex2f => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glVertex2f; }
@@ -1847,7 +1856,7 @@ _glStencilOp                                                {	printf("_glStencil
 _glFrontFace                                                {	printf("_glFrontFace => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glFrontFace; }
 _glVertex3sv                                                {	printf("_glVertex3sv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glVertex3sv; }
 _glPopAttrib                                                {	printf("_glPopAttrib => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glPopAttrib; }
-[pP][aA][lL][eE][tT][tT][eE]\s+[uU][sS][iI][nN][gG]         {	printf("PALETTE USING => %s\n", yytext); nchar += yyleng; return ENUM_QB_PALETTE_USING; }
+[pP][aA][lL][eE][tT][tT][eE]{ws}+[uU][sS][iI][nN][gG]       {	printf("PALETTE USING => %s\n", yytext); nchar += yyleng; return ENUM_QB_PALETTE_USING; }
 _glVertex2fv                                                {	printf("_glVertex2fv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glVertex2fv; }
 _glVertex3fv                                                {	printf("_glVertex3fv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glVertex3fv; }
 _glNormal3sv                                                {	printf("_glNormal3sv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glNormal3sv; }
@@ -1873,10 +1882,10 @@ _glMapGrid1d                                                {	printf("_glMapGrid
 _glNormal3dv                                                {	printf("_glNormal3dv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glNormal3dv; }
 _glInitNames                                                {	printf("_glInitNames => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glInitNames; }
 _glIsEnabled                                                {	printf("_glIsEnabled => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glIsEnabled; }
-[lL][oO][nN][gG]\s+[vV][aA][rR][iI][aA][bB][lL][eE]         {	printf("LONG VARIABLE => %s\n", yytext); nchar += yyleng; return ENUM_QB_LONG_VARIABLE; }
+[lL][oO][nN][gG]{ws}+[vV][aA][rR][iI][aA][bB][lL][eE]       {	printf("LONG VARIABLE => %s\n", yytext); nchar += yyleng; return ENUM_QB_LONG_VARIABLE; }
 _[cC][oO][mM][mM][aA][nN][dD][cC][oO][uU][nN][tT]           {	printf("_COMMANDCOUNT => %s\n", yytext); nchar += yyleng; return ENUM_QB__COMMANDCOUNT; }
 _glIsTexture                                                {	printf("_glIsTexture => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glIsTexture; }
-[bB][yY][tT][eE]\s+[vV][aA][rR][iI][aA][bB][lL][eE]         {	printf("BYTE VARIABLE => %s\n", yytext); nchar += yyleng; return ENUM_QB_BYTE_VARIABLE; }
+[bB][yY][tT][eE]{ws}+[vV][aA][rR][iI][aA][bB][lL][eE]       {	printf("BYTE VARIABLE => %s\n", yytext); nchar += yyleng; return ENUM_QB_BYTE_VARIABLE; }
 \$[sS][cC][rR][eE][eE][nN][sS][hH][oO][wW]                  {	printf("$SCREENSHOW => %s\n", yytext); nchar += yyleng; return ENUM_QB_DS_SCREENSHOW; }
 _glGetFloatv                                                {	printf("_glGetFloatv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glGetFloatv; }
 _glColor4uiv                                                {	printf("_glColor4uiv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glColor4uiv; }
@@ -1887,7 +1896,7 @@ _glColorMask                                                {	printf("_glColorMa
 _glEdgeFlagv                                                {	printf("_glEdgeFlagv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glEdgeFlagv; }
 _glVertex4dv                                                {	printf("_glVertex4dv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glVertex4dv; }
 _glDepthMask                                                {	printf("_glDepthMask => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glDepthMask; }
-[cC][aA][lL][lL]\s+[aA][bB][sS][oO][lL][uU][tT][eE]         {	printf("CALL ABSOLUTE => %s\n", yytext); nchar += yyleng; return ENUM_QB_CALL_ABSOLUTE; }
+[cC][aA][lL][lL]{ws}+[aA][bB][sS][oO][lL][uU][tT][eE]       {	printf("CALL ABSOLUTE => %s\n", yytext); nchar += yyleng; return ENUM_QB_CALL_ABSOLUTE; }
 _glVertex2iv                                                {	printf("_glVertex2iv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glVertex2iv; }
 _[dD][eE][fF][aA][uU][lL][tT][cC][oO][lL][oO][rR]           {	printf("_DEFAULTCOLOR => %s\n", yytext); nchar += yyleng; return ENUM_QB__DEFAULTCOLOR; }
 _[dD][iI][sS][pP][lL][aA][yY][oO][rR][dD][eE][rR]           {	printf("_DISPLAYORDER => %s\n", yytext); nchar += yyleng; return ENUM_QB__DISPLAYORDER; }
@@ -1904,7 +1913,7 @@ _glEvalMesh2                                                {	printf("_glEvalMes
 _[dD][eE][sS][kK][tT][oO][pP][wW][iI][dD][tT][hH]           {	printf("_DESKTOPWIDTH => %s\n", yytext); nchar += yyleng; return ENUM_QB__DESKTOPWIDTH; }
 _glAlphaFunc                                                {	printf("_glAlphaFunc => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glAlphaFunc; }
 _glBlendFunc                                                {	printf("_glBlendFunc => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glBlendFunc; }
-[fF][lL][oO][aA][tT]\s+[vV][aA][rR][iI][aA][bB][lL][eE]     {	printf("FLOAT VARIABLE => %s\n", yytext); nchar += yyleng; return ENUM_QB_FLOAT_VARIABLE; }
+[fF][lL][oO][aA][tT]{ws}+[vV][aA][rR][iI][aA][bB][lL][eE]   {	printf("FLOAT VARIABLE => %s\n", yytext); nchar += yyleng; return ENUM_QB_FLOAT_VARIABLE; }
 [sS][eE][eE][kK]                                            {	printf("SEEK => %s\n", yytext); nchar += yyleng; return ENUM_QB_SEEK_STATEMENT; }
 _glClearColor                                               {	printf("_glClearColor => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glClearColor; }
 _glReadBuffer                                               {	printf("_glReadBuffer => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glReadBuffer; }
@@ -1956,7 +1965,7 @@ _glPixelMapfv                                               {	printf("_glPixelMa
 _glTexCoord3s                                               {	printf("_glTexCoord3s => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glTexCoord3s; }
 _glTexImage2D                                               {	printf("_glTexImage2D => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glTexImage2D; }
 _glGetLightfv                                               {	printf("_glGetLightfv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glGetLightfv; }
-[sS][iI][nN][gG][lL][eE]\s+[vV][aA][rR][iI][aA][bB][lL][eE] {	printf("SINGLE VARIABLE => %s\n", yytext); nchar += yyleng; return ENUM_QB_SINGLE_VARIABLE; }
+[sS][iI][nN][gG][lL][eE]{ws}+[vV][aA][rR][iI][aA][bB][lL][eE]          {	printf("SINGLE VARIABLE => %s\n", yytext); nchar += yyleng; return ENUM_QB_SINGLE_VARIABLE; }
 _glRasterPos2f                                              {	printf("_glRasterPos2f => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glRasterPos2f; }
 _glRasterPos3s                                              {	printf("_glRasterPos3s => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glRasterPos3s; }
 _glRasterPos2d                                              {	printf("_glRasterPos2d => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glRasterPos2d; }
@@ -1980,16 +1989,16 @@ _glTexCoord1sv                                              {	printf("_glTexCoor
 _glStencilFunc                                              {	printf("_glStencilFunc => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glStencilFunc; }
 _glTexCoord3fv                                              {	printf("_glTexCoord3fv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glTexCoord3fv; }
 _glRasterPos4i                                              {	printf("_glRasterPos4i => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glRasterPos4i; }
-[dD][oO][uU][bB][lL][eE]\s+[vV][aA][rR][iI][aA][bB][lL][eE] {	printf("DOUBLE VARIABLE => %s\n", yytext); nchar += yyleng; return ENUM_QB_DOUBLE_VARIABLE; }
+[dD][oO][uU][bB][lL][eE]{ws}+[vV][aA][rR][iI][aA][bB][lL][eE]          {	printf("DOUBLE VARIABLE => %s\n", yytext); nchar += yyleng; return ENUM_QB_DOUBLE_VARIABLE; }
 _glRasterPos4f                                              {	printf("_glRasterPos4f => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glRasterPos4f; }
 _glRasterPos4d                                              {	printf("_glRasterPos4d => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glRasterPos4d; }
 _glRasterPos4s                                              {	printf("_glRasterPos4s => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glRasterPos4s; }
-[oO][fF][fF][sS][eE][tT]\s+[vV][aA][rR][iI][aA][bB][lL][eE] {	printf("OFFSET VARIABLE => %s\n", yytext); nchar += yyleng; return ENUM_QB_OFFSET_VARIABLE; }
+[oO][fF][fF][sS][eE][tT]{ws}+[vV][aA][rR][iI][aA][bB][lL][eE]          {	printf("OFFSET VARIABLE => %s\n", yytext); nchar += yyleng; return ENUM_QB_OFFSET_VARIABLE; }
 _glTexCoord3iv                                              {	printf("_glTexCoord3iv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glTexCoord3iv; }
 _glTexCoord3sv                                              {	printf("_glTexCoord3sv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glTexCoord3sv; }
 _glTexCoord4dv                                              {	printf("_glTexCoord4dv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glTexCoord4dv; }
 _glTexCoord4fv                                              {	printf("_glTexCoord4fv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glTexCoord4fv; }
-[sS][tT][rR][iI][nN][gG]\s+[vV][aA][rR][iI][aA][bB][lL][eE] {	printf("STRING VARIABLE => %s\n", yytext); nchar += yyleng; return ENUM_QB_STRING_VARIABLE; }
+[sS][tT][rR][iI][nN][gG]{ws}+[vV][aA][rR][iI][aA][bB][lL][eE]          {	printf("STRING VARIABLE => %s\n", yytext); nchar += yyleng; return ENUM_QB_STRING_VARIABLE; }
 _[fF][oO][nN][tT]                                           {	printf("_FONT => %s\n", yytext); nchar += yyleng; return ENUM_QB__FONT_STATEMENT; }
 _glGetTexEnvfv                                              {	printf("_glGetTexEnvfv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glGetTexEnvfv; }
 _glGetIntegerv                                              {	printf("_glGetIntegerv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glGetIntegerv; }
@@ -2006,11 +2015,11 @@ _glGetTexGenfv                                              {	printf("_glGetTexG
 _glGetTexGeniv                                              {	printf("_glGetTexGeniv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glGetTexGeniv; }
 _glEvalCoord2d                                              {	printf("_glEvalCoord2d => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glEvalCoord2d; }
 _glEvalCoord1f                                              {	printf("_glEvalCoord1f => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glEvalCoord1f; }
-[rR][aA][nN][dD][oO][mM][iI][zZ][eE]\s+[uU][sS][iI][nN][gG] {	printf("RANDOMIZE USING => %s\n", yytext); nchar += yyleng; return ENUM_QB_RANDOMIZE_USING; }
-[mM][iI][dD]\s+\$[sS][tT][aA][tT][mM][eE][nN][tT]           {	printf("MID_$STATMENT => %s\n", yytext); nchar += yyleng; return ENUM_QB_MID_DS_STATMENT; }
-[lL][iI][nN][eE]\s+[iI][nN][pP][uU][tT]\s+[fF][iI][lL][eE]  {	printf("LINE INPUT FILE => %s\n", yytext); nchar += yyleng; return ENUM_QB_LINE_INPUT_FILE; }
-[iI][nN][pP][uU][tT]\s+[fF][iI][lL][eE]\s+[mM][oO][dD][eE]  {	printf("INPUT FILE MODE => %s\n", yytext); nchar += yyleng; return ENUM_QB_INPUT_FILE_MODE; }
-[dD][eE][cC][lL][aA][rR][eE]\s+[lL][iI][bB][rR][aA][rR][yY] {	printf("DECLARE LIBRARY => %s\n", yytext); nchar += yyleng; return ENUM_QB_DECLARE_LIBRARY; }
+[rR][aA][nN][dD][oO][mM][iI][zZ][eE]{ws}+[uU][sS][iI][nN][gG]          {	printf("RANDOMIZE USING => %s\n", yytext); nchar += yyleng; return ENUM_QB_RANDOMIZE_USING; }
+[mM][iI][dD]{ws}+\$[sS][tT][aA][tT][mM][eE][nN][tT]         {	printf("MID_$STATMENT => %s\n", yytext); nchar += yyleng; return ENUM_QB_MID_DS_STATMENT; }
+[lL][iI][nN][eE]{ws}+[iI][nN][pP][uU][tT]{ws}+[fF][iI][lL][eE]          {	printf("LINE INPUT FILE => %s\n", yytext); nchar += yyleng; return ENUM_QB_LINE_INPUT_FILE; }
+[iI][nN][pP][uU][tT]{ws}+[fF][iI][lL][eE]{ws}+[mM][oO][dD][eE]          {	printf("INPUT FILE MODE => %s\n", yytext); nchar += yyleng; return ENUM_QB_INPUT_FILE_MODE; }
+[dD][eE][cC][lL][aA][rR][eE]{ws}+[lL][iI][bB][rR][aA][rR][yY]          {	printf("DECLARE LIBRARY => %s\n", yytext); nchar += yyleng; return ENUM_QB_DECLARE_LIBRARY; }
 [sS][tT][rR][iI][gG]                                        {	printf("STRIG => %s\n", yytext); nchar += yyleng; return ENUM_QB_STRIG_STATEMENT; }
 [tT][iI][mM][eE][rR]                                        {	printf("TIMER => %s\n", yytext); nchar += yyleng; return ENUM_QB_TIMER_STATEMENT; }
 _[mM][oO][uU][sS][eE][mM][oO][vV][eE][mM][eE][nN][tT][xX]   {	printf("_MOUSEMOVEMENTX => %s\n", yytext); nchar += yyleng; return ENUM_QB__MOUSEMOVEMENTX; }
@@ -2039,7 +2048,7 @@ _glEvalCoord1dv                                             {	printf("_glEvalCoo
 _glLightModeliv                                             {	printf("_glLightModeliv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glLightModeliv; }
 _glClearStencil                                             {	printf("_glClearStencil => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glClearStencil; }
 [sS][cC][rR][eE][eE][nN]                                    {	printf("SCREEN => %s\n", yytext); nchar += yyleng; return ENUM_QB_SCREEN_STATEMENT; }
-[pP][rR][iI][nN][tT]\s+[uU][sS][iI][nN][gG]\s+[fF][iI][lL][eE]          {	printf("PRINT USING FILE => %s\n", yytext); nchar += yyleng; return ENUM_QB_PRINT_USING_FILE; }
+[pP][rR][iI][nN][tT]{ws}+[uU][sS][iI][nN][gG]{ws}+[fF][iI][lL][eE]          {	printf("PRINT USING FILE => %s\n", yytext); nchar += yyleng; return ENUM_QB_PRINT_USING_FILE; }
 _[bB][lL][eE][nN][dD]                                       {	printf("_BLEND => %s\n", yytext); nchar += yyleng; return ENUM_QB__BLEND_STATEMENT; }
 _[bB][aA][cC][kK][gG][rR][oO][uU][nN][dD][cC][oO][lL][oO][rR]          {	printf("_BACKGROUNDCOLOR => %s\n", yytext); nchar += yyleng; return ENUM_QB__BACKGROUNDCOLOR; }
 _glRasterPos2dv                                             {	printf("_glRasterPos2dv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glRasterPos2dv; }
@@ -2052,7 +2061,7 @@ _glRasterPos4iv                                             {	printf("_glRasterP
 _glRasterPos4fv                                             {	printf("_glRasterPos4fv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glRasterPos4fv; }
 _glRasterPos3fv                                             {	printf("_glRasterPos3fv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glRasterPos3fv; }
 _glRasterPos4dv                                             {	printf("_glRasterPos4dv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glRasterPos4dv; }
-[iI][nN][tT][eE][gG][eE][rR]\s+[vV][aA][rR][iI][aA][bB][lL][eE]          {	printf("INTEGER VARIABLE => %s\n", yytext); nchar += yyleng; return ENUM_QB_INTEGER_VARIABLE; }
+[iI][nN][tT][eE][gG][eE][rR]{ws}+[vV][aA][rR][iI][aA][bB][lL][eE]          {	printf("INTEGER VARIABLE => %s\n", yytext); nchar += yyleng; return ENUM_QB_INTEGER_VARIABLE; }
 _glIndexPointer                                             {	printf("_glIndexPointer => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glIndexPointer; }
 _glLoadIdentity                                             {	printf("_glLoadIdentity => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glLoadIdentity; }
 _glLightModelfv                                             {	printf("_glLightModelfv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glLightModelfv; }
@@ -2065,24 +2074,24 @@ _glGetClipPlane                                             {	printf("_glGetClip
 _glNormalPointer                                            {	printf("_glNormalPointer => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glNormalPointer; }
 [tT][iI][mM][eE]\$                                          {	printf("TIME$ => %s\n", yytext); nchar += yyleng; return ENUM_QB_TIME_DS_STATEMENT; }
 _glVertexPointer                                            {	printf("_glVertexPointer => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glVertexPointer; }
-[uU][nN][sS][iI][gG][nN][eE][dD]\s+[vV][aA][rR][iI][aA][bB][lL][eE]          {	printf("UNSIGNED VARIABLE => %s\n", yytext); nchar += yyleng; return ENUM_QB_UNSIGNED_VARIABLE; }
+[uU][nN][sS][iI][gG][nN][eE][dD]{ws}+[vV][aA][rR][iI][aA][bB][lL][eE]          {	printf("UNSIGNED VARIABLE => %s\n", yytext); nchar += yyleng; return ENUM_QB_UNSIGNED_VARIABLE; }
 _[mM][eE][mM][gG][eE][tT]                                   {	printf("_MEMGET => %s\n", yytext); nchar += yyleng; return ENUM_QB__MEMGET_STATEMENT; }
 _glPolygonOffset                                            {	printf("_glPolygonOffset => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glPolygonOffset; }
-[sS][tT][aA][nN][dD][aA][rR][dD]\s+[vV][aA][rR][iI][aA][bB][lL][eE]          {	printf("STANDARD VARIABLE => %s\n", yytext); nchar += yyleng; return ENUM_QB_STANDARD_VARIABLE; }
+[sS][tT][aA][nN][dD][aA][rR][dD]{ws}+[vV][aA][rR][iI][aA][bB][lL][eE]          {	printf("STANDARD VARIABLE => %s\n", yytext); nchar += yyleng; return ENUM_QB_STANDARD_VARIABLE; }
 _glTexParameteri                                            {	printf("_glTexParameteri => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glTexParameteri; }
 [dD][aA][tT][eE]\$                                          {	printf("DATE$ => %s\n", yytext); nchar += yyleng; return ENUM_QB_DATE_DS_STATEMENT; }
 _glTexSubImage1D                                            {	printf("_glTexSubImage1D => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glTexSubImage1D; }
 _glTexSubImage2D                                            {	printf("_glTexSubImage2D => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glTexSubImage2D; }
 _glColorMaterial                                            {	printf("_glColorMaterial => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glColorMaterial; }
 _glGetPixelMapfv                                            {	printf("_glGetPixelMapfv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glGetPixelMapfv; }
-[uU][nN][kK][nN][oO][wW][nN]\s+[cC][hH][aA][rR][aA][cC][tT][eE][rR]          {	printf("UNKNOWN CHARACTER => %s\n", yytext); nchar += yyleng; return ENUM_QB_UNKNOWN_CHARACTER; }
+[uU][nN][kK][nN][oO][wW][nN]{ws}+[cC][hH][aA][rR][aA][cC][tT][eE][rR]          {	printf("UNKNOWN CHARACTER => %s\n", yytext); nchar += yyleng; return ENUM_QB_UNKNOWN_CHARACTER; }
 _glGetMaterialfv                                            {	printf("_glGetMaterialfv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glGetMaterialfv; }
 _glGetMaterialiv                                            {	printf("_glGetMaterialiv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glGetMaterialiv; }
 _glTexParameterf                                            {	printf("_glTexParameterf => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glTexParameterf; }
 _[dD][iI][sS][pP][lL][aA][yY]                               {	printf("_DISPLAY => %s\n", yytext); nchar += yyleng; return ENUM_QB__DISPLAY_STATEMENT; }
 \$[vV][iI][rR][tT][uU][aA][lL][kK][eE][yY][bB][oO][aA][rR][dD]          {	printf("$VIRTUALKEYBOARD => %s\n", yytext); nchar += yyleng; return ENUM_QB_DS_VIRTUALKEYBOARD; }
-_[mM][iI][dD][dD][lL][eE]\s+[sS][cC][rR][eE][eE][nN][mM][oO][vV][eE]          {	printf("_MIDDLE SCREENMOVE => %s\n", yytext); nchar += yyleng; return ENUM_QB__MIDDLE_SCREENMOVE; }
-[iI][nN][tT][eE][gG][eE][rR]64\s+[vV][aA][rR][iI][aA][bB][lL][eE]          {	printf("INTEGER64 VARIABLE => %s\n", yytext); nchar += yyleng; return ENUM_QB_INTEGER64_VARIABLE; }
+_[mM][iI][dD][dD][lL][eE]{ws}+[sS][cC][rR][eE][eE][nN][mM][oO][vV][eE]          {	printf("_MIDDLE SCREENMOVE => %s\n", yytext); nchar += yyleng; return ENUM_QB__MIDDLE_SCREENMOVE; }
+[iI][nN][tT][eE][gG][eE][rR]64{ws}+[vV][aA][rR][iI][aA][bB][lL][eE]          {	printf("INTEGER64 VARIABLE => %s\n", yytext); nchar += yyleng; return ENUM_QB_INTEGER64_VARIABLE; }
 _glCopyTexImage1D                                           {	printf("_glCopyTexImage1D => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glCopyTexImage1D; }
 _glDeleteTextures                                           {	printf("_glDeleteTextures => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glDeleteTextures; }
 _glPixelTransferi                                           {	printf("_glPixelTransferi => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glPixelTransferi; }
@@ -2097,17 +2106,17 @@ _glTexParameteriv                                           {	printf("_glTexPara
 _glPopClientAttrib                                          {	printf("_glPopClientAttrib => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glPopClientAttrib; }
 _glEdgeFlagPointer                                          {	printf("_glEdgeFlagPointer => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glEdgeFlagPointer; }
 _glTexCoordPointer                                          {	printf("_glTexCoordPointer => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glTexCoordPointer; }
-[iI][nN][pP][uU][tT]\s+[fF][iI][lL][eE]                     {	printf("INPUT FILE => %s\n", yytext); nchar += yyleng; return ENUM_QB_INPUT_FILE_STATEMENT; }
+[iI][nN][pP][uU][tT]{ws}+[fF][iI][lL][eE]                   {	printf("INPUT FILE => %s\n", yytext); nchar += yyleng; return ENUM_QB_INPUT_FILE_STATEMENT; }
 _glPushClientAttrib                                         {	printf("_glPushClientAttrib => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glPushClientAttrib; }
 _[pP][rR][iI][nN][tT][mM][oO][dD][eE]                       {	printf("_PRINTMODE => %s\n", yytext); nchar += yyleng; return ENUM_QB__PRINTMODE_STATEMENT; }
-[uU][nN][sS][iI][gG][nN][eE][dD]\s+[bB][iI][tT]\s+[vV][aA][rR][iI][aA][bB][lL][eE]          {	printf("UNSIGNED BIT VARIABLE => %s\n", yytext); nchar += yyleng; return ENUM_QB_UNSIGNED_BIT_VARIABLE; }
+[uU][nN][sS][iI][gG][nN][eE][dD]{ws}+[bB][iI][tT]{ws}+[vV][aA][rR][iI][aA][bB][lL][eE]          {	printf("UNSIGNED BIT VARIABLE => %s\n", yytext); nchar += yyleng; return ENUM_QB_UNSIGNED_BIT_VARIABLE; }
 _[cC][oO][nN][tT][rR][oO][lL][cC][hH][rR]                   {	printf("_CONTROLCHR => %s\n", yytext); nchar += yyleng; return ENUM_QB__CONTROLCHR_STATEMENT; }
 _glGetTexParameterfv                                        {	printf("_glGetTexParameterfv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glGetTexParameterfv; }
 _[cC][oO][nN][nN][eE][cC][tT][iI][oO][nN][aA][dD][dD][rR][eE][sS][sS]\$          {	printf("_CONNECTIONADDRESS$ => %s\n", yytext); nchar += yyleng; return ENUM_QB__CONNECTIONADDRESS_DS; }
 _glGetTexParameteriv                                        {	printf("_glGetTexParameteriv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glGetTexParameteriv; }
 _glInterleavedArrays                                        {	printf("_glInterleavedArrays => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glInterleavedArrays; }
 _[cC][lL][eE][aA][rR][cC][oO][lL][oO][rR]                   {	printf("_CLEARCOLOR => %s\n", yytext); nchar += yyleng; return ENUM_QB__CLEARCOLOR_STATEMENT; }
-[lL][eE][sS][sS]\s+[tT][hH][aA][nN]\s+[oO][rR]\s+[eE][qQ][uU][aA][lL]\s+[tT][oO]          {	printf("LESS THAN OR EQUAL TO => %s\n", yytext); nchar += yyleng; return ENUM_QB_LESS_THAN_OR_EQUAL_TO; }
+[lL][eE][sS][sS]{ws}+[tT][hH][aA][nN]{ws}+[oO][rR]{ws}+[eE][qQ][uU][aA][lL]{ws}+[tT][oO]          {	printf("LESS THAN OR EQUAL TO => %s\n", yytext); nchar += yyleng; return ENUM_QB_LESS_THAN_OR_EQUAL_TO; }
 _glGetPolygonStipple                                        {	printf("_glGetPolygonStipple => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glGetPolygonStipple; }
 _[mM][aA][pP][uU][nN][iI][cC][oO][dD][eE]                   {	printf("_MAPUNICODE => %s\n", yytext); nchar += yyleng; return ENUM_QB__MAPUNICODE_STATEMENT; }
 _glCopyTexSubImage2D                                        {	printf("_glCopyTexSubImage2D => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glCopyTexSubImage2D; }
@@ -2116,29 +2125,29 @@ _[fF][uU][lL][lL][sS][cC][rR][eE][eE][nN]                   {	printf("_FULLSCREE
 _glCopyTexSubImage1D                                        {	printf("_glCopyTexSubImage1D => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glCopyTexSubImage1D; }
 _[sS][cC][rR][eE][eE][nN][iI][cC][oO][nN]                   {	printf("_SCREENICON => %s\n", yytext); nchar += yyleng; return ENUM_QB__SCREENICON_STATEMENT; }
 _glPrioritizeTextures                                       {	printf("_glPrioritizeTextures => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glPrioritizeTextures; }
-[uU][nN][sS][iI][gG][nN][eE][dD]\s+[bB][yY][tT][eE]\s+[vV][aA][rR][iI][aA][bB][lL][eE]          {	printf("UNSIGNED BYTE VARIABLE => %s\n", yytext); nchar += yyleng; return ENUM_QB_UNSIGNED_BYTE_VARIABLE; }
+[uU][nN][sS][iI][gG][nN][eE][dD]{ws}+[bB][yY][tT][eE]{ws}+[vV][aA][rR][iI][aA][bB][lL][eE]          {	printf("UNSIGNED BYTE VARIABLE => %s\n", yytext); nchar += yyleng; return ENUM_QB_UNSIGNED_BYTE_VARIABLE; }
 _glDisableClientState                                       {	printf("_glDisableClientState => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glDisableClientState; }
-[uU][nN][sS][iI][gG][nN][eE][dD]\s+[lL][oO][nN][gG]\s+[vV][aA][rR][iI][aA][bB][lL][eE]          {	printf("UNSIGNED LONG VARIABLE => %s\n", yytext); nchar += yyleng; return ENUM_QB_UNSIGNED_LONG_VARIABLE; }
-[mM][uU][lL][tT][iI]\s+[lL][iI][nN][eE]\s+[cC][oO][mM][mM][eE][nN][tT]\s+[eE][nN][dD]          {	printf("MULTI LINE COMMENT END => %s\n", yytext); nchar += yyleng; return ENUM_QB_MULTI_LINE_COMMENT_END; }
+[uU][nN][sS][iI][gG][nN][eE][dD]{ws}+[lL][oO][nN][gG]{ws}+[vV][aA][rR][iI][aA][bB][lL][eE]          {	printf("UNSIGNED LONG VARIABLE => %s\n", yytext); nchar += yyleng; return ENUM_QB_UNSIGNED_LONG_VARIABLE; }
+[mM][uU][lL][tT][iI]{ws}+[lL][iI][nN][eE]{ws}+[cC][oO][mM][mM][eE][nN][tT]{ws}+[eE][nN][dD]          {	printf("MULTI LINE COMMENT END => %s\n", yytext); nchar += yyleng; return ENUM_QB_MULTI_LINE_COMMENT_END; }
 _[pP][aA][lL][eE][tT][tT][eE][cC][oO][lL][oO][rR]           {	printf("_PALETTECOLOR => %s\n", yytext); nchar += yyleng; return ENUM_QB__PALETTECOLOR_STATEMENT; }
 _[cC][lL][iI][pP][bB][oO][aA][rR][dD]\$                     {	printf("_CLIPBOARD$ => %s\n", yytext); nchar += yyleng; return ENUM_QB__CLIPBOARD_DS_STATEMENT; }
-[dD][eE][cC][lL][aA][rR][eE]\s+[dD][yY][nN][aA][mM][iI][cC]\s+[lL][iI][bB][rR][aA][rR][yY]          {	printf("DECLARE DYNAMIC LIBRARY => %s\n", yytext); nchar += yyleng; return ENUM_QB_DECLARE_DYNAMIC_LIBRARY; }
+[dD][eE][cC][lL][aA][rR][eE]{ws}+[dD][yY][nN][aA][mM][iI][cC]{ws}+[lL][iI][bB][rR][aA][rR][yY]          {	printf("DECLARE DYNAMIC LIBRARY => %s\n", yytext); nchar += yyleng; return ENUM_QB_DECLARE_DYNAMIC_LIBRARY; }
 _glAreTexturesResident                                      {	printf("_glAreTexturesResident => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glAreTexturesResident; }
-[mM][uU][lL][tT][iI]\s+[lL][iI][nN][eE]\s+[cC][oO][mM][mM][eE][nN][tT]\s+[eE][rR][rR][oO][rR]          {	printf("MULTI LINE COMMENT ERROR => %s\n", yytext); nchar += yyleng; return ENUM_QB_MULTI_LINE_COMMENT_ERROR; }
-[gG][rR][eE][aA][tT][eE][rR]\s+[tT][hH][aA][nN]\s+[oO][rR]\s+[eE][qQ][uU][aA][lL]\s+[tT][oO]          {	printf("GREATER THAN OR EQUAL TO => %s\n", yytext); nchar += yyleng; return ENUM_QB_GREATER_THAN_OR_EQUAL_TO; }
-[mM][uU][lL][tT][iI]\s+[lL][iI][nN][eE]\s+[cC][oO][mM][mM][eE][nN][tT]\s+[bB][eE][gG][iI][nN]          {	printf("MULTI LINE COMMENT BEGIN => %s\n", yytext); nchar += yyleng; return ENUM_QB_MULTI_LINE_COMMENT_BEGIN; }
-[uU][nN][sS][iI][gG][nN][eE][dD]\s+[oO][fF][fF][sS][eE][tT]\s+[vV][aA][rR][iI][aA][bB][lL][eE]          {	printf("UNSIGNED OFFSET VARIABLE => %s\n", yytext); nchar += yyleng; return ENUM_QB_UNSIGNED_OFFSET_VARIABLE; }
-[uU][nN][sS][iI][gG][nN][eE][dD]\s+[iI][nN][tT][eE][gG][eE][rR]\s+[vV][aA][rR][iI][aA][bB][lL][eE]          {	printf("UNSIGNED INTEGER VARIABLE => %s\n", yytext); nchar += yyleng; return ENUM_QB_UNSIGNED_INTEGER_VARIABLE; }
+[mM][uU][lL][tT][iI]{ws}+[lL][iI][nN][eE]{ws}+[cC][oO][mM][mM][eE][nN][tT]{ws}+[eE][rR][rR][oO][rR]          {	printf("MULTI LINE COMMENT ERROR => %s\n", yytext); nchar += yyleng; return ENUM_QB_MULTI_LINE_COMMENT_ERROR; }
+[gG][rR][eE][aA][tT][eE][rR]{ws}+[tT][hH][aA][nN]{ws}+[oO][rR]{ws}+[eE][qQ][uU][aA][lL]{ws}+[tT][oO]          {	printf("GREATER THAN OR EQUAL TO => %s\n", yytext); nchar += yyleng; return ENUM_QB_GREATER_THAN_OR_EQUAL_TO; }
+[mM][uU][lL][tT][iI]{ws}+[lL][iI][nN][eE]{ws}+[cC][oO][mM][mM][eE][nN][tT]{ws}+[bB][eE][gG][iI][nN]          {	printf("MULTI LINE COMMENT BEGIN => %s\n", yytext); nchar += yyleng; return ENUM_QB_MULTI_LINE_COMMENT_BEGIN; }
+[uU][nN][sS][iI][gG][nN][eE][dD]{ws}+[oO][fF][fF][sS][eE][tT]{ws}+[vV][aA][rR][iI][aA][bB][lL][eE]          {	printf("UNSIGNED OFFSET VARIABLE => %s\n", yytext); nchar += yyleng; return ENUM_QB_UNSIGNED_OFFSET_VARIABLE; }
+[uU][nN][sS][iI][gG][nN][eE][dD]{ws}+[iI][nN][tT][eE][gG][eE][rR]{ws}+[vV][aA][rR][iI][aA][bB][lL][eE]          {	printf("UNSIGNED INTEGER VARIABLE => %s\n", yytext); nchar += yyleng; return ENUM_QB_UNSIGNED_INTEGER_VARIABLE; }
 _glGetTexLevelParameterfv                                   {	printf("_glGetTexLevelParameterfv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glGetTexLevelParameterfv; }
 _glGetTexLevelParameteriv                                   {	printf("_glGetTexLevelParameteriv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glGetTexLevelParameteriv; }
-[uU][nN][sS][iI][gG][nN][eE][dD]\s+[iI][nN][tT][eE][gG][eE][rR]64\s+[vV][aA][rR][iI][aA][bB][lL][eE]          {	printf("UNSIGNED INTEGER64 VARIABLE => %s\n", yytext); nchar += yyleng; return ENUM_QB_UNSIGNED_INTEGER64_VARIABLE; }
+[uU][nN][sS][iI][gG][nN][eE][dD]{ws}+[iI][nN][tT][eE][gG][eE][rR]64{ws}+[vV][aA][rR][iI][aA][bB][lL][eE]          {	printf("UNSIGNED INTEGER64 VARIABLE => %s\n", yytext); nchar += yyleng; return ENUM_QB_UNSIGNED_INTEGER64_VARIABLE; }
 
 	/*	END LEX	*/
 	/*	+++++	DO NOT REMOVE THE PREVIOUS LINE!!!	+++++	*/
 
-\n						{	printf("NEW LINE\n"); nline++; nchar++; return ENUM_QB_NEW_LINE; }
-({blank}|{space})		{	printf("WHITE SPACE\n"); ws++; return ENUM_QB_WHITE_SPACE; }
-.						{	printf("UNKNOWN CHARACTER\n"); nchar++; return ENUM_QB_UNKNOWN_CHARACTER; }
+\n			{	printf("NEW LINE\n"); nline++; nchar++; return ENUM_QB_NEW_LINE; }
+{ws}		{	printf("WHITE SPACE\n"); ws++; return ENUM_QB_WHITE_SPACE; }
+.			{	printf("UNKNOWN CHARACTER\n"); nchar++; return ENUM_QB_UNKNOWN_CHARACTER; }
 
 
 %%
@@ -2157,59 +2166,5 @@ int main( void )
 
 	printf( "\n\nCharacters : %d\nWords : %d\nLines : %d\nWhite Space : %d\n", nchar, nword, yylineno, ws );
 	return 0;
-}
-
-int newfile(char *fn)
-{
-printf( "---> NewFile\n" );
-	FILE *f = fopen(fn, "r");
-	struct bufstack *bs = malloc(sizeof(struct bufstack));
-/*
-	die if no file or no room
-*/
-	if(!f) { perror(fn); return 0; }
-	if(!bs) { perror("malloc"); exit(1); }
-/*
-	remember state
-*/
-	if(curbs){ curbs->lineno = yylineno; }
-	bs->prev = curbs;
-/*
-	set up current entry
-*/
-	bs->bs = yy_create_buffer(f, YY_BUF_SIZE);
-	bs->f = f;
-	bs->filename = fn;
-	yy_switch_to_buffer(bs->bs);
-	curbs = bs;
-	yylineno = 1;
-	curfilename = fn;
-	return 1;
-}
-
-int
-popfile(void)
-{
-printf( "--> PopFile\n" );
-	struct bufstack *bs = curbs;
-	struct bufstack *prevbs;
-	if(!bs) return 0;
-/*
-	get rid of current entry
-
-	fclose(bs->f);
-	yy_delete_buffer(bs->bs);
-
-	switch back to previous
-*/
-	prevbs = bs->prev;
-	free(bs);
-	if(!prevbs){ return 0; }
-
-	yy_switch_to_buffer(prevbs->bs);
-	curbs = prevbs;
-	yylineno = curbs->lineno;
-	curfilename = curbs->filename;
-	return 1;
 }
 
