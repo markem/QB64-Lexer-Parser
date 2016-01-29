@@ -1,6 +1,6 @@
 
 
-include	"c:/this/is/a/test"
+rem $include	"./include.dat"
 
 
 
