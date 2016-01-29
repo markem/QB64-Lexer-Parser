@@ -903,7 +903,7 @@ EOD;
 
 	$test .= <<<EOD
 
-include	"c:/this/is/a/test"
+rem \$include	"c:/this/is/a/test"
 
 	A = B + C
 	A = B - C
@@ -972,11 +972,13 @@ EOD;
 			for( $i=0; $i<strlen($v); $i++ ){
 				$l = substr( $v, $i, 1 );
 				if( $l == '_' && $i < 1 ){ $cmd .= '_'; }
-					else if( $l == '_' ){ $cmd .= '\s+'; }
+					else if( $l == '_' ){ $cmd .= '{ws}+'; }
 					else if( $l == '$' ){ $cmd .= "\\$"; }
+					else if( $l == "'" ){ $cmd .= "([rR][eE][mM]|'){ws}*"; $i++; }
 					else if( is_numeric($l) ){ $cmd .= $l; }
 					else { $cmd .= '[' . strtolower($l) . strtoupper($l) . ']'; }
 				}
+
 			$cmd .= "";
 			$n = ((60 - strlen($cmd)) > 0) ? (60 - strlen($cmd)) : 10;
 			$v = preg_replace( "/(\w)_(\w)/", "$1 $2", $v );
@@ -996,7 +998,7 @@ EOD;
 				for( $i=0; $i<strlen($v); $i++ ){
 					$l = substr( $v, $i, 1 );
 					if( $l == '_' && $i < 1 ){ $cmd .= '_'; }
-						else if( $l == '_' ){ $cmd .= "\s+"; }
+						else if( $l == '_' ){ $cmd .= "{ws}+"; }
 						else if( $l == '$' ){ $cmd .= "\\$"; }
 						else { $cmd .= $l; }
 					}
