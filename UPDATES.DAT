@@ -1,4 +1,29 @@
 
+;	Mark Manning			Simulacron I			Sat 01/30/2016 23:49:42.18 
+;	---------------------------------------------------------------------------
+;	Release : lexQB-0.1.3
+
+Did more work on the include commands.  Made it so either the REM or single
+quote(') command has to be in front of the include command.
+
+Did a very big change - converted all of the commands over from the [aA] way
+of doing it to just trying to define the commands better.  Now all of the names
+are just put in as lowercase words.  The insensitive switch handles getting both
+upper and lowercase versions of the commands.
+
+At some point in the future I will need to convert this update file over to HTML
+using lists instead of the comment section type layouts.  It will be clearer
+that way.
+
+;	Mark Manning			Simulacron I			Sat 01/30/2016 23:47:58.17 
+;	---------------------------------------------------------------------------
+;	Release : lexQB-0.1.2
+
+Took out the old Flex commands to do includes and put in a much simpler set
+of commands to handle includes.  We can now do up to 1,000 include files.
+
+Did some work on the REM and single quote(') commands.
+
 ;	Mark Manning			Simulacron I			
 ;---------------------------------------------------------------------------
 ;	Release : lexQB-0.1.1	Sat 01/23/2016 18:53:19.19 
@@ -8,6 +33,8 @@ Modified the main program so it now has a loop which is
 executed until the end of the input file.  Every time
 something is found it is returned along with its ENUM.
 The ENUM number is then printed out.
+
+Added in the "<=", ">=", and "<>" symbols.
 
 --------------------------------------------------------------------------------
 ;	Mark Manning			Simulacron I			
