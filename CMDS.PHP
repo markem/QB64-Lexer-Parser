@@ -313,7 +313,6 @@
 	ENUM_QB_HEX_DS
 	ENUM_QB_IF
 	ENUM_QB_IMP
-	ENUM_QB_DS_INCLUDE
 	ENUM_QB_INKEY_DS
 	ENUM_QB_INP
 	ENUM_QB_INPUT
@@ -412,7 +411,6 @@
 	ENUM_QB_RANDOMIZE_USING
 	ENUM_QB_READ
 	ENUM_QB_REDIM
-	ENUM_QB_REM
 	ENUM_QB_RESET
 	ENUM_QB_RESTORE
 	ENUM_QB_RESUME
@@ -898,12 +896,20 @@ ENUM_QB_UNSIGNED_BIT_VARIABLE; }
 {alpha}{alnum}*				{	printf("STANDARD QB VARIABLE => %s\\n", yytext); nchar += yyleng; return ENUM_QB_STANDARD_VARIABLE; }
 {digit}+					{	printf("INTEGER NUMBER => %s\\n", yytext); nchar += yyleng; return ENUM_QB_LONG_VARIABLE; }
 {float}						{	printf("FLOAT NUMBER => %s\\n", yytext); nchar += yyleng; return ENUM_QB_FLOAT_VARIABLE; }
+^{ws}*rem					{	printf("REM => %s\\n", yytext); nchar += yyleng; return ENUM_QB_REM; }
+^{ws}*'						{	printf("REM => %s\\n", yytext); nchar += yyleng; return ENUM_QB_REM; }
+:{ws}*rem					{	printf("REM => %s\\n", yytext); nchar += yyleng; return ENUM_QB_REM; }
+:{ws}*'						{	printf("REM => %s\\n", yytext); nchar += yyleng; return ENUM_QB_REM; }
 
 EOD;
 
 	$test .= <<<EOD
 
-rem \$include	"c:/this/is/a/test"
+rem	This is a test
+'	This is also a test
+
+rem \$include	"./include.dat"
+'	\$include	"./include.dat"
 
 	A = B + C
 	A = B - C
@@ -976,11 +982,12 @@ EOD;
 					else if( $l == '$' ){ $cmd .= "\\$"; }
 					else if( $l == "'" ){ $cmd .= "([rR][eE][mM]|'){ws}*"; $i++; }
 					else if( is_numeric($l) ){ $cmd .= $l; }
-					else { $cmd .= '[' . strtolower($l) . strtoupper($l) . ']'; }
+#					else { $cmd .= '[' . strtolower($l) . strtoupper($l) . ']'; }
+					else { $cmd .= $l; }
 				}
 
-			$cmd .= "";
-			$n = ((60 - strlen($cmd)) > 0) ? (60 - strlen($cmd)) : 10;
+			$cmd = "(^|{ws}*)$cmd{ws}*";
+			$n = ((50 - strlen($cmd)) > 0) ? (50 - strlen($cmd)) : 10;
 			$v = preg_replace( "/(\w)_(\w)/", "$1 $2", $v );
 			$cmd .= str_repeat( ' ', $n );
 			$cmd .= "{	printf(\"$v => %s\\n\", yytext); nchar += yyleng; return $tok; }\n";
@@ -1004,7 +1011,7 @@ EOD;
 					}
 
 				$cmd .= "";
-				$n = ((60 - strlen($cmd)) > 0) ? (60 - strlen($cmd)) : 10;
+				$n = ((50 - strlen($cmd)) > 0) ? (50 - strlen($cmd)) : 10;
 				$v = preg_replace( "/(\w)_(\w)/", "$1 $2", $v );
 				$cmd .= str_repeat( ' ', $n );
 				$cmd .= "{	printf(\"$v => %s\\n\", yytext); nchar += yyleng; return $tok; }\n";
