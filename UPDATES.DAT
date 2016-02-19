@@ -1,4 +1,28 @@
 
+#	Mark Manning			Simulacron I			Fri 02/19/2016 12:21:05.74 
+#	---------------------------------------------------------------------------
+#	Release lexQB-0.2
+
+Added in a new start state that handles strings (double
+quoted strings). I do not have anything yet for single
+quoted strings because I need to check to see if they
+are allowed or not.  If so - it is really simple to add
+them in.
+
+I also added in a start stack to keep track of which state
+I am in.  As things go along we might need to add in even
+more start states so now is a good time to put this in.
+All it is - is a dumb push/pull stack where we shove the
+current start state off onto an integer stack (because that
+is what Flex uses) or we pull the last state back off of
+the stack and then we stick that into the BEGIN statement.
+Strange that Flex doesn't have an END command like it has
+a BEGIN statement.
+
+Added two test cases for strings.  One is in the
+INCLUDE.DAT file and the other is in the TEST.BAS file.
+Nothing fancy.
+
 ;	Mark Manning			Simulacron I			Sat 01/30/2016 23:49:42.18 
 ;	---------------------------------------------------------------------------
 ;	Release : lexQB-0.1.3
@@ -82,4 +106,3 @@ like to have things deleted without notice.
 
 Removed the LEX.DAT file and the TEST.DAT file since they
 are no longer needed.
-
