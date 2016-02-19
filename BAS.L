@@ -24,7 +24,6 @@ str_var			([[:alpha:]_][[:alnum:]_]*[$]?)
 blank			([[:blank:]])
 space			([[:space:]])
 ws				({blank}|{space})
-rem				([rR][eE][mM]|['])
 nl				(\n)
 notnl			(.)
 any				({notnl}|{nl})
@@ -32,6 +31,7 @@ any				({notnl}|{nl})
 %option noyywrap nodefault yylineno case-insensitive
 
 %x INCL
+%x STRING
 
 	/*	Symbol Table	*/
 	/*	This is taken directly from the Flex/Bison manual from O'Reilly	*/
@@ -39,7 +39,15 @@ any				({notnl}|{nl})
 %{
 	/*	Defines	*/
 
+	/*
+		The MAX_START_STACK >MUST< be at least the size of all start states. MORE IS BETTER HERE!!!!
+		So you don't fall off the end of the stack!  You have been warned!  Make it smaller at your
+		own risk!
+	*/
+
+#define MAX_START_STACK 3000
 #define MAX_INCLUDE_DEPTH 1000
+#define MAX_STRING_LENGTH 65536
 #define NHASH 9997
 
 #include	<stdio.h>
@@ -61,7 +69,14 @@ struct ref {
 struct symbol symtab[NHASH];
 struct symbol *lookup(char*);
 
-int	include_stack_ptr = 0;
+	int i;
+	int	include_stack_ptr = 0;
+	int start_stack[MAX_START_STACK];
+	int start_stack_counter = 0;
+
+	char myBuffer[MAX_STRING_LENGTH];
+	char *myString;
+	char c;
 
 YY_BUFFER_STATE	include_stack[ 1000 ];
 
@@ -1215,12 +1230,13 @@ struct {
 	because it was a lot simpler than what was in the Flex/Bison book.
 	*/
 
-^{ws}*(rem|'){ws}+\$[iI][nN][cC][lL][uU][dD][eE]{ws}*[\"<]	{	BEGIN INCL;	}
+^{ws}*(rem|'){ws}+\$include{ws}*[\"<]	{ start_stack[start_stack_counter++] = YY_START; BEGIN INCL; }
+:{ws}*(rem|'){ws}+\$include{ws}*[\"<]	{ start_stack[start_stack_counter++] = YY_START; BEGIN INCL; }
 
 <INCL>[^{ws}*\">]+   { /* got the include file name */
 printf( "---> Entering INCLUDE(%s)\n", yytext );
 	if( include_stack_ptr >= MAX_INCLUDE_DEPTH ){
-		fprintf( stderr, "Includes nested too deeply" );
+		fprintf( stderr, "*****ERROR : Includes nested too deeply" );
 		exit( 1 );
 		}
 
@@ -1232,18 +1248,48 @@ printf( "---> Entering INCLUDE(%s)\n", yytext );
 
 	yy_switch_to_buffer( yy_create_buffer( yyin, YY_BUF_SIZE ) );
 
-	BEGIN(INITIAL);
+	BEGIN(start_stack[--start_stack_counter]);
 	}
 
 <<EOF>> {
 printf( "<--- Exiting INCLUDE\n" );
 
-   if( --include_stack_ptr < 0 ){ yyterminate(); }
-	   else{
-		   yy_delete_buffer( YY_CURRENT_BUFFER );
-		   yy_switch_to_buffer( include_stack[include_stack_ptr] );
-		   }
+	if( --include_stack_ptr < 0 ){ yyterminate(); }
+		else{
+			yy_delete_buffer( YY_CURRENT_BUFFER );
+			yy_switch_to_buffer( include_stack[include_stack_ptr] );
+			}
    }
+
+	/*	The string parser is taken from http://epaperpress.com/lexandyacc/str.html - Modified 2/19/2016 MEM	*/
+
+{ws}\"			{
+					start_stack[start_stack_counter++] = YY_START;
+					for( i=0; i<MAX_STRING_LENGTH; i++ ){ myBuffer[i] = 0; }
+					
+
+					BEGIN STRING;
+					myString = myBuffer;
+					printf( "--->Entering STRING\n" ); 
+					}
+
+<STRING>\\n		{ *myString++ = '\n'; }
+<STRING>\\t		{ *myString++ = '\t'; }
+<STRING>\\\"	{ *myString++ = '\"'; }
+<STRING>\"		{
+					*myString = 0;
+					c = input();
+					printf( "Found : %s\n", myBuffer );
+					printf( "<---Exiting STRING\n" );
+					BEGIN(start_stack[--start_stack_counter]);
+				}
+
+<STRING>\n		{
+					printf( "*****ERROR : Unterminated String : %s\n", yytext );
+					exit(1);
+				}
+
+<STRING>.		{	*myString++ = *yytext; printf( "Working : %s\n", myBuffer ); }
 
 	/*	+++++	DO NOT REMOVE THE NEXT LINE!!!	+++++	*/
 	/*	BEGIN LEX	*/
@@ -1277,11 +1323,11 @@ printf( "<--- Exiting INCLUDE\n" );
 
 "\)"						{	printf("CLOSE PARENTHESIS => %s\n", yytext); nchar += yyleng; return ENUM_PAREN_CLOSED; }
 
-"&"[bB]{binary}+			{	printf("BINARY NUMBER => %s\n", yytext); nchar += yyleng; return ENUM_QB_BINARY; }
+"&"b{binary}+				{	printf("BINARY NUMBER => %s\n", yytext); nchar += yyleng; return ENUM_QB_BINARY; }
 
-"&"[oO]{octal}+				{	printf("OCTAL NUMBER => %s\n", yytext); nchar += yyleng; return ENUM_QB_OCTAL; }
+"&"o{octal}+				{	printf("OCTAL NUMBER => %s\n", yytext); nchar += yyleng; return ENUM_QB_OCTAL; }
 
-"&"[hH]{xdigit}+			{	printf("HEXADECIMAL NUMBER => %s\n", yytext); nchar += yyleng; return ENUM_QB_HEXADECIMAL; }
+"&"h{xdigit}+				{	printf("HEXADECIMAL NUMBER => %s\n", yytext); nchar += yyleng; return ENUM_QB_HEXADECIMAL; }
 
 {alpha}{alnum}*\$			{	printf("STRING VARIABLE => %s\n", yytext); nchar += yyleng; return ENUM_QB_STRING_VARIABLE; }
 
@@ -1325,13 +1371,13 @@ ENUM_QB_UNSIGNED_BIT_VARIABLE; }
 
 {float}						{	printf("FLOAT NUMBER => %s\n", yytext); nchar += yyleng; return ENUM_QB_FLOAT_VARIABLE; }
 
-^{ws}*rem					{	printf("REM => %s\n", yytext); nchar += yyleng; return ENUM_QB_REM; }
+^{ws}*rem{ws}+[^$].*{nl}{1}	{	printf("REM => %s\n", yytext); nchar += yyleng; return ENUM_QB_REM; }
 
-^{ws}*'						{	printf("REM => %s\n", yytext); nchar += yyleng; return ENUM_QB_REM; }
+^{ws}*'{ws}+[^$].*{nl}{1}	{	printf("SQ => %s\n", yytext); nchar += yyleng; return ENUM_QB_REM; }
 
-:{ws}*rem					{	printf("REM => %s\n", yytext); nchar += yyleng; return ENUM_QB_REM; }
+:{ws}*rem{ws}+[^$].*{nl}{1}	{	printf("REM => %s\n", yytext); nchar += yyleng; return ENUM_QB_REM; }
 
-:{ws}*'						{	printf("REM => %s\n", yytext); nchar += yyleng; return ENUM_QB_REM; }
+:{ws}*'{ws}+[^$].*{nl}{1}	{	printf("SQ => %s\n", yytext); nchar += yyleng; return ENUM_QB_REM; }
 
 (^|{ws}*)IF{ws}*                                  {	printf("IF => %s\n", yytext); nchar += yyleng; return ENUM_QB_IF; }
 (^|{ws}*)TO{ws}*                                  {	printf("TO => %s\n", yytext); nchar += yyleng; return ENUM_QB_TO; }
