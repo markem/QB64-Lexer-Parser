@@ -1,53 +1,74 @@
 REM => 
 
-rem
+rem	This is test #1
+
 --->RETURNED : 669
-WHITE SPACE
---->RETURNED : 1105
-STANDARD QB VARIABLE => This
---->RETURNED : 1099
-WHITE SPACE
---->RETURNED : 1105
-STANDARD QB VARIABLE => is
---->RETURNED : 1099
-WHITE SPACE
---->RETURNED : 1105
-STANDARD QB VARIABLE => a
---->RETURNED : 1099
-WHITE SPACE
---->RETURNED : 1105
-STANDARD QB VARIABLE => test
---->RETURNED : 1099
+SQ => 
+'	This is test #2
+
+--->RETURNED : 669
 NEW LINE
 --->RETURNED : 1104
-REM => 
-'
---->RETURNED : 669
-WHITE SPACE
---->RETURNED : 1105
-STANDARD QB VARIABLE => This
---->RETURNED : 1099
-WHITE SPACE
---->RETURNED : 1105
-STANDARD QB VARIABLE => is
---->RETURNED : 1099
-WHITE SPACE
---->RETURNED : 1105
-STANDARD QB VARIABLE => also
---->RETURNED : 1099
-WHITE SPACE
---->RETURNED : 1105
-STANDARD QB VARIABLE => a
---->RETURNED : 1099
-WHITE SPACE
---->RETURNED : 1105
-STANDARD QB VARIABLE => test
---->RETURNED : 1099
 NEW LINE
 --->RETURNED : 1104
+NEW LINE
+--->RETURNED : 1104
+REM => :rem	This is test #3
+
+--->RETURNED : 669
+NEW LINE
+--->RETURNED : 1104
+SQ => :				'	This is test #4
+
+--->RETURNED : 669
 ---> Entering INCLUDE(./include.dat)
 WHITE SPACE
 --->RETURNED : 1105
+NEW LINE
+--->RETURNED : 1104
+WHITE SPACE
+--->RETURNED : 1105
+STRING VARIABLE => a$
+--->RETURNED : 1082
+WHITE SPACE
+--->RETURNED : 1105
+EQUAL SIGN => =
+--->RETURNED : 61
+--->Entering STRING
+Working : T
+Working : Th
+Working : Thi
+Working : This
+Working : This 
+Working : This i
+Working : This is
+Working : This is 
+Working : This is a
+Working : This is a 
+Working : This is a t
+Working : This is a te
+Working : This is a tes
+Working : This is a test
+Working : This is a test 
+Working : This is a test f
+Working : This is a test fr
+Working : This is a test fro
+Working : This is a test from
+Working : This is a test from 
+Working : This is a test from t
+Working : This is a test from th
+Working : This is a test from the
+Working : This is a test from the 
+Working : This is a test from the i
+Working : This is a test from the in
+Working : This is a test from the inc
+Working : This is a test from the incl
+Working : This is a test from the inclu
+Working : This is a test from the includ
+Working : This is a test from the include
+Working : This is a test from the include!
+Found : This is a test from the include!
+<---Exiting STRING
 NEW LINE
 --->RETURNED : 1104
 <--- Exiting INCLUDE
@@ -58,6 +79,169 @@ NEW LINE
 ---> Entering INCLUDE(./include.dat)
 WHITE SPACE
 --->RETURNED : 1105
+NEW LINE
+--->RETURNED : 1104
+WHITE SPACE
+--->RETURNED : 1105
+STRING VARIABLE => a$
+--->RETURNED : 1082
+WHITE SPACE
+--->RETURNED : 1105
+EQUAL SIGN => =
+--->RETURNED : 61
+--->Entering STRING
+Working : T
+Working : Th
+Working : Thi
+Working : This
+Working : This 
+Working : This i
+Working : This is
+Working : This is 
+Working : This is a
+Working : This is a 
+Working : This is a t
+Working : This is a te
+Working : This is a tes
+Working : This is a test
+Working : This is a test 
+Working : This is a test f
+Working : This is a test fr
+Working : This is a test fro
+Working : This is a test from
+Working : This is a test from 
+Working : This is a test from t
+Working : This is a test from th
+Working : This is a test from the
+Working : This is a test from the 
+Working : This is a test from the i
+Working : This is a test from the in
+Working : This is a test from the inc
+Working : This is a test from the incl
+Working : This is a test from the inclu
+Working : This is a test from the includ
+Working : This is a test from the include
+Working : This is a test from the include!
+Found : This is a test from the include!
+<---Exiting STRING
+NEW LINE
+--->RETURNED : 1104
+<--- Exiting INCLUDE
+UNKNOWN CHARACTER
+--->RETURNED : 1106
+NEW LINE
+--->RETURNED : 1104
+NEW LINE
+--->RETURNED : 1104
+NEW LINE
+--->RETURNED : 1104
+NEW LINE
+--->RETURNED : 1104
+---> Entering INCLUDE(./include.dat)
+WHITE SPACE
+--->RETURNED : 1105
+NEW LINE
+--->RETURNED : 1104
+WHITE SPACE
+--->RETURNED : 1105
+STRING VARIABLE => a$
+--->RETURNED : 1082
+WHITE SPACE
+--->RETURNED : 1105
+EQUAL SIGN => =
+--->RETURNED : 61
+--->Entering STRING
+Working : T
+Working : Th
+Working : Thi
+Working : This
+Working : This 
+Working : This i
+Working : This is
+Working : This is 
+Working : This is a
+Working : This is a 
+Working : This is a t
+Working : This is a te
+Working : This is a tes
+Working : This is a test
+Working : This is a test 
+Working : This is a test f
+Working : This is a test fr
+Working : This is a test fro
+Working : This is a test from
+Working : This is a test from 
+Working : This is a test from t
+Working : This is a test from th
+Working : This is a test from the
+Working : This is a test from the 
+Working : This is a test from the i
+Working : This is a test from the in
+Working : This is a test from the inc
+Working : This is a test from the incl
+Working : This is a test from the inclu
+Working : This is a test from the includ
+Working : This is a test from the include
+Working : This is a test from the include!
+Found : This is a test from the include!
+<---Exiting STRING
+NEW LINE
+--->RETURNED : 1104
+<--- Exiting INCLUDE
+UNKNOWN CHARACTER
+--->RETURNED : 1106
+NEW LINE
+--->RETURNED : 1104
+NEW LINE
+--->RETURNED : 1104
+---> Entering INCLUDE(./include.dat)
+WHITE SPACE
+--->RETURNED : 1105
+NEW LINE
+--->RETURNED : 1104
+WHITE SPACE
+--->RETURNED : 1105
+STRING VARIABLE => a$
+--->RETURNED : 1082
+WHITE SPACE
+--->RETURNED : 1105
+EQUAL SIGN => =
+--->RETURNED : 61
+--->Entering STRING
+Working : T
+Working : Th
+Working : Thi
+Working : This
+Working : This 
+Working : This i
+Working : This is
+Working : This is 
+Working : This is a
+Working : This is a 
+Working : This is a t
+Working : This is a te
+Working : This is a tes
+Working : This is a test
+Working : This is a test 
+Working : This is a test f
+Working : This is a test fr
+Working : This is a test fro
+Working : This is a test from
+Working : This is a test from 
+Working : This is a test from t
+Working : This is a test from th
+Working : This is a test from the
+Working : This is a test from the 
+Working : This is a test from the i
+Working : This is a test from the in
+Working : This is a test from the inc
+Working : This is a test from the incl
+Working : This is a test from the inclu
+Working : This is a test from the includ
+Working : This is a test from the include
+Working : This is a test from the include!
+Found : This is a test from the include!
+<---Exiting STRING
 NEW LINE
 --->RETURNED : 1104
 <--- Exiting INCLUDE
@@ -731,6 +915,47 @@ STANDARD QB VARIABLE => ghijklmnop
 --->RETURNED : 1099
 NEW LINE
 --->RETURNED : 1104
+NEW LINE
+--->RETURNED : 1104
+NEW LINE
+--->RETURNED : 1104
+NEW LINE
+--->RETURNED : 1104
+WHITE SPACE
+--->RETURNED : 1105
+STRING VARIABLE => a$
+--->RETURNED : 1082
+WHITE SPACE
+--->RETURNED : 1105
+EQUAL SIGN => =
+--->RETURNED : 61
+--->Entering STRING
+Working : H
+Working : Hi
+Working : Hi 
+Working : Hi t
+Working : Hi th
+Working : Hi the
+Working : Hi ther
+Working : Hi there
+Working : Hi there!
+Working : Hi there! 
+Working : Hi there!  
+Working : Hi there!  I
+Working : Hi there!  I'
+Working : Hi there!  I'm
+Working : Hi there!  I'm 
+Working : Hi there!  I'm a
+Working : Hi there!  I'm a 
+Working : Hi there!  I'm a s
+Working : Hi there!  I'm a st
+Working : Hi there!  I'm a str
+Working : Hi there!  I'm a stri
+Working : Hi there!  I'm a strin
+Working : Hi there!  I'm a string
+Working : Hi there!  I'm a string!
+Found : Hi there!  I'm a string!
+<---Exiting STRING
 NEW LINE
 --->RETURNED : 1104
 WHITE SPACE
@@ -9791,7 +10016,7 @@ UNSIGNED INTEGER64 VARIABLE =>  UNSIGNED INTEGER64 VARIABLE
 <--- Exiting INCLUDE
 
 
-Characters : 12565
+Characters : 12651
 Words : 0
-Lines : 915
-White Space : 1606
+Lines : 941
+White Space : 1609
