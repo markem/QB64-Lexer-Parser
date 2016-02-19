@@ -872,9 +872,9 @@ EOD;
 "<>"						{	printf("NOT EQUAL TO => %s\\n", yytext); nchar += yyleng; return ENUM_QB_NOT_EQUAL_TO; }
 "\\("						{	printf("OPEN PARENTHESIS => %s\\n", yytext); nchar += yyleng; return ENUM_PAREN_OPEN; }
 "\\)"						{	printf("CLOSE PARENTHESIS => %s\\n", yytext); nchar += yyleng; return ENUM_PAREN_CLOSED; }
-"&"[bB]{binary}+			{	printf("BINARY NUMBER => %s\\n", yytext); nchar += yyleng; return ENUM_QB_BINARY; }
-"&"[oO]{octal}+				{	printf("OCTAL NUMBER => %s\\n", yytext); nchar += yyleng; return ENUM_QB_OCTAL; }
-"&"[hH]{xdigit}+			{	printf("HEXADECIMAL NUMBER => %s\\n", yytext); nchar += yyleng; return ENUM_QB_HEXADECIMAL; }
+"&"b{binary}+				{	printf("BINARY NUMBER => %s\\n", yytext); nchar += yyleng; return ENUM_QB_BINARY; }
+"&"o{octal}+				{	printf("OCTAL NUMBER => %s\\n", yytext); nchar += yyleng; return ENUM_QB_OCTAL; }
+"&"h{xdigit}+				{	printf("HEXADECIMAL NUMBER => %s\\n", yytext); nchar += yyleng; return ENUM_QB_HEXADECIMAL; }
 {alpha}{alnum}*\\$			{	printf("STRING VARIABLE => %s\\n", yytext); nchar += yyleng; return ENUM_QB_STRING_VARIABLE; }
 {alpha}{alnum}*\!			{	printf("SINGLE VARIABLE => %s\\n", yytext); nchar += yyleng; return ENUM_QB_SINGLE_VARIABLE; }
 {alpha}{alnum}*\#			{	printf("DOUBLE VARIABLE => %s\\n", yytext); nchar += yyleng; return ENUM_QB_DOUBLE_VARIABLE; }
@@ -896,20 +896,26 @@ ENUM_QB_UNSIGNED_BIT_VARIABLE; }
 {alpha}{alnum}*				{	printf("STANDARD QB VARIABLE => %s\\n", yytext); nchar += yyleng; return ENUM_QB_STANDARD_VARIABLE; }
 {digit}+					{	printf("INTEGER NUMBER => %s\\n", yytext); nchar += yyleng; return ENUM_QB_LONG_VARIABLE; }
 {float}						{	printf("FLOAT NUMBER => %s\\n", yytext); nchar += yyleng; return ENUM_QB_FLOAT_VARIABLE; }
-^{ws}*rem					{	printf("REM => %s\\n", yytext); nchar += yyleng; return ENUM_QB_REM; }
-^{ws}*'						{	printf("REM => %s\\n", yytext); nchar += yyleng; return ENUM_QB_REM; }
-:{ws}*rem					{	printf("REM => %s\\n", yytext); nchar += yyleng; return ENUM_QB_REM; }
-:{ws}*'						{	printf("REM => %s\\n", yytext); nchar += yyleng; return ENUM_QB_REM; }
+^{ws}*rem{ws}+[^\$].*{nl}{1}	{	printf("REM => %s\\n", yytext); nchar += yyleng; return ENUM_QB_REM; }
+^{ws}*'{ws}+[^\$].*{nl}{1}	{	printf("SQ => %s\\n", yytext); nchar += yyleng; return ENUM_QB_REM; }
+:{ws}*rem{ws}+[^\$].*{nl}{1}	{	printf("REM => %s\\n", yytext); nchar += yyleng; return ENUM_QB_REM; }
+:{ws}*'{ws}+[^\$].*{nl}{1}	{	printf("SQ => %s\\n", yytext); nchar += yyleng; return ENUM_QB_REM; }
 
 EOD;
 
 	$test .= <<<EOD
 
-rem	This is a test
-'	This is also a test
+rem	This is test #1
+'	This is test #2
+
+:rem	This is test #3
+:				'	This is test #4
 
 rem \$include	"./include.dat"
 '	\$include	"./include.dat"
+
+:rem \$include	"./include.dat"
+:'	\$include	"./include.dat"
 
 	A = B + C
 	A = B - C
@@ -951,6 +957,8 @@ rem \$include	"./include.dat"
 	a = &b012345
 	b = &o0123456789
 	c = &h0123456789abcdefghijklmnop
+
+	a$ = "Hi there!  I'm a string!"
 
 EOD;
 
