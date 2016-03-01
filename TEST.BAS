@@ -1,14 +1,26 @@
 
 
-rem	This is a test
+rem	This is test #1
 
-'	This is also a test
+'	This is test #2
+
+
+
+:rem	This is test #3
+
+:				'	This is test #4
 
 
 
 rem $include	"./include.dat"
 
 '	$include	"./include.dat"
+
+
+
+:rem $include	"./include.dat"
+
+:'	$include	"./include.dat"
 
 
 
@@ -91,6 +103,10 @@ rem $include	"./include.dat"
 	b = &o0123456789
 
 	c = &h0123456789abcdefghijklmnop
+
+
+
+	a$ = "Hi there!  I'm a string!"
 
 	a$ = IF
 	a$ = TO
