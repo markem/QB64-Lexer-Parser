@@ -5118,13 +5118,6 @@ char *yytext;
 		The MAX_START_STACK >MUST< be at least the size of all start states. MORE IS BETTER HERE!!!!
 		So you don't fall off the end of the stack!  You have been warned!  Make it smaller at your
 		own risk!
-
-		Currently we have TWO start states.  These are : INCL and STRING.  See them up there above
-		these comments?  Because we are allowing MAX_INCLUDE_DEPT number of includes - then everything
-		else has to go with that.  Now, you might go "Well, we only need 2,000 entries for the
-		start stack - but you would be wrong.  You forget the FIRST entry is the INITIAL entry. So
-		really it is 2001.  So then you go "Ok, I see that - but why 3,000 instead of 2,001?" It is
-		so if I've forgotten anything there is room for expansion. Always a good thing in programming. :-)
 	*/
 
 #define MAX_START_STACK 3000
@@ -5134,7 +5127,11 @@ char *yytext;
 
 #include	<stdio.h>
 #include	<stdlib.h>
+#include	<string.h>
 #include	"y.tab.h"
+#include	"qb_enums.h"
+
+char yylval[MAX_STRING_LENGTH];
 
 struct symbol {				/* a variable name */
 	struct ref *reflist;
@@ -5166,1135 +5163,6 @@ YY_BUFFER_STATE	include_stack[ 1000 ];
 
 void	yyerror( char * );
 
-/*	Enumeration setup	*/
-/*	BEGINNING OF THE ASCII CHARACTER TABLE	*/
-enum {
-	ENUM_NULL = 0,
-	ENUM_CONTROL_A,
-	ENUM_CONTROL_B,
-	ENUM_CONTROL_C,
-	ENUM_CONTROL_D,
-	ENUM_CONTROL_E,
-	ENUM_CONTROL_F,
-	ENUM_CONTROL_G,
-	ENUM_CONTROL_H,
-	ENUM_CONTROL_I,
-	ENUM_CONTROL_J,
-	ENUM_CONTROL_K,
-	ENUM_CONTROL_L,
-	ENUM_CONTROL_M,
-	ENUM_CONTROL_N,
-	ENUM_CONTROL_O,
-	ENUM_CONTROL_P,
-	ENUM_CONTROL_Q,
-	ENUM_CONTROL_R,
-	ENUM_CONTROL_S,
-	ENUM_CONTROL_T,
-	ENUM_CONTROL_U,
-	ENUM_CONTROL_V,
-	ENUM_CONTROL_W,
-	ENUM_CONTROL_X,
-	ENUM_CONTROL_Y,
-	ENUM_CONTROL_Z,
-	ENUM_ESCAPE,
-	ENUM_FILE_SEPARATOR,
-	ENUM_GROUP_SEPARATOR,
-	ENUM_RECORD_SEPARATOR,
-	ENUM_UNIT_SEPARATOR,
-	ENUM_SPACE,
-	ENUM_EXCLAMATION_POINT,
-	ENUM_DOUBLE_QUOTE,
-	ENUM_POUND_SIGN,
-	ENUM_DOLLAR_SIGN,
-	ENUM_PERCENT_SIGN,
-	ENUM_AMPERSAND,
-	ENUM_SINGLE_QUOTE,
-	ENUM_PAREN_OPEN,
-	ENUM_PAREN_CLOSED,
-	ENUM_ASTERIK,
-	ENUM_PLUS_SIGN,
-	ENUM_COMMA,
-	ENUM_MINUS_SIGN,
-	ENUM_PERIOD,
-	ENUM_SLASH_FORWARDS,
-	ENUM_ZERO,
-	ENUM_ONE,
-	ENUM_TWO,
-	ENUM_THREE,
-	ENUM_FOUR,
-	ENUM_FIVE,
-	ENUM_SIX,
-	ENUM_SEVEN,
-	ENUM_EIGHT,
-	ENUM_NINE,
-	ENUM_COLON,
-	ENUM_SEMICOLON,
-	ENUM_LESS_THAN,
-	ENUM_EQUAL,
-	ENUM_GREATER_THAN,
-	ENUM_QUESTION_MARK,
-	ENUM_AT_SIGN,
-	ENUM_UPPERCASE_A,
-	ENUM_UPPERCASE_B,
-	ENUM_UPPERCASE_C,
-	ENUM_UPPERCASE_D,
-	ENUM_UPPERCASE_E,
-	ENUM_UPPERCASE_F,
-	ENUM_UPPERCASE_G,
-	ENUM_UPPERCASE_H,
-	ENUM_UPPERCASE_I,
-	ENUM_UPPERCASE_J,
-	ENUM_UPPERCASE_K,
-	ENUM_UPPERCASE_L,
-	ENUM_UPPERCASE_M,
-	ENUM_UPPERCASE_N,
-	ENUM_UPPERCASE_O,
-	ENUM_UPPERCASE_P,
-	ENUM_UPPERCASE_Q,
-	ENUM_UPPERCASE_R,
-	ENUM_UPPERCASE_S,
-	ENUM_UPPERCASE_T,
-	ENUM_UPPERCASE_U,
-	ENUM_UPPERCASE_V,
-	ENUM_UPPERCASE_W,
-	ENUM_UPPERCASE_X,
-	ENUM_UPPERCASE_Y,
-	ENUM_UPPERCASE_Z,
-	ENUM_BRACKET_OPEN,
-	ENUM_SLASH_BACK,
-	ENUM_BRACKET_CLOSE,
-	ENUM_CARET,
-	ENUM_UNDERSCORE,
-	ENUM_BACK_TICK,
-	ENUM_LOWERCASE_A,
-	ENUM_LOWERCASE_B,
-	ENUM_LOWERCASE_C,
-	ENUM_LOWERCASE_D,
-	ENUM_LOWERCASE_E,
-	ENUM_LOWERCASE_F,
-	ENUM_LOWERCASE_G,
-	ENUM_LOWERCASE_H,
-	ENUM_LOWERCASE_I,
-	ENUM_LOWERCASE_J,
-	ENUM_LOWERCASE_K,
-	ENUM_LOWERCASE_L,
-	ENUM_LOWERCASE_M,
-	ENUM_LOWERCASE_N,
-	ENUM_LOWERCASE_O,
-	ENUM_LOWERCASE_P,
-	ENUM_LOWERCASE_Q,
-	ENUM_LOWERCASE_R,
-	ENUM_LOWERCASE_S,
-	ENUM_LOWERCASE_T,
-	ENUM_LOWERCASE_U,
-	ENUM_LOWERCASE_V,
-	ENUM_LOWERCASE_W,
-	ENUM_LOWERCASE_X,
-	ENUM_LOWERCASE_Y,
-	ENUM_LOWERCASE_Z,
-	ENUM_BRACE_OPEN,
-	ENUM_OR_BAR,
-	ENUM_BRACE_CLOSE,
-	ENUM_TILDE,
-	ENUM_DELETE,
-/*	End of standard ASCII table - Extended table to follow	*/
-	ENUM_SYMBOL_128,
-	ENUM_SYMBOL_129,
-	ENUM_SYMBOL_130,
-	ENUM_SYMBOL_131,
-	ENUM_SYMBOL_132,
-	ENUM_SYMBOL_133,
-	ENUM_SYMBOL_134,
-	ENUM_SYMBOL_135,
-	ENUM_SYMBOL_136,
-	ENUM_SYMBOL_137,
-	ENUM_SYMBOL_138,
-	ENUM_SYMBOL_139,
-	ENUM_SYMBOL_140,
-	ENUM_SYMBOL_141,
-	ENUM_SYMBOL_142,
-	ENUM_SYMBOL_143,
-	ENUM_SYMBOL_144,
-	ENUM_SYMBOL_145,
-	ENUM_SYMBOL_146,
-	ENUM_SYMBOL_147,
-	ENUM_SYMBOL_148,
-	ENUM_SYMBOL_149,
-	ENUM_SYMBOL_150,
-	ENUM_SYMBOL_151,
-	ENUM_SYMBOL_152,
-	ENUM_SYMBOL_153,
-	ENUM_SYMBOL_154,
-	ENUM_SYMBOL_155,
-	ENUM_SYMBOL_156,
-	ENUM_SYMBOL_157,
-	ENUM_SYMBOL_158,
-	ENUM_SYMBOL_159,
-	ENUM_SYMBOL_160,
-	ENUM_SYMBOL_161,
-	ENUM_SYMBOL_162,
-	ENUM_SYMBOL_163,
-	ENUM_SYMBOL_164,
-	ENUM_SYMBOL_165,
-	ENUM_SYMBOL_166,
-	ENUM_SYMBOL_167,
-	ENUM_SYMBOL_168,
-	ENUM_SYMBOL_169,
-	ENUM_SYMBOL_170,
-	ENUM_SYMBOL_171,
-	ENUM_SYMBOL_172,
-	ENUM_SYMBOL_173,
-	ENUM_SYMBOL_174,
-	ENUM_SYMBOL_175,
-	ENUM_SYMBOL_176,
-	ENUM_SYMBOL_177,
-	ENUM_SYMBOL_178,
-	ENUM_SYMBOL_179,
-	ENUM_SYMBOL_180,
-	ENUM_SYMBOL_181,
-	ENUM_SYMBOL_182,
-	ENUM_SYMBOL_183,
-	ENUM_SYMBOL_184,
-	ENUM_SYMBOL_185,
-	ENUM_SYMBOL_186,
-	ENUM_SYMBOL_187,
-	ENUM_SYMBOL_188,
-	ENUM_SYMBOL_189,
-	ENUM_SYMBOL_190,
-	ENUM_SYMBOL_191,
-	ENUM_SYMBOL_192,
-	ENUM_SYMBOL_193,
-	ENUM_SYMBOL_194,
-	ENUM_SYMBOL_195,
-	ENUM_SYMBOL_196,
-	ENUM_SYMBOL_197,
-	ENUM_SYMBOL_198,
-	ENUM_SYMBOL_199,
-	ENUM_SYMBOL_200,
-	ENUM_SYMBOL_201,
-	ENUM_SYMBOL_202,
-	ENUM_SYMBOL_203,
-	ENUM_SYMBOL_204,
-	ENUM_SYMBOL_205,
-	ENUM_SYMBOL_206,
-	ENUM_SYMBOL_207,
-	ENUM_SYMBOL_208,
-	ENUM_SYMBOL_209,
-	ENUM_SYMBOL_210,
-	ENUM_SYMBOL_211,
-	ENUM_SYMBOL_212,
-	ENUM_SYMBOL_213,
-	ENUM_SYMBOL_214,
-	ENUM_SYMBOL_215,
-	ENUM_SYMBOL_216,
-	ENUM_SYMBOL_217,
-	ENUM_SYMBOL_218,
-	ENUM_SYMBOL_219,
-	ENUM_SYMBOL_220,
-	ENUM_SYMBOL_221,
-	ENUM_SYMBOL_222,
-	ENUM_SYMBOL_223,
-	ENUM_SYMBOL_224,
-	ENUM_SYMBOL_225,
-	ENUM_SYMBOL_226,
-	ENUM_SYMBOL_227,
-	ENUM_SYMBOL_228,
-	ENUM_SYMBOL_229,
-	ENUM_SYMBOL_230,
-	ENUM_SYMBOL_231,
-	ENUM_SYMBOL_232,
-	ENUM_SYMBOL_233,
-	ENUM_SYMBOL_234,
-	ENUM_SYMBOL_235,
-	ENUM_SYMBOL_236,
-	ENUM_SYMBOL_237,
-	ENUM_SYMBOL_238,
-	ENUM_SYMBOL_239,
-	ENUM_SYMBOL_240,
-	ENUM_SYMBOL_241,
-	ENUM_SYMBOL_242,
-	ENUM_SYMBOL_243,
-	ENUM_SYMBOL_244,
-	ENUM_SYMBOL_245,
-	ENUM_SYMBOL_246,
-	ENUM_SYMBOL_247,
-	ENUM_SYMBOL_248,
-	ENUM_SYMBOL_249,
-	ENUM_SYMBOL_250,
-	ENUM_SYMBOL_251,
-	ENUM_SYMBOL_252,
-	ENUM_SYMBOL_253,
-	ENUM_SYMBOL_254,
-	ENUM_SYMBOL_255,
-/*
-	END OF ASCII CHARACTER TABLE
-	BEGINNING OF QUICKBASIC 64 COMMAND TABLE	-	DS = Dollar Sign ($)
-	BEGIN : QB64 specific keywords
-*/
-	ENUM_QB__ACOS,
-	ENUM_QB__ACOSH,
-	ENUM_QB__ALPHA,
-	ENUM_QB__ALPHA32,
-	ENUM_QB__ARCCOT,
-	ENUM_QB__ARCSC,
-	ENUM_QB__ARCSEC,
-	ENUM_QB__ASIN,
-	ENUM_QB__ASINH,
-	ENUM_QB__ATAN2,
-	ENUM_QB__ATANH,
-	ENUM_QB__AUTODISPLAY,
-	ENUM_QB__AXIS,
-	ENUM_QB__BACKGROUNDCOLOR,
-	ENUM_QB__BIT,
-	ENUM_QB__BLEND_STATEMENT,
-	ENUM_QB__BLEND_FUNCTION,
-	ENUM_QB__BLUE,
-	ENUM_QB__BLUE32,
-	ENUM_QB__BUTTON,
-	ENUM_QB__BUTTONCHANGE,
-	ENUM_QB__BYTE,
-	ENUM_QB_DS_CHECKING,
-	ENUM_QB__CEIL,
-	ENUM_QB__CLEARCOLOR_STATEMENT,
-	ENUM_QB__CLEARCOLOR_FUNCTION,
-	ENUM_QB__CLIP,
-	ENUM_QB__CLIPBOARD_DS_STATEMENT,
-	ENUM_QB__CLIPBOARD_DS_FUNCTION,
-	ENUM_QB__COMMANDCOUNT,
-	ENUM_QB__CONNECTED,
-	ENUM_QB__CONNECTIONADDRESS_DS,
-	ENUM_QB_DS_CONSOLE,
-	ENUM_QB__CONSOLE,
-	ENUM_QB__CONSOLETITLE,
-	ENUM_QB__CONTROLCHR_STATEMENT,
-	ENUM_QB__CONTROLCHR_FUNCTION,
-	ENUM_QB__COPYIMAGE,
-	ENUM_QB__COPYPALETTE,
-	ENUM_QB__COT,
-	ENUM_QB__COTH,
-	ENUM_QB__COSH,
-	ENUM_QB__CSC,
-	ENUM_QB__CSCH,
-	ENUM_QB__CV,
-	ENUM_QB__CWD_DS,
-	ENUM_QB__D2G,
-	ENUM_QB__D2R,
-	ENUM_QB__DEFAULTCOLOR,
-	ENUM_QB__DEFINE,
-	ENUM_QB__DELAY,
-	ENUM_QB__DEPTHBUFFER,
-	ENUM_QB__DESKTOPHEIGHT,
-	ENUM_QB__DESKTOPWIDTH,
-	ENUM_QB__DEST_STATEMENT,
-	ENUM_QB__DEST_FUNCTION,
-	ENUM_QB__DEVICE_DS,
-	ENUM_QB__DEVICEINPUT,
-	ENUM_QB__DEVICES,
-	ENUM_QB__DIREXISTS,
-	ENUM_QB__DISPLAY_STATEMENT,
-	ENUM_QB__DISPLAY_FUNCTION,
-	ENUM_QB__DISPLAYORDER,
-	ENUM_QB__DONTBLEND,
-	ENUM_QB__DONTWAIT,
-	ENUM_QB_DS_ELSE,
-	ENUM_QB_DS_ELSEIF,
-	ENUM_QB_DS_ELSE_IF,
-	ENUM_QB_DS_END,
-	ENUM_QB__ERRORLINE,
-	ENUM_QB__EXIT,
-	ENUM_QB__FILEEXISTS,
-	ENUM_QB__FLOAT,
-	ENUM_QB__FONT_STATEMENT,
-	ENUM_QB__FONT_FUNCTION,
-	ENUM_QB__FONTHEIGHT,
-	ENUM_QB__FONTWIDTH,
-	ENUM_QB__FREEFONT,
-	ENUM_QB__FREEIMAGE,
-	ENUM_QB__FREETIMER,
-	ENUM_QB__FULLSCREEN_STATEMENT,
-	ENUM_QB__FULLSCREEN_FUNCTION,
-	ENUM_QB__G2D,
-	ENUM_QB__G2R,
-	ENUM_QB__GREEN,
-	ENUM_QB__GREEN32,
-	ENUM_QB__HEIGHT,
-	ENUM_QB__HIDE,
-	ENUM_QB__HYPOT,
-	ENUM_QB_DS_IF,
-	ENUM_QB__ICON,
-	ENUM_QB__INTEGER64,
-	ENUM_QB__KEYCLEAR,
-	ENUM_QB__KEYHIT,
-	ENUM_QB__KEYDOWN,
-	ENUM_QB_DS_LET,
-	ENUM_QB__LASTAXIS,
-	ENUM_QB__LASTBUTTON,
-	ENUM_QB__LASTWHEEL,
-	ENUM_QB__LIMIT,
-	ENUM_QB__LOADFONT,
-	ENUM_QB__LOADIMAGE,
-	ENUM_QB__MAPTRIANGLE,
-	ENUM_QB__MAPUNICODE_STATEMENT,
-	ENUM_QB__MAPUNICODE_FUNCTION,
-	ENUM_QB__MEM_STATEMENT,
-	ENUM_QB__MEM_FUNCTION,
-	ENUM_QB__MEMCOPY,
-	ENUM_QB__MEMELEMENT,
-	ENUM_QB__MEMEXISTS,
-	ENUM_QB__MEMFILL,
-	ENUM_QB__MEMFREE,
-	ENUM_QB__MEMGET_STATEMENT,
-	ENUM_QB__MEMGET_FUNCTION,
-	ENUM_QB__MEMIMAGE,
-	ENUM_QB__MEMNEW,
-	ENUM_QB__MEMPUT,
-	ENUM_QB__MIDDLE_SCREENMOVE,
-	ENUM_QB__MK_DS,
-	ENUM_QB__MOUSEBUTTON,
-	ENUM_QB__MOUSEHIDE,
-	ENUM_QB__MOUSEINPUT,
-	ENUM_QB__MOUSEMOVE,
-	ENUM_QB__MOUSEMOVEMENTX,
-	ENUM_QB__MOUSEMOVEMENTY,
-	ENUM_QB__MOUSEPIPEOPEN,
-	ENUM_QB__MOUSESHOW,
-	ENUM_QB__MOUSEWHEEL,
-	ENUM_QB__MOUSEX,
-	ENUM_QB__MOUSEY,
-	ENUM_QB__NEWIMAGE,
-	ENUM_QB__OFFSET_FUNCTION,
-	ENUM_QB__OFFSET_TYPE,
-	ENUM_QB__OPENCLIENT,
-	ENUM_QB__OPENCONNECTION,
-	ENUM_QB__OPENHOST,
-	ENUM_QB__OS_DS,
-	ENUM_QB__PALETTECOLOR_STATEMENT,
-	ENUM_QB__PALETTECOLOR_FUNCTION,
-	ENUM_QB__PIXELSIZE,
-	ENUM_QB__PRESERVE,
-	ENUM_QB__PRINTIMAGE,
-	ENUM_QB__PRINTMODE_STATEMENT,
-	ENUM_QB__PRINTMODE_FUNCTION,
-	ENUM_QB__PRINTSTRING,
-	ENUM_QB__PRINTWIDTH,
-	ENUM_QB__PUTIMAGE,
-	ENUM_QB__R2D,
-	ENUM_QB__R2G,
-	ENUM_QB__RED,
-	ENUM_QB__RED32,
-	ENUM_QB_DS_RESIZE,
-	ENUM_QB__RESIZE,
-	ENUM_QB__RESIZEHEIGHT,
-	ENUM_QB__RESIZEWIDTH,
-	ENUM_QB__RGB,
-	ENUM_QB__RGB32,
-	ENUM_QB__RGBA,
-	ENUM_QB__RGBA32,
-	ENUM_QB__ROUND,
-	ENUM_QB__SEC,
-	ENUM_QB__SECH,
-	ENUM_QB__SCREENCLICK,
-	ENUM_QB__SCREENEXISTS,
-	ENUM_QB_DS_SCREENHIDE,
-	ENUM_QB__SCREENHIDE,
-	ENUM_QB__SCREENICON_STATEMENT,
-	ENUM_QB__SCREENICON_FUNCTION,
-	ENUM_QB__SCREENIMAGE,
-	ENUM_QB__SCREENMOVE,
-	ENUM_QB__SCREENPRINT,
-	ENUM_QB_DS_SCREENSHOW,
-	ENUM_QB__SCREENSHOW,
-	ENUM_QB__SCREENX,
-	ENUM_QB__SCREENY,
-	ENUM_QB__SETALPHA,
-	ENUM_QB__SHELLHIDE,
-	ENUM_QB__SINH,
-	ENUM_QB__SNDBAL,
-	ENUM_QB__SNDCLOSE,
-	ENUM_QB__SNDCOPY,
-	ENUM_QB__SNDGETPOS,
-	ENUM_QB__SNDLEN,
-	ENUM_QB__SNDLIMIT,
-	ENUM_QB__SNDLOOP,
-	ENUM_QB__SNDOPEN,
-	ENUM_QB__SNDOPENRAW,
-	ENUM_QB__SNDPAUSE,
-	ENUM_QB__SNDPAUSED,
-	ENUM_QB__SNDPLAY,
-	ENUM_QB__SNDPLAYCOPY,
-	ENUM_QB__SNDPLAYFILE,
-	ENUM_QB__SNDPLAYING,
-	ENUM_QB__SNDRATE,
-	ENUM_QB__SNDRAW,
-	ENUM_QB__SNDRAWDONE,
-	ENUM_QB__SNDRAWLEN,
-	ENUM_QB__SNDSETPOS,
-	ENUM_QB__SNDSTOP,
-	ENUM_QB__SNDVOL,
-	ENUM_QB__SOURCE,
-	ENUM_QB__STARTDIR_DS,
-	ENUM_QB__STRCMP,
-	ENUM_QB__STRICMP,
-	ENUM_QB__TANH,
-	ENUM_QB__TITLE,
-	ENUM_QB__UNSIGNED,
-	ENUM_QB_DS_VIRTUALKEYBOARD,
-	ENUM_QB__WHEEL,
-	ENUM_QB__WIDTH,
-/*
-	END : QB64 specific keywords
-	BEGIN : ORIGINAL QBASIC KEYWORDS
-*/
-	ENUM_QB_ABS,
-	ENUM_QB_ABSOLUTE,
-	ENUM_QB_ACCESS,
-	ENUM_QB_ALIAS,
-	ENUM_QB_AND,
-	ENUM_QB_ANY,
-	ENUM_QB_APPEND,
-	ENUM_QB_AS,
-	ENUM_QB_ASC,
-	ENUM_QB_ATN,
-	ENUM_QB_BEEP,
-	ENUM_QB_BINARY,
-	ENUM_QB_OCTAL,
-	ENUM_QB_HEXADECIMAL,
-	ENUM_QB_BLOAD,
-	ENUM_QB_BSAVE,
-	ENUM_QB_BYVAL,
-	ENUM_QB_CALL,
-	ENUM_QB_CALL_ABSOLUTE,
-	ENUM_QB_CALLS,
-	ENUM_QB_CASE,
-	ENUM_QB_CASE_ELSE,
-	ENUM_QB_CASE_IS,
-	ENUM_QB_CDBL,
-	ENUM_QB_CDECL,
-	ENUM_QB_CHAIN,
-	ENUM_QB_CHDIR,
-	ENUM_QB_CHR_DS,
-	ENUM_QB_CINT,
-	ENUM_QB_CIRCLE,
-	ENUM_QB_CLEAR,
-	ENUM_QB_CLNG,
-	ENUM_QB_CLOSE,
-	ENUM_QB_CLS,
-	ENUM_QB_COLOR,
-	ENUM_QB_COMMAND_DS,
-	ENUM_QB_COMMON,
-	ENUM_QB_CONST,
-	ENUM_QB_COS,
-	ENUM_QB_CSNG,
-	ENUM_QB_CSRLIN,
-	ENUM_QB_CVD,
-	ENUM_QB_CVDMBF,
-	ENUM_QB_CVI,
-	ENUM_QB_CVL,
-	ENUM_QB_CVS,
-	ENUM_QB_CVSMBF,
-	ENUM_QB_DATA,
-	ENUM_QB_DATE_DS_STATEMENT,
-	ENUM_QB_DATE_DS_FUNCTION,
-	ENUM_QB_DECLARE,
-	ENUM_QB_DECLARE_C_FUNCTION,
-	ENUM_QB_DECLARE_LIBRARY,
-	ENUM_QB_DECLARE_DYNAMIC_LIBRARY,
-	ENUM_QB_DEF_FN,
-	ENUM_QB_DEF_SEG,
-	ENUM_QB_DEFDBL,
-	ENUM_QB_DEFINT,
-	ENUM_QB_DEFLNG,
-	ENUM_QB_DEFSNG,
-	ENUM_QB_DEFSTR,
-	ENUM_QB_DIM,
-	ENUM_QB_DIR_DS,
-	ENUM_QB_DO,
-	ENUM_QB_LOOP_STATEMENT,
-	ENUM_QB_DOUBLE,
-	ENUM_QB_DRAW,
-	ENUM_QB_DS_DYNAMIC,
-	ENUM_QB_ELSE,
-	ENUM_QB_ELSEIF,
-	ENUM_QB_END,
-	ENUM_QB_END_IF,
-	ENUM_QB_END_TYPE,
-	ENUM_QB_ENVIRON,
-	ENUM_QB_ENVIRON_DS,
-	ENUM_QB_EOF,
-	ENUM_QB_EQV,
-	ENUM_QB_ERASE,
-	ENUM_QB_ERDEV,
-	ENUM_QB_ERDEV_DS,
-	ENUM_QB_ERL,
-	ENUM_QB_ERR,
-	ENUM_QB_ERROR,
-	ENUM_QB_EXIT,
-	ENUM_QB_EXP,
-	ENUM_QB_FIELD,
-	ENUM_QB_FILEATTR,
-	ENUM_QB_FILES,
-	ENUM_QB_FIX,
-	ENUM_QB_FOR,
-	ENUM_QB_NEXT_STATEMENT,
-	ENUM_QB_FOR_FILE,
-	ENUM_QB_FRE,
-	ENUM_QB_FREE,
-	ENUM_QB_FREEFILE,
-	ENUM_QB_FUNCTION,
-	ENUM_QB_GET_FILE,
-	ENUM_QB_GET_QB64,
-	ENUM_QB_GET,
-	ENUM_QB_GOSUB,
-	ENUM_QB_GOTO,
-	ENUM_QB_HEX_DS,
-	ENUM_QB_IF,
-	ENUM_QB_IMP,
-	ENUM_QB_DS_INCLUDE,
-	ENUM_QB_INKEY_DS,
-	ENUM_QB_INP,
-	ENUM_QB_INPUT,
-	ENUM_QB_INPUT_FILE_MODE,
-	ENUM_QB_INPUT_FILE_STATEMENT,
-	ENUM_QB_INPUT_QB64,
-	ENUM_QB_INPUT_DS,
-	ENUM_QB_INSTR,
-	ENUM_QB_INT,
-	ENUM_QB_INTEGER,
-	ENUM_QB_INTERRUPT,
-	ENUM_QB_INTERRUPTX,
-	ENUM_QB_IOCTL,
-	ENUM_QB_IOCTL_DS,
-	ENUM_QB_KEY_STATEMENT,
-	ENUM_QB_KEY_FUNCTION,
-	ENUM_QB_KEY_LIST,
-	ENUM_QB_KILL,
-	ENUM_QB_LBOUND,
-	ENUM_QB_LCASE_DS,
-	ENUM_QB_LEFT_DS,
-	ENUM_QB_LEN,
-	ENUM_QB_LET,
-	ENUM_QB_LINE,
-	ENUM_QB_LINE_INPUT,
-	ENUM_QB_LINE_INPUT_FILE,
-	ENUM_QB_LIST,
-	ENUM_QB_LOC,
-	ENUM_QB_LOCATE,
-	ENUM_QB_LOCK,
-	ENUM_QB_LOF,
-	ENUM_QB_LOG,
-	ENUM_QB_LONG,
-	ENUM_QB_LOOP_FUNCTION,
-	ENUM_QB_LPOS,
-	ENUM_QB_LPRINT,
-	ENUM_QB_LPRINT_USING,
-	ENUM_QB_LSET,
-	ENUM_QB_LTRIM_DS,
-	ENUM_QB_MID_DS_STATMENT,
-	ENUM_QB_MID_DS_FUNCTION,
-	ENUM_QB_MKD_DS,
-	ENUM_QB_MKDIR,
-	ENUM_QB_MKDMBF_DS,
-	ENUM_QB_MKI_DS,
-	ENUM_QB_MKL_DS,
-	ENUM_QB_MKS_DS,
-	ENUM_QB_MKSMBF_DS,
-	ENUM_QB_MOD,
-	ENUM_QB_NAME,
-	ENUM_QB_NEXT_FUNCTION,
-	ENUM_QB_NOT,
-	ENUM_QB_OCT_DS,
-	ENUM_QB_OFF,
-	ENUM_QB_ON_COM,
-	ENUM_QB_ON_ERROR,
-	ENUM_QB_ON_KEY,
-	ENUM_QB_ON_PEN,
-	ENUM_QB_ON_PLAY,
-	ENUM_QB_ON_STRIG,
-	ENUM_QB_ON_TIMER,
-	ENUM_QB_ON_UEVENT,
-	ENUM_QB_ON_GOSUB,
-	ENUM_QB_ON_GOTO,
-	ENUM_QB_OPEN,
-	ENUM_QB_OPEN_COM,
-	ENUM_QB_OPTION_BASE,
-	ENUM_QB_OR,
-	ENUM_QB_OUT,
-	ENUM_QB_OUTPUT,
-	ENUM_QB_PAINT,
-	ENUM_QB_PALETTE,
-	ENUM_QB_PALETTE_USING,
-	ENUM_QB_PCOPY,
-	ENUM_QB_PEEK,
-	ENUM_QB_PEN_STATEMENT,
-	ENUM_QB_PEN_FUNCTION,
-	ENUM_QB_PLAY_STATEMENT,
-	ENUM_QB_PLAY_FUNCTION,
-	ENUM_QB_PMAP,
-	ENUM_QB_POINT,
-	ENUM_QB_POKE,
-	ENUM_QB_POS,
-	ENUM_QB_PRESET,
-	ENUM_QB_PRINT,
-	ENUM_QB_PRINT_FILE,
-	ENUM_QB_PRINT_QB64,
-	ENUM_QB_PRINT_USING,
-	ENUM_QB_PRINT_USING_FILE,
-	ENUM_QB_PSET,
-	ENUM_QB_PUT_FILE,
-	ENUM_QB_PUT_QB64,
-	ENUM_QB_PUT_GRAPHICS,
-	ENUM_QB_RANDOM,
-	ENUM_QB_RANDOMIZE,
-	ENUM_QB_RANDOMIZE_USING,
-	ENUM_QB_READ,
-	ENUM_QB_REDIM,
-	ENUM_QB_REM,
-	ENUM_QB_RESET,
-	ENUM_QB_RESTORE,
-	ENUM_QB_RESUME,
-	ENUM_QB_RETURN,
-	ENUM_QB_RIGHT_DS,
-	ENUM_QB_RMDIR,
-	ENUM_QB_RND,
-	ENUM_QB_RSET,
-	ENUM_QB_RTRIM_DS,
-	ENUM_QB_RUN,
-	ENUM_QB_SADD,
-	ENUM_QB_SCREEN_STATEMENT,
-	ENUM_QB_SCREEN_FUNCTION,
-	ENUM_QB_SEEK_STATEMENT,
-	ENUM_QB_SEEK_FUNCTION,
-	ENUM_QB_SELECT_CASE,
-	ENUM_QB_SETMEM,
-	ENUM_QB_SGN,
-	ENUM_QB_SHARED,
-	ENUM_QB_SHELL,
-	ENUM_QB_SHELL_QB64,
-	ENUM_QB_SIGNAL,
-	ENUM_QB_SIN,
-	ENUM_QB_SINGLE,
-	ENUM_QB_SLEEP,
-	ENUM_QB_SOUND,
-	ENUM_QB_SPACE_DS,
-	ENUM_QB_SPC,
-	ENUM_QB_SQR,
-	ENUM_QB_STATIC,
-	ENUM_QB_DS_STATIC,
-	ENUM_QB_STEP,
-	ENUM_QB_STICK,
-	ENUM_QB_STOP,
-	ENUM_QB_STR_DS,
-	ENUM_QB_STRIG_STATEMENT,
-	ENUM_QB_STRIG_FUNCTION,
-	ENUM_QB_STRING,
-	ENUM_QB_STRING_DS,
-	ENUM_QB_SUB,
-	ENUM_QB_SWAP,
-	ENUM_QB_SYSTEM,
-	ENUM_QB_TAB,
-	ENUM_QB_TAN,
-	ENUM_QB_THEN,
-	ENUM_QB_TIME_DS_STATEMENT,
-	ENUM_QB_TIME_DS_FUNCTION,
-	ENUM_QB_TIMER_STATEMENT,
-	ENUM_QB_TIMER_FUNCTION,
-	ENUM_QB_TO,
-	ENUM_QB_TROFF,
-	ENUM_QB_TRON,
-	ENUM_QB_TYPE,
-	ENUM_QB_UBOUND,
-	ENUM_QB_UCASE_DS,
-	ENUM_QB_UEVENT,
-	ENUM_QB_UNLOCK,
-	ENUM_QB_UNTIL,
-	ENUM_QB_VAL,
-	ENUM_QB_VARPTR,
-	ENUM_QB_VARPTR_DS,
-	ENUM_QB_VARSEG,
-	ENUM_QB_VIEW,
-	ENUM_QB_VIEW_PRINT,
-	ENUM_QB_WAIT,
-	ENUM_QB_WEND,
-	ENUM_QB_WHILE,
-	ENUM_QB_WHILE_WEND,
-	ENUM_QB_WIDTH,
-	ENUM_QB_WINDOW,
-	ENUM_QB_WRITE_SCREEN,
-	ENUM_QB_WRITE_FILE,
-	ENUM_QB_XOR,
-/*
-	END : ORIGINAL QBASIC KEYWORDS
-	BEGIN : OpenGL specific keywords
-*/
-	ENUM_OGL__glAccum,
-	ENUM_OGL__glAlphaFunc,
-	ENUM_OGL__glAreTexturesResident,
-	ENUM_OGL__glArrayElement,
-	ENUM_OGL__glBegin,
-	ENUM_OGL__glBindTexture,
-	ENUM_OGL__glBitmap,
-	ENUM_OGL__glBlendFunc,
-	ENUM_OGL__glCallList,
-	ENUM_OGL__glCallLists,
-	ENUM_OGL__glClear,
-	ENUM_OGL__glClearAccum,
-	ENUM_OGL__glClearColor,
-	ENUM_OGL__glClearDepth,
-	ENUM_OGL__glClearIndex,
-	ENUM_OGL__glClearStencil,
-	ENUM_OGL__glClipPlane,
-	ENUM_OGL__glColor3b,
-	ENUM_OGL__glColor3bv,
-	ENUM_OGL__glColor3d,
-	ENUM_OGL__glColor3dv,
-	ENUM_OGL__glColor3f,
-	ENUM_OGL__glColor3fv,
-	ENUM_OGL__glColor3i,
-	ENUM_OGL__glColor3iv,
-	ENUM_OGL__glColor3s,
-	ENUM_OGL__glColor3sv,
-	ENUM_OGL__glColor3ub,
-	ENUM_OGL__glColor3ubv,
-	ENUM_OGL__glColor3ui,
-	ENUM_OGL__glColor3uiv,
-	ENUM_OGL__glColor3us,
-	ENUM_OGL__glColor3usv,
-	ENUM_OGL__glColor4b,
-	ENUM_OGL__glColor4bv,
-	ENUM_OGL__glColor4d,
-	ENUM_OGL__glColor4dv,
-	ENUM_OGL__glColor4f,
-	ENUM_OGL__glColor4fv,
-	ENUM_OGL__glColor4i,
-	ENUM_OGL__glColor4iv,
-	ENUM_OGL__glColor4s,
-	ENUM_OGL__glColor4sv,
-	ENUM_OGL__glColor4ub,
-	ENUM_OGL__glColor4ubv,
-	ENUM_OGL__glColor4ui,
-	ENUM_OGL__glColor4uiv,
-	ENUM_OGL__glColor4us,
-	ENUM_OGL__glColor4usv,
-	ENUM_OGL__glColorMask,
-	ENUM_OGL__glColorMaterial,
-	ENUM_OGL__glColorPointer,
-	ENUM_OGL__glCopyPixels,
-	ENUM_OGL__glCopyTexImage1D,
-	ENUM_OGL__glCopyTexImage2D,
-	ENUM_OGL__glCopyTexSubImage1D,
-	ENUM_OGL__glCopyTexSubImage2D,
-	ENUM_OGL__glCullFace,
-	ENUM_OGL__glDeleteLists,
-	ENUM_OGL__glDeleteTextures,
-	ENUM_OGL__glDepthFunc,
-	ENUM_OGL__glDepthMask,
-	ENUM_OGL__glDepthRange,
-	ENUM_OGL__glDisable,
-	ENUM_OGL__glDisableClientState,
-	ENUM_OGL__glDrawArrays,
-	ENUM_OGL__glDrawBuffer,
-	ENUM_OGL__glDrawElements,
-	ENUM_OGL__glDrawPixels,
-	ENUM_OGL__glEdgeFlag,
-	ENUM_OGL__glEdgeFlagPointer,
-	ENUM_OGL__glEdgeFlagv,
-	ENUM_OGL__glEnable,
-	ENUM_OGL__glEnableClientState,
-	ENUM_OGL__glEnd,
-	ENUM_OGL__glEndList,
-	ENUM_OGL__glEvalCoord1d,
-	ENUM_OGL__glEvalCoord1dv,
-	ENUM_OGL__glEvalCoord1f,
-	ENUM_OGL__glEvalCoord1fv,
-	ENUM_OGL__glEvalCoord2d,
-	ENUM_OGL__glEvalCoord2dv,
-	ENUM_OGL__glEvalCoord2f,
-	ENUM_OGL__glEvalCoord2fv,
-	ENUM_OGL__glEvalMesh1,
-	ENUM_OGL__glEvalMesh2,
-	ENUM_OGL__glEvalPoint1,
-	ENUM_OGL__glEvalPoint2,
-	ENUM_OGL__glFeedbackBuffer,
-	ENUM_OGL__glFinish,
-	ENUM_OGL__glFlush,
-	ENUM_OGL__glFogf,
-	ENUM_OGL__glFogfv,
-	ENUM_OGL__glFogi,
-	ENUM_OGL__glFogiv,
-	ENUM_OGL__glFrontFace,
-	ENUM_OGL__glFrustum,
-	ENUM_OGL__glGenLists,
-	ENUM_OGL__glGenTextures,
-	ENUM_OGL__glGetBooleanv,
-	ENUM_OGL__glGetClipPlane,
-	ENUM_OGL__glGetDoublev,
-	ENUM_OGL__glGetError,
-	ENUM_OGL__glGetFloatv,
-	ENUM_OGL__glGetIntegerv,
-	ENUM_OGL__glGetLightfv,
-	ENUM_OGL__glGetLightiv,
-	ENUM_OGL__glGetMapdv,
-	ENUM_OGL__glGetMapfv,
-	ENUM_OGL__glGetMapiv,
-	ENUM_OGL__glGetMaterialfv,
-	ENUM_OGL__glGetMaterialiv,
-	ENUM_OGL__glGetPixelMapfv,
-	ENUM_OGL__glGetPixelMapuiv,
-	ENUM_OGL__glGetPixelMapusv,
-	ENUM_OGL__glGetPointerv,
-	ENUM_OGL__glGetPolygonStipple,
-	ENUM_OGL__glGetString,
-	ENUM_OGL__glGetTexEnvfv,
-	ENUM_OGL__glGetTexEnviv,
-	ENUM_OGL__glGetTexGendv,
-	ENUM_OGL__glGetTexGenfv,
-	ENUM_OGL__glGetTexGeniv,
-	ENUM_OGL__glGetTexImage,
-	ENUM_OGL__glGetTexLevelParameterfv,
-	ENUM_OGL__glGetTexLevelParameteriv,
-	ENUM_OGL__glGetTexParameterfv,
-	ENUM_OGL__glGetTexParameteriv,
-	ENUM_OGL__glHint,
-	ENUM_OGL__glIndexMask,
-	ENUM_OGL__glIndexPointer,
-	ENUM_OGL__glIndexd,
-	ENUM_OGL__glIndexdv,
-	ENUM_OGL__glIndexf,
-	ENUM_OGL__glIndexfv,
-	ENUM_OGL__glIndexi,
-	ENUM_OGL__glIndexiv,
-	ENUM_OGL__glIndexs,
-	ENUM_OGL__glIndexsv,
-	ENUM_OGL__glIndexub,
-	ENUM_OGL__glIndexubv,
-	ENUM_OGL__glInitNames,
-	ENUM_OGL__glInterleavedArrays,
-	ENUM_OGL__glIsEnabled,
-	ENUM_OGL__glIsList,
-	ENUM_OGL__glIsTexture,
-	ENUM_OGL__glLightModelf,
-	ENUM_OGL__glLightModelfv,
-	ENUM_OGL__glLightModeli,
-	ENUM_OGL__glLightModeliv,
-	ENUM_OGL__glLightf,
-	ENUM_OGL__glLightfv,
-	ENUM_OGL__glLighti,
-	ENUM_OGL__glLightiv,
-	ENUM_OGL__glLineStipple,
-	ENUM_OGL__glLineWidth,
-	ENUM_OGL__glListBase,
-	ENUM_OGL__glLoadIdentity,
-	ENUM_OGL__glLoadMatrixd,
-	ENUM_OGL__glLoadMatrixf,
-	ENUM_OGL__glLoadName,
-	ENUM_OGL__glLogicOp,
-	ENUM_OGL__glMap1d,
-	ENUM_OGL__glMap1f,
-	ENUM_OGL__glMap2d,
-	ENUM_OGL__glMap2f,
-	ENUM_OGL__glMapGrid1d,
-	ENUM_OGL__glMapGrid1f,
-	ENUM_OGL__glMapGrid2d,
-	ENUM_OGL__glMapGrid2f,
-	ENUM_OGL__glMaterialf,
-	ENUM_OGL__glMaterialfv,
-	ENUM_OGL__glMateriali,
-	ENUM_OGL__glMaterialiv,
-	ENUM_OGL__glMatrixMode,
-	ENUM_OGL__glMultMatrixd,
-	ENUM_OGL__glMultMatrixf,
-	ENUM_OGL__glNewList,
-	ENUM_OGL__glNormal3b,
-	ENUM_OGL__glNormal3bv,
-	ENUM_OGL__glNormal3d,
-	ENUM_OGL__glNormal3dv,
-	ENUM_OGL__glNormal3f,
-	ENUM_OGL__glNormal3fv,
-	ENUM_OGL__glNormal3i,
-	ENUM_OGL__glNormal3iv,
-	ENUM_OGL__glNormal3s,
-	ENUM_OGL__glNormal3sv,
-	ENUM_OGL__glNormalPointer,
-	ENUM_OGL__glOrtho,
-	ENUM_OGL__glPassThrough,
-	ENUM_OGL__glPixelMapfv,
-	ENUM_OGL__glPixelMapuiv,
-	ENUM_OGL__glPixelMapusv,
-	ENUM_OGL__glPixelStoref,
-	ENUM_OGL__glPixelStorei,
-	ENUM_OGL__glPixelTransferf,
-	ENUM_OGL__glPixelTransferi,
-	ENUM_OGL__glPixelZoom,
-	ENUM_OGL__glPointSize,
-	ENUM_OGL__glPolygonMode,
-	ENUM_OGL__glPolygonOffset,
-	ENUM_OGL__glPolygonStipple,
-	ENUM_OGL__glPopAttrib,
-	ENUM_OGL__glPopClientAttrib,
-	ENUM_OGL__glPopMatrix,
-	ENUM_OGL__glPopName,
-	ENUM_OGL__glPrioritizeTextures,
-	ENUM_OGL__glPushAttrib,
-	ENUM_OGL__glPushClientAttrib,
-	ENUM_OGL__glPushMatrix,
-	ENUM_OGL__glPushName,
-	ENUM_OGL__glRasterPos2d,
-	ENUM_OGL__glRasterPos2dv,
-	ENUM_OGL__glRasterPos2f,
-	ENUM_OGL__glRasterPos2fv,
-	ENUM_OGL__glRasterPos2i,
-	ENUM_OGL__glRasterPos2iv,
-	ENUM_OGL__glRasterPos2s,
-	ENUM_OGL__glRasterPos2sv,
-	ENUM_OGL__glRasterPos3d,
-	ENUM_OGL__glRasterPos3dv,
-	ENUM_OGL__glRasterPos3f,
-	ENUM_OGL__glRasterPos3fv,
-	ENUM_OGL__glRasterPos3i,
-	ENUM_OGL__glRasterPos3iv,
-	ENUM_OGL__glRasterPos3s,
-	ENUM_OGL__glRasterPos3sv,
-	ENUM_OGL__glRasterPos4d,
-	ENUM_OGL__glRasterPos4dv,
-	ENUM_OGL__glRasterPos4f,
-	ENUM_OGL__glRasterPos4fv,
-	ENUM_OGL__glRasterPos4i,
-	ENUM_OGL__glRasterPos4iv,
-	ENUM_OGL__glRasterPos4s,
-	ENUM_OGL__glRasterPos4sv,
-	ENUM_OGL__glReadBuffer,
-	ENUM_OGL__glReadPixels,
-	ENUM_OGL__glRectd,
-	ENUM_OGL__glRectdv,
-	ENUM_OGL__glRectf,
-	ENUM_OGL__glRectfv,
-	ENUM_OGL__glRecti,
-	ENUM_OGL__glRectiv,
-	ENUM_OGL__glRects,
-	ENUM_OGL__glRectsv,
-	ENUM_OGL__glRenderMode,
-	ENUM_OGL__glRotated,
-	ENUM_OGL__glRotatef,
-	ENUM_OGL__glScaled,
-	ENUM_OGL__glScalef,
-	ENUM_OGL__glScissor,
-	ENUM_OGL__glSelectBuffer,
-	ENUM_OGL__glShadeModel,
-	ENUM_OGL__glStencilFunc,
-	ENUM_OGL__glStencilMask,
-	ENUM_OGL__glStencilOp,
-	ENUM_OGL__glTexCoord1d,
-	ENUM_OGL__glTexCoord1dv,
-	ENUM_OGL__glTexCoord1f,
-	ENUM_OGL__glTexCoord1fv,
-	ENUM_OGL__glTexCoord1i,
-	ENUM_OGL__glTexCoord1iv,
-	ENUM_OGL__glTexCoord1s,
-	ENUM_OGL__glTexCoord1sv,
-	ENUM_OGL__glTexCoord2d,
-	ENUM_OGL__glTexCoord2dv,
-	ENUM_OGL__glTexCoord2f,
-	ENUM_OGL__glTexCoord2fv,
-	ENUM_OGL__glTexCoord2i,
-	ENUM_OGL__glTexCoord2iv,
-	ENUM_OGL__glTexCoord2s,
-	ENUM_OGL__glTexCoord2sv,
-	ENUM_OGL__glTexCoord3d,
-	ENUM_OGL__glTexCoord3dv,
-	ENUM_OGL__glTexCoord3f,
-	ENUM_OGL__glTexCoord3fv,
-	ENUM_OGL__glTexCoord3i,
-	ENUM_OGL__glTexCoord3iv,
-	ENUM_OGL__glTexCoord3s,
-	ENUM_OGL__glTexCoord3sv,
-	ENUM_OGL__glTexCoord4d,
-	ENUM_OGL__glTexCoord4dv,
-	ENUM_OGL__glTexCoord4f,
-	ENUM_OGL__glTexCoord4fv,
-	ENUM_OGL__glTexCoord4i,
-	ENUM_OGL__glTexCoord4iv,
-	ENUM_OGL__glTexCoord4s,
-	ENUM_OGL__glTexCoord4sv,
-	ENUM_OGL__glTexCoordPointer,
-	ENUM_OGL__glTexEnvf,
-	ENUM_OGL__glTexEnvfv,
-	ENUM_OGL__glTexEnvi,
-	ENUM_OGL__glTexEnviv,
-	ENUM_OGL__glTexGend,
-	ENUM_OGL__glTexGendv,
-	ENUM_OGL__glTexGenf,
-	ENUM_OGL__glTexGenfv,
-	ENUM_OGL__glTexGeni,
-	ENUM_OGL__glTexGeniv,
-	ENUM_OGL__glTexImage1D,
-	ENUM_OGL__glTexImage2D,
-	ENUM_OGL__glTexParameterf,
-	ENUM_OGL__glTexParameterfv,
-	ENUM_OGL__glTexParameteri,
-	ENUM_OGL__glTexParameteriv,
-	ENUM_OGL__glTexSubImage1D,
-	ENUM_OGL__glTexSubImage2D,
-	ENUM_OGL__glTranslated,
-	ENUM_OGL__glTranslatef,
-	ENUM_OGL__glVertex2d,
-	ENUM_OGL__glVertex2dv,
-	ENUM_OGL__glVertex2f,
-	ENUM_OGL__glVertex2fv,
-	ENUM_OGL__glVertex2i,
-	ENUM_OGL__glVertex2iv,
-	ENUM_OGL__glVertex2s,
-	ENUM_OGL__glVertex2sv,
-	ENUM_OGL__glVertex3d,
-	ENUM_OGL__glVertex3dv,
-	ENUM_OGL__glVertex3f,
-	ENUM_OGL__glVertex3fv,
-	ENUM_OGL__glVertex3i,
-	ENUM_OGL__glVertex3iv,
-	ENUM_OGL__glVertex3s,
-	ENUM_OGL__glVertex3sv,
-	ENUM_OGL__glVertex4d,
-	ENUM_OGL__glVertex4dv,
-	ENUM_OGL__glVertex4f,
-	ENUM_OGL__glVertex4fv,
-	ENUM_OGL__glVertex4i,
-	ENUM_OGL__glVertex4iv,
-	ENUM_OGL__glVertex4s,
-	ENUM_OGL__glVertex4sv,
-	ENUM_OGL__glVertexPointer,
-	ENUM_OGL__glViewport,
-/*
-	Additional commands not covered by the above.
-*/
-	ENUM_QB_MULTI_LINE_COMMENT_BEGIN,
-	ENUM_QB_MULTI_LINE_COMMENT_END,
-	ENUM_QB_MULTI_LINE_COMMENT_ERROR,
-	ENUM_QB_STRING_VARIABLE,
-	ENUM_QB_SINGLE_VARIABLE,
-	ENUM_QB_DOUBLE_VARIABLE,
-	ENUM_QB_FLOAT_VARIABLE,
-	ENUM_QB_INTEGER_VARIABLE,
-	ENUM_QB_LONG_VARIABLE,
-	ENUM_QB_INTEGER64_VARIABLE,
-	ENUM_QB_BIT_VARIABLE,
-	ENUM_QB_BYTE_VARIABLE,
-	ENUM_QB_OFFSET_VARIABLE,
-	ENUM_QB_UNSIGNED_VARIABLE,
-	ENUM_QB_UNSIGNED_INTEGER_VARIABLE,
-	ENUM_QB_UNSIGNED_LONG_VARIABLE,
-	ENUM_QB_UNSIGNED_INTEGER64_VARIABLE,
-	ENUM_QB_UNSIGNED_BIT_VARIABLE,
-	ENUM_QB_UNSIGNED_BYTE_VARIABLE,
-	ENUM_QB_UNSIGNED_OFFSET_VARIABLE,
-	ENUM_QB_STANDARD_VARIABLE,
-	ENUM_QB_LESS_THAN_OR_EQUAL_TO,
-	ENUM_QB_GREATER_THAN_OR_EQUAL_TO,
-	ENUM_QB_NOT_EQUAL_TO,
-	ENUM_QB_ELSE_IF,
-	ENUM_QB_NEW_LINE,
-	ENUM_QB_WHITE_SPACE,
-	ENUM_QB_UNKNOWN_CHARACTER,
-	};
-
 struct {
 	char	token[40];
 	int		id;
@@ -6302,7 +5170,7 @@ struct {
 
 	int	nline, nchar, nword, ws;
 
-#line 6306 "lex.yy.c"
+#line 5174 "lex.yy.c"
 
 /* Macros after this point can all be overridden by user definitions in
  * section 1.
@@ -6456,7 +5324,7 @@ YY_DECL
 	register char *yy_cp, *yy_bp;
 	register int yy_act;
 
-#line 1232 "bas.l"
+#line 100 "bas.l"
 
 	/*	Rules	*/
 
@@ -6465,7 +5333,7 @@ YY_DECL
 	because it was a lot simpler than what was in the Flex/Bison book.
 	*/
 
-#line 6469 "lex.yy.c"
+#line 5337 "lex.yy.c"
 
 	if ( yy_init )
 		{
@@ -6559,17 +5427,17 @@ do_action:	/* This label is used only to access EOF actions. */
 	{ /* beginning of action switch */
 case 1:
 YY_RULE_SETUP
-#line 1240 "bas.l"
+#line 108 "bas.l"
 { start_stack[start_stack_counter++] = YY_START; BEGIN INCL; }
 	YY_BREAK
 case 2:
 YY_RULE_SETUP
-#line 1241 "bas.l"
+#line 109 "bas.l"
 { start_stack[start_stack_counter++] = YY_START; BEGIN INCL; }
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
-#line 1243 "bas.l"
+#line 111 "bas.l"
 { /* got the include file name */
 printf( "---> Entering INCLUDE(%s)\n", yytext );
 	if( include_stack_ptr >= MAX_INCLUDE_DEPTH ){
@@ -6591,7 +5459,7 @@ printf( "---> Entering INCLUDE(%s)\n", yytext );
 case YY_STATE_EOF(INITIAL):
 case YY_STATE_EOF(INCL):
 case YY_STATE_EOF(STRING):
-#line 1261 "bas.l"
+#line 129 "bas.l"
 {
 printf( "<--- Exiting INCLUDE\n" );
 
@@ -6605,7 +5473,7 @@ printf( "<--- Exiting INCLUDE\n" );
 /*	The string parser is taken from http://epaperpress.com/lexandyacc/str.html - Modified 2/19/2016 MEM	*/
 case 4:
 YY_RULE_SETUP
-#line 1273 "bas.l"
+#line 141 "bas.l"
 {
 					start_stack[start_stack_counter++] = YY_START;
 					for( i=0; i<MAX_STRING_LENGTH; i++ ){ myBuffer[i] = 0; }
@@ -6618,33 +5486,34 @@ YY_RULE_SETUP
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 1283 "bas.l"
+#line 151 "bas.l"
 { *myString++ = '\n'; }
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
-#line 1284 "bas.l"
+#line 152 "bas.l"
 { *myString++ = '\t'; }
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
-#line 1285 "bas.l"
+#line 153 "bas.l"
 { *myString++ = '\"'; }
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 1286 "bas.l"
+#line 154 "bas.l"
 {
 					*myString = 0;
 					c = input();
 					printf( "Found : %s\n", myBuffer );
 					printf( "<---Exiting STRING\n" );
 					BEGIN(start_stack[--start_stack_counter]);
+					return ENUM_QB_STRING_VALUE;
 				}
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 1294 "bas.l"
+#line 163 "bas.l"
 {
 					printf( "*****ERROR : Unterminated String : %s\n", yytext );
 					exit(1);
@@ -6652,4333 +5521,4333 @@ YY_RULE_SETUP
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
-#line 1299 "bas.l"
+#line 168 "bas.l"
 {	*myString++ = *yytext; printf( "Working : %s\n", myBuffer ); }
 	YY_BREAK
 /*	+++++	DO NOT REMOVE THE NEXT LINE!!!	+++++	*/
 /*	BEGIN LEX	*/
 case 11:
 YY_RULE_SETUP
-#line 1303 "bas.l"
-{	printf("ENUM_PLUS_SIGN => %s\n", yytext); nchar += yyleng; return ENUM_PLUS_SIGN; }
+#line 172 "bas.l"
+{	printf("ENUM_PLUS_SIGN => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_PLUS_SIGN; }
 	YY_BREAK
 case 12:
 YY_RULE_SETUP
-#line 1305 "bas.l"
-{	printf("MINUS => %s\n", yytext); nchar += yyleng; return ENUM_MINUS_SIGN; }
+#line 174 "bas.l"
+{	printf("MINUS => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_MINUS_SIGN; }
 	YY_BREAK
 case 13:
 YY_RULE_SETUP
-#line 1307 "bas.l"
-{	printf("MULTIPLY => %s\n", yytext); nchar += yyleng; return ENUM_ASTERIK; }
+#line 176 "bas.l"
+{	printf("MULTIPLY => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_ASTERIK; }
 	YY_BREAK
 case 14:
 YY_RULE_SETUP
-#line 1309 "bas.l"
-{	printf("DIVIDE => %s\n", yytext); nchar += yyleng; return ENUM_SLASH_FORWARDS; }
+#line 178 "bas.l"
+{	printf("DIVIDE => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_SLASH_FORWARDS; }
 	YY_BREAK
 case 15:
 YY_RULE_SETUP
-#line 1311 "bas.l"
-{	printf("INTEGER DIVISION => %s\n", yytext); nchar += yyleng; return ENUM_SLASH_BACK; }
+#line 180 "bas.l"
+{	printf("INTEGER DIVISION => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_SLASH_BACK; }
 	YY_BREAK
 case 16:
 YY_RULE_SETUP
-#line 1313 "bas.l"
-{	printf("EXPONENTIAL => %s\n", yytext); nchar += yyleng; return ENUM_CARET; }
+#line 182 "bas.l"
+{	printf("EXPONENTIAL => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_CARET; }
 	YY_BREAK
 case 17:
 YY_RULE_SETUP
-#line 1315 "bas.l"
-{	printf("EQUAL SIGN => %s\n", yytext); nchar += yyleng; return ENUM_EQUAL; }
+#line 184 "bas.l"
+{	printf("EQUAL SIGN => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_EQUAL; }
 	YY_BREAK
 case 18:
 YY_RULE_SETUP
-#line 1317 "bas.l"
-{	printf("LESS THAN => %s\n", yytext); nchar += yyleng; return ENUM_LESS_THAN; }
+#line 186 "bas.l"
+{	printf("LESS THAN => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_LESS_THAN; }
 	YY_BREAK
 case 19:
 YY_RULE_SETUP
-#line 1319 "bas.l"
-{	printf("GREATER THAN => %s\n", yytext); nchar += yyleng; return ENUM_GREATER_THAN; }
+#line 188 "bas.l"
+{	printf("GREATER THAN => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_GREATER_THAN; }
 	YY_BREAK
 case 20:
 YY_RULE_SETUP
-#line 1321 "bas.l"
+#line 190 "bas.l"
 {	printf("LESS THAN OR EQUAL TO => %s\n", yytext);
 
-								nchar += yyleng; return ENUM_QB_LESS_THAN_OR_EQUAL_TO; }
+								nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_LESS_THAN_OR_EQUAL_TO; }
 	YY_BREAK
 case 21:
 YY_RULE_SETUP
-#line 1325 "bas.l"
-{	printf("GREATER THAN OR EQUAL TO => %s\n", yytext); nchar += yyleng; return ENUM_QB_GREATER_THAN_OR_EQUAL_TO; }
+#line 194 "bas.l"
+{	printf("GREATER THAN OR EQUAL TO => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_GREATER_THAN_OR_EQUAL_TO; }
 	YY_BREAK
 case 22:
 YY_RULE_SETUP
-#line 1327 "bas.l"
-{	printf("NOT EQUAL TO => %s\n", yytext); nchar += yyleng; return ENUM_QB_NOT_EQUAL_TO; }
+#line 196 "bas.l"
+{	printf("NOT EQUAL TO => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_NOT_EQUAL_TO; }
 	YY_BREAK
 case 23:
 YY_RULE_SETUP
-#line 1329 "bas.l"
-{	printf("OPEN PARENTHESIS => %s\n", yytext); nchar += yyleng; return ENUM_PAREN_OPEN; }
+#line 198 "bas.l"
+{	printf("OPEN PARENTHESIS => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_PAREN_OPEN; }
 	YY_BREAK
 case 24:
 YY_RULE_SETUP
-#line 1331 "bas.l"
-{	printf("CLOSE PARENTHESIS => %s\n", yytext); nchar += yyleng; return ENUM_PAREN_CLOSED; }
+#line 200 "bas.l"
+{	printf("CLOSE PARENTHESIS => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_PAREN_CLOSED; }
 	YY_BREAK
 case 25:
 YY_RULE_SETUP
-#line 1333 "bas.l"
-{	printf("BINARY NUMBER => %s\n", yytext); nchar += yyleng; return ENUM_QB_BINARY; }
+#line 202 "bas.l"
+{	printf("BINARY NUMBER => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_BINARY; }
 	YY_BREAK
 case 26:
 YY_RULE_SETUP
-#line 1335 "bas.l"
-{	printf("OCTAL NUMBER => %s\n", yytext); nchar += yyleng; return ENUM_QB_OCTAL; }
+#line 204 "bas.l"
+{	printf("OCTAL NUMBER => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_OCTAL; }
 	YY_BREAK
 case 27:
 YY_RULE_SETUP
-#line 1337 "bas.l"
-{	printf("HEXADECIMAL NUMBER => %s\n", yytext); nchar += yyleng; return ENUM_QB_HEXADECIMAL; }
+#line 206 "bas.l"
+{	printf("HEXADECIMAL NUMBER => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_HEXADECIMAL; }
 	YY_BREAK
 case 28:
 YY_RULE_SETUP
-#line 1339 "bas.l"
-{	printf("STRING VARIABLE => %s\n", yytext); nchar += yyleng; return ENUM_QB_STRING_VARIABLE; }
+#line 208 "bas.l"
+{	printf("STRING VARIABLE => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_STRING_VARIABLE; }
 	YY_BREAK
 case 29:
 YY_RULE_SETUP
-#line 1341 "bas.l"
-{	printf("SINGLE VARIABLE => %s\n", yytext); nchar += yyleng; return ENUM_QB_SINGLE_VARIABLE; }
+#line 210 "bas.l"
+{	printf("SINGLE VARIABLE => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_SINGLE_VARIABLE; }
 	YY_BREAK
 case 30:
 YY_RULE_SETUP
-#line 1343 "bas.l"
-{	printf("DOUBLE VARIABLE => %s\n", yytext); nchar += yyleng; return ENUM_QB_DOUBLE_VARIABLE; }
+#line 212 "bas.l"
+{	printf("DOUBLE VARIABLE => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_DOUBLE_VARIABLE; }
 	YY_BREAK
 case 31:
 YY_RULE_SETUP
-#line 1345 "bas.l"
-{	printf("FLOAT VARIABLE => %s\n", yytext); nchar += yyleng; return ENUM_QB_FLOAT_VARIABLE; }
+#line 214 "bas.l"
+{	printf("FLOAT VARIABLE => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_FLOAT_VARIABLE; }
 	YY_BREAK
 case 32:
 YY_RULE_SETUP
-#line 1347 "bas.l"
-{	printf("INTEGER VARIABLE => %s\n", yytext); nchar += yyleng; return ENUM_QB_INTEGER_VARIABLE; }
+#line 216 "bas.l"
+{	printf("INTEGER VARIABLE => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_INTEGER_VARIABLE; }
 	YY_BREAK
 case 33:
 YY_RULE_SETUP
-#line 1349 "bas.l"
-{	printf("LONG VARIABLE => %s\n", yytext); nchar += yyleng; return ENUM_QB_LONG_VARIABLE; }
+#line 218 "bas.l"
+{	printf("LONG VARIABLE => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_LONG_VARIABLE; }
 	YY_BREAK
 case 34:
 YY_RULE_SETUP
-#line 1351 "bas.l"
-{	printf("INTEGER64 VARIABLE => %s\n", yytext); nchar += yyleng; return ENUM_QB_INTEGER64_VARIABLE; }
+#line 220 "bas.l"
+{	printf("INTEGER64 VARIABLE => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_INTEGER64_VARIABLE; }
 	YY_BREAK
 case 35:
 YY_RULE_SETUP
-#line 1353 "bas.l"
-{	printf("BIT VARIABLE => %s\n", yytext); nchar += yyleng; return ENUM_QB_BIT_VARIABLE; }
+#line 222 "bas.l"
+{	printf("BIT VARIABLE => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_BIT_VARIABLE; }
 	YY_BREAK
 case 36:
 YY_RULE_SETUP
-#line 1355 "bas.l"
-{	printf("BYTE VARIABLE => %s\n", yytext); nchar += yyleng; return ENUM_QB_BYTE_VARIABLE; }
+#line 224 "bas.l"
+{	printf("BYTE VARIABLE => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_BYTE_VARIABLE; }
 	YY_BREAK
 case 37:
 YY_RULE_SETUP
-#line 1357 "bas.l"
-{	printf("OFFSET VARIABLE => %s\n", yytext); nchar += yyleng; return ENUM_QB_OFFSET_VARIABLE; }
+#line 226 "bas.l"
+{	printf("OFFSET VARIABLE => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_OFFSET_VARIABLE; }
 	YY_BREAK
 case 38:
 YY_RULE_SETUP
-#line 1359 "bas.l"
-{	printf("UNSIGNED VARIABLE => %s\n", yytext); nchar += yyleng; return ENUM_QB_UNSIGNED_VARIABLE; }
+#line 228 "bas.l"
+{	printf("UNSIGNED VARIABLE => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_UNSIGNED_VARIABLE; }
 	YY_BREAK
 case 39:
 YY_RULE_SETUP
-#line 1361 "bas.l"
-{	printf("UNSIGNED INTEGER VARIABLE => %s\n", yytext); nchar += yyleng; return ENUM_QB_UNSIGNED_INTEGER_VARIABLE; }
+#line 230 "bas.l"
+{	printf("UNSIGNED INTEGER VARIABLE => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_UNSIGNED_INTEGER_VARIABLE; }
 	YY_BREAK
 case 40:
 YY_RULE_SETUP
-#line 1363 "bas.l"
-{	printf("UNSIGNED LONG VARIABLE => %s\n", yytext); nchar += yyleng; return ENUM_QB_UNSIGNED_LONG_VARIABLE; }
+#line 232 "bas.l"
+{	printf("UNSIGNED LONG VARIABLE => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_UNSIGNED_LONG_VARIABLE; }
 	YY_BREAK
 case 41:
 YY_RULE_SETUP
-#line 1365 "bas.l"
-{	printf("UNSIGNED INTEGER64 VARIABLE => %s\n", yytext); nchar += yyleng; return ENUM_QB_UNSIGNED_INTEGER64_VARIABLE; }
+#line 234 "bas.l"
+{	printf("UNSIGNED INTEGER64 VARIABLE => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_UNSIGNED_INTEGER64_VARIABLE; }
 	YY_BREAK
 case 42:
 YY_RULE_SETUP
-#line 1367 "bas.l"
-{	printf("UNSIGNED BIT VARIABLE => %s\n", yytext); nchar += yyleng; return
+#line 236 "bas.l"
+{	printf("UNSIGNED BIT VARIABLE => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return
 
 ENUM_QB_UNSIGNED_BIT_VARIABLE; }
 	YY_BREAK
 case 43:
 YY_RULE_SETUP
-#line 1371 "bas.l"
-{	printf("UNSIGNED BYTE VARIABLE => %s\n", yytext); nchar += yyleng; return ENUM_QB_UNSIGNED_BYTE_VARIABLE; }
+#line 240 "bas.l"
+{	printf("UNSIGNED BYTE VARIABLE => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_UNSIGNED_BYTE_VARIABLE; }
 	YY_BREAK
 case 44:
 YY_RULE_SETUP
-#line 1373 "bas.l"
-{	printf("UNSIGNED OFFSET VARIABLE => %s\n", yytext); nchar += yyleng; return ENUM_QB_UNSIGNED_OFFSET_VARIABLE; }
+#line 242 "bas.l"
+{	printf("UNSIGNED OFFSET VARIABLE => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_UNSIGNED_OFFSET_VARIABLE; }
 	YY_BREAK
 case 45:
 YY_RULE_SETUP
-#line 1375 "bas.l"
-{	printf("STANDARD QB VARIABLE => %s\n", yytext); nchar += yyleng; return ENUM_QB_STANDARD_VARIABLE; }
+#line 244 "bas.l"
+{	printf("STANDARD QB VARIABLE => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_STANDARD_VARIABLE; }
 	YY_BREAK
 case 46:
 YY_RULE_SETUP
-#line 1377 "bas.l"
-{	printf("INTEGER NUMBER => %s\n", yytext); nchar += yyleng; return ENUM_QB_LONG_VARIABLE; }
+#line 246 "bas.l"
+{	printf("INTEGER NUMBER => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_LONG_VARIABLE; }
 	YY_BREAK
 case 47:
 YY_RULE_SETUP
-#line 1379 "bas.l"
-{	printf("FLOAT NUMBER => %s\n", yytext); nchar += yyleng; return ENUM_QB_FLOAT_VARIABLE; }
+#line 248 "bas.l"
+{	printf("FLOAT NUMBER => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_FLOAT_VARIABLE; }
 	YY_BREAK
 case 48:
 YY_RULE_SETUP
-#line 1381 "bas.l"
-{	printf("REM => %s\n", yytext); nchar += yyleng; return ENUM_QB_REM; }
+#line 250 "bas.l"
+{	printf("REM => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_REM; }
 	YY_BREAK
 case 49:
 YY_RULE_SETUP
-#line 1383 "bas.l"
-{	printf("SQ => %s\n", yytext); nchar += yyleng; return ENUM_QB_REM; }
+#line 252 "bas.l"
+{	printf("SQ => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_REM; }
 	YY_BREAK
 case 50:
 YY_RULE_SETUP
-#line 1385 "bas.l"
-{	printf("REM => %s\n", yytext); nchar += yyleng; return ENUM_QB_REM; }
+#line 254 "bas.l"
+{	printf("REM => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_REM; }
 	YY_BREAK
 case 51:
 YY_RULE_SETUP
-#line 1387 "bas.l"
-{	printf("SQ => %s\n", yytext); nchar += yyleng; return ENUM_QB_REM; }
+#line 256 "bas.l"
+{	printf("SQ => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_REM; }
 	YY_BREAK
 case 52:
 YY_RULE_SETUP
-#line 1389 "bas.l"
-{	printf("IF => %s\n", yytext); nchar += yyleng; return ENUM_QB_IF; }
+#line 258 "bas.l"
+{	printf("IF => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_IF; }
 	YY_BREAK
 case 53:
 YY_RULE_SETUP
-#line 1390 "bas.l"
-{	printf("TO => %s\n", yytext); nchar += yyleng; return ENUM_QB_TO; }
+#line 259 "bas.l"
+{	printf("TO => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_TO; }
 	YY_BREAK
 case 54:
 YY_RULE_SETUP
-#line 1391 "bas.l"
-{	printf("AS => %s\n", yytext); nchar += yyleng; return ENUM_QB_AS; }
+#line 260 "bas.l"
+{	printf("AS => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_AS; }
 	YY_BREAK
 case 55:
 YY_RULE_SETUP
-#line 1392 "bas.l"
-{	printf("DO => %s\n", yytext); nchar += yyleng; return ENUM_QB_DO; }
+#line 261 "bas.l"
+{	printf("DO => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_DO; }
 	YY_BREAK
 case 56:
 YY_RULE_SETUP
-#line 1393 "bas.l"
-{	printf("OR => %s\n", yytext); nchar += yyleng; return ENUM_QB_OR; }
+#line 262 "bas.l"
+{	printf("OR => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_OR; }
 	YY_BREAK
 case 57:
 YY_RULE_SETUP
-#line 1394 "bas.l"
-{	printf("EQV => %s\n", yytext); nchar += yyleng; return ENUM_QB_EQV; }
+#line 263 "bas.l"
+{	printf("EQV => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_EQV; }
 	YY_BREAK
 case 58:
 YY_RULE_SETUP
-#line 1395 "bas.l"
-{	printf("FIX => %s\n", yytext); nchar += yyleng; return ENUM_QB_FIX; }
+#line 264 "bas.l"
+{	printf("FIX => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_FIX; }
 	YY_BREAK
 case 59:
 YY_RULE_SETUP
-#line 1396 "bas.l"
-{	printf("ERL => %s\n", yytext); nchar += yyleng; return ENUM_QB_ERL; }
+#line 265 "bas.l"
+{	printf("ERL => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_ERL; }
 	YY_BREAK
 case 60:
 YY_RULE_SETUP
-#line 1397 "bas.l"
-{	printf("EXP => %s\n", yytext); nchar += yyleng; return ENUM_QB_EXP; }
+#line 266 "bas.l"
+{	printf("EXP => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_EXP; }
 	YY_BREAK
 case 61:
 YY_RULE_SETUP
-#line 1398 "bas.l"
-{	printf("ERR => %s\n", yytext); nchar += yyleng; return ENUM_QB_ERR; }
+#line 267 "bas.l"
+{	printf("ERR => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_ERR; }
 	YY_BREAK
 case 62:
 YY_RULE_SETUP
-#line 1399 "bas.l"
-{	printf("EOF => %s\n", yytext); nchar += yyleng; return ENUM_QB_EOF; }
+#line 268 "bas.l"
+{	printf("EOF => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_EOF; }
 	YY_BREAK
 case 63:
 YY_RULE_SETUP
-#line 1400 "bas.l"
-{	printf("INT => %s\n", yytext); nchar += yyleng; return ENUM_QB_INT; }
+#line 269 "bas.l"
+{	printf("INT => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_INT; }
 	YY_BREAK
 case 64:
 YY_RULE_SETUP
-#line 1401 "bas.l"
-{	printf("CVL => %s\n", yytext); nchar += yyleng; return ENUM_QB_CVL; }
+#line 270 "bas.l"
+{	printf("CVL => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_CVL; }
 	YY_BREAK
 case 65:
 YY_RULE_SETUP
-#line 1402 "bas.l"
-{	printf("DIM => %s\n", yytext); nchar += yyleng; return ENUM_QB_DIM; }
+#line 271 "bas.l"
+{	printf("DIM => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_DIM; }
 	YY_BREAK
 case 66:
 YY_RULE_SETUP
-#line 1403 "bas.l"
-{	printf("POS => %s\n", yytext); nchar += yyleng; return ENUM_QB_POS; }
+#line 272 "bas.l"
+{	printf("POS => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_POS; }
 	YY_BREAK
 case 67:
 YY_RULE_SETUP
-#line 1404 "bas.l"
-{	printf("FOR => %s\n", yytext); nchar += yyleng; return ENUM_QB_FOR; }
+#line 273 "bas.l"
+{	printf("FOR => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_FOR; }
 	YY_BREAK
 case 68:
 YY_RULE_SETUP
-#line 1405 "bas.l"
-{	printf("END => %s\n", yytext); nchar += yyleng; return ENUM_QB_END; }
+#line 274 "bas.l"
+{	printf("END => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_END; }
 	YY_BREAK
 case 69:
 YY_RULE_SETUP
-#line 1406 "bas.l"
-{	printf("_CV => %s\n", yytext); nchar += yyleng; return ENUM_QB__CV; }
+#line 275 "bas.l"
+{	printf("_CV => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__CV; }
 	YY_BREAK
 case 70:
 YY_RULE_SETUP
-#line 1407 "bas.l"
-{	printf("FRE => %s\n", yytext); nchar += yyleng; return ENUM_QB_FRE; }
+#line 276 "bas.l"
+{	printf("FRE => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_FRE; }
 	YY_BREAK
 case 71:
 YY_RULE_SETUP
-#line 1408 "bas.l"
-{	printf("IMP => %s\n", yytext); nchar += yyleng; return ENUM_QB_IMP; }
+#line 277 "bas.l"
+{	printf("IMP => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_IMP; }
 	YY_BREAK
 case 72:
 YY_RULE_SETUP
-#line 1409 "bas.l"
-{	printf("LOC => %s\n", yytext); nchar += yyleng; return ENUM_QB_LOC; }
+#line 278 "bas.l"
+{	printf("LOC => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_LOC; }
 	YY_BREAK
 case 73:
 YY_RULE_SETUP
-#line 1410 "bas.l"
-{	printf("INP => %s\n", yytext); nchar += yyleng; return ENUM_QB_INP; }
+#line 279 "bas.l"
+{	printf("INP => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_INP; }
 	YY_BREAK
 case 74:
 YY_RULE_SETUP
-#line 1411 "bas.l"
-{	printf("LET => %s\n", yytext); nchar += yyleng; return ENUM_QB_LET; }
+#line 280 "bas.l"
+{	printf("LET => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_LET; }
 	YY_BREAK
 case 75:
 YY_RULE_SETUP
-#line 1412 "bas.l"
-{	printf("LEN => %s\n", yytext); nchar += yyleng; return ENUM_QB_LEN; }
+#line 281 "bas.l"
+{	printf("LEN => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_LEN; }
 	YY_BREAK
 case 76:
 YY_RULE_SETUP
-#line 1413 "bas.l"
-{	printf("LOF => %s\n", yytext); nchar += yyleng; return ENUM_QB_LOF; }
+#line 282 "bas.l"
+{	printf("LOF => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_LOF; }
 	YY_BREAK
 case 77:
 YY_RULE_SETUP
-#line 1414 "bas.l"
-{	printf("LOG => %s\n", yytext); nchar += yyleng; return ENUM_QB_LOG; }
+#line 283 "bas.l"
+{	printf("LOG => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_LOG; }
 	YY_BREAK
 case 78:
 YY_RULE_SETUP
-#line 1415 "bas.l"
-{	printf("OFF => %s\n", yytext); nchar += yyleng; return ENUM_QB_OFF; }
+#line 284 "bas.l"
+{	printf("OFF => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_OFF; }
 	YY_BREAK
 case 79:
 YY_RULE_SETUP
-#line 1416 "bas.l"
-{	printf("RND => %s\n", yytext); nchar += yyleng; return ENUM_QB_RND; }
+#line 285 "bas.l"
+{	printf("RND => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_RND; }
 	YY_BREAK
 case 80:
 YY_RULE_SETUP
-#line 1417 "bas.l"
-{	printf("NOT => %s\n", yytext); nchar += yyleng; return ENUM_QB_NOT; }
+#line 286 "bas.l"
+{	printf("NOT => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_NOT; }
 	YY_BREAK
 case 81:
 YY_RULE_SETUP
-#line 1418 "bas.l"
-{	printf("MOD => %s\n", yytext); nchar += yyleng; return ENUM_QB_MOD; }
+#line 287 "bas.l"
+{	printf("MOD => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_MOD; }
 	YY_BREAK
 case 82:
 YY_RULE_SETUP
-#line 1419 "bas.l"
-{	printf("GET => %s\n", yytext); nchar += yyleng; return ENUM_QB_GET; }
+#line 288 "bas.l"
+{	printf("GET => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_GET; }
 	YY_BREAK
 case 83:
 YY_RULE_SETUP
-#line 1420 "bas.l"
-{	printf("OUT => %s\n", yytext); nchar += yyleng; return ENUM_QB_OUT; }
+#line 289 "bas.l"
+{	printf("OUT => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_OUT; }
 	YY_BREAK
 case 84:
 YY_RULE_SETUP
-#line 1421 "bas.l"
-{	printf("CVS => %s\n", yytext); nchar += yyleng; return ENUM_QB_CVS; }
+#line 290 "bas.l"
+{	printf("CVS => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_CVS; }
 	YY_BREAK
 case 85:
 YY_RULE_SETUP
-#line 1422 "bas.l"
-{	printf("TAN => %s\n", yytext); nchar += yyleng; return ENUM_QB_TAN; }
+#line 291 "bas.l"
+{	printf("TAN => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_TAN; }
 	YY_BREAK
 case 86:
 YY_RULE_SETUP
-#line 1423 "bas.l"
-{	printf("ATN => %s\n", yytext); nchar += yyleng; return ENUM_QB_ATN; }
+#line 292 "bas.l"
+{	printf("ATN => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_ATN; }
 	YY_BREAK
 case 87:
 YY_RULE_SETUP
-#line 1424 "bas.l"
-{	printf("TAB => %s\n", yytext); nchar += yyleng; return ENUM_QB_TAB; }
+#line 293 "bas.l"
+{	printf("TAB => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_TAB; }
 	YY_BREAK
 case 88:
 YY_RULE_SETUP
-#line 1425 "bas.l"
-{	printf("CVI => %s\n", yytext); nchar += yyleng; return ENUM_QB_CVI; }
+#line 294 "bas.l"
+{	printf("CVI => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_CVI; }
 	YY_BREAK
 case 89:
 YY_RULE_SETUP
-#line 1426 "bas.l"
-{	printf("SQR => %s\n", yytext); nchar += yyleng; return ENUM_QB_SQR; }
+#line 295 "bas.l"
+{	printf("SQR => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_SQR; }
 	YY_BREAK
 case 90:
 YY_RULE_SETUP
-#line 1427 "bas.l"
-{	printf("ASC => %s\n", yytext); nchar += yyleng; return ENUM_QB_ASC; }
+#line 296 "bas.l"
+{	printf("ASC => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_ASC; }
 	YY_BREAK
 case 91:
 YY_RULE_SETUP
-#line 1428 "bas.l"
-{	printf("ANY => %s\n", yytext); nchar += yyleng; return ENUM_QB_ANY; }
+#line 297 "bas.l"
+{	printf("ANY => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_ANY; }
 	YY_BREAK
 case 92:
 YY_RULE_SETUP
-#line 1429 "bas.l"
-{	printf("XOR => %s\n", yytext); nchar += yyleng; return ENUM_QB_XOR; }
+#line 298 "bas.l"
+{	printf("XOR => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_XOR; }
 	YY_BREAK
 case 93:
 YY_RULE_SETUP
-#line 1430 "bas.l"
-{	printf("ABS => %s\n", yytext); nchar += yyleng; return ENUM_QB_ABS; }
+#line 299 "bas.l"
+{	printf("ABS => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_ABS; }
 	YY_BREAK
 case 94:
 YY_RULE_SETUP
-#line 1431 "bas.l"
-{	printf("VAL => %s\n", yytext); nchar += yyleng; return ENUM_QB_VAL; }
+#line 300 "bas.l"
+{	printf("VAL => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_VAL; }
 	YY_BREAK
 case 95:
 YY_RULE_SETUP
-#line 1432 "bas.l"
-{	printf("AND => %s\n", yytext); nchar += yyleng; return ENUM_QB_AND; }
+#line 301 "bas.l"
+{	printf("AND => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_AND; }
 	YY_BREAK
 case 96:
 YY_RULE_SETUP
-#line 1433 "bas.l"
-{	printf("SPC => %s\n", yytext); nchar += yyleng; return ENUM_QB_SPC; }
+#line 302 "bas.l"
+{	printf("SPC => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_SPC; }
 	YY_BREAK
 case 97:
 YY_RULE_SETUP
-#line 1434 "bas.l"
-{	printf("SUB => %s\n", yytext); nchar += yyleng; return ENUM_QB_SUB; }
+#line 303 "bas.l"
+{	printf("SUB => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_SUB; }
 	YY_BREAK
 case 98:
 YY_RULE_SETUP
-#line 1435 "bas.l"
-{	printf("CVD => %s\n", yytext); nchar += yyleng; return ENUM_QB_CVD; }
+#line 304 "bas.l"
+{	printf("CVD => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_CVD; }
 	YY_BREAK
 case 99:
 YY_RULE_SETUP
-#line 1436 "bas.l"
-{	printf("CLS => %s\n", yytext); nchar += yyleng; return ENUM_QB_CLS; }
+#line 305 "bas.l"
+{	printf("CLS => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_CLS; }
 	YY_BREAK
 case 100:
 YY_RULE_SETUP
-#line 1437 "bas.l"
-{	printf("COS => %s\n", yytext); nchar += yyleng; return ENUM_QB_COS; }
+#line 306 "bas.l"
+{	printf("COS => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_COS; }
 	YY_BREAK
 case 101:
 YY_RULE_SETUP
-#line 1438 "bas.l"
-{	printf("SGN => %s\n", yytext); nchar += yyleng; return ENUM_QB_SGN; }
+#line 307 "bas.l"
+{	printf("SGN => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_SGN; }
 	YY_BREAK
 case 102:
 YY_RULE_SETUP
-#line 1439 "bas.l"
-{	printf("RUN => %s\n", yytext); nchar += yyleng; return ENUM_QB_RUN; }
+#line 308 "bas.l"
+{	printf("RUN => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_RUN; }
 	YY_BREAK
 case 103:
 YY_RULE_SETUP
-#line 1440 "bas.l"
-{	printf("SIN => %s\n", yytext); nchar += yyleng; return ENUM_QB_SIN; }
+#line 309 "bas.l"
+{	printf("SIN => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_SIN; }
 	YY_BREAK
 case 104:
 YY_RULE_SETUP
-#line 1441 "bas.l"
-{	printf("CSNG => %s\n", yytext); nchar += yyleng; return ENUM_QB_CSNG; }
+#line 310 "bas.l"
+{	printf("CSNG => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_CSNG; }
 	YY_BREAK
 case 105:
 YY_RULE_SETUP
-#line 1442 "bas.l"
-{	printf("GOTO => %s\n", yytext); nchar += yyleng; return ENUM_QB_GOTO; }
+#line 311 "bas.l"
+{	printf("GOTO => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_GOTO; }
 	YY_BREAK
 case 106:
 YY_RULE_SETUP
-#line 1443 "bas.l"
-{	printf("DATA => %s\n", yytext); nchar += yyleng; return ENUM_QB_DATA; }
+#line 312 "bas.l"
+{	printf("DATA => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_DATA; }
 	YY_BREAK
 case 107:
 YY_RULE_SETUP
-#line 1444 "bas.l"
-{	printf("_SEC => %s\n", yytext); nchar += yyleng; return ENUM_QB__SEC; }
+#line 313 "bas.l"
+{	printf("_SEC => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__SEC; }
 	YY_BREAK
 case 108:
 YY_RULE_SETUP
-#line 1445 "bas.l"
-{	printf("_R2G => %s\n", yytext); nchar += yyleng; return ENUM_QB__R2G; }
+#line 314 "bas.l"
+{	printf("_R2G => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__R2G; }
 	YY_BREAK
 case 109:
 YY_RULE_SETUP
-#line 1446 "bas.l"
-{	printf("_RED => %s\n", yytext); nchar += yyleng; return ENUM_QB__RED; }
+#line 315 "bas.l"
+{	printf("_RED => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__RED; }
 	YY_BREAK
 case 110:
 YY_RULE_SETUP
-#line 1447 "bas.l"
-{	printf("_RGB => %s\n", yytext); nchar += yyleng; return ENUM_QB__RGB; }
+#line 316 "bas.l"
+{	printf("_RGB => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__RGB; }
 	YY_BREAK
 case 111:
 YY_RULE_SETUP
-#line 1448 "bas.l"
-{	printf("FREE => %s\n", yytext); nchar += yyleng; return ENUM_QB_FREE; }
+#line 317 "bas.l"
+{	printf("FREE => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_FREE; }
 	YY_BREAK
 case 112:
 YY_RULE_SETUP
-#line 1449 "bas.l"
-{	printf("DRAW => %s\n", yytext); nchar += yyleng; return ENUM_QB_DRAW; }
+#line 318 "bas.l"
+{	printf("DRAW => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_DRAW; }
 	YY_BREAK
 case 113:
 YY_RULE_SETUP
-#line 1450 "bas.l"
-{	printf("CASE => %s\n", yytext); nchar += yyleng; return ENUM_QB_CASE; }
+#line 319 "bas.l"
+{	printf("CASE => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_CASE; }
 	YY_BREAK
 case 114:
 YY_RULE_SETUP
-#line 1451 "bas.l"
-{	printf("CDBL => %s\n", yytext); nchar += yyleng; return ENUM_QB_CDBL; }
+#line 320 "bas.l"
+{	printf("CDBL => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_CDBL; }
 	YY_BREAK
 case 115:
 YY_RULE_SETUP
-#line 1452 "bas.l"
-{	printf("EXIT => %s\n", yytext); nchar += yyleng; return ENUM_QB_EXIT; }
+#line 321 "bas.l"
+{	printf("EXIT => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_EXIT; }
 	YY_BREAK
 case 116:
 YY_RULE_SETUP
-#line 1453 "bas.l"
-{	printf("CINT => %s\n", yytext); nchar += yyleng; return ENUM_QB_CINT; }
+#line 322 "bas.l"
+{	printf("CINT => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_CINT; }
 	YY_BREAK
 case 117:
 YY_RULE_SETUP
-#line 1454 "bas.l"
-{	printf("CALL => %s\n", yytext); nchar += yyleng; return ENUM_QB_CALL; }
+#line 323 "bas.l"
+{	printf("CALL => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_CALL; }
 	YY_BREAK
 case 118:
 YY_RULE_SETUP
-#line 1455 "bas.l"
-{	printf("BEEP => %s\n", yytext); nchar += yyleng; return ENUM_QB_BEEP; }
+#line 324 "bas.l"
+{	printf("BEEP => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_BEEP; }
 	YY_BREAK
 case 119:
 YY_RULE_SETUP
-#line 1456 "bas.l"
-{	printf("CLNG => %s\n", yytext); nchar += yyleng; return ENUM_QB_CLNG; }
+#line 325 "bas.l"
+{	printf("CLNG => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_CLNG; }
 	YY_BREAK
 case 120:
 YY_RULE_SETUP
-#line 1457 "bas.l"
-{	printf("_G2R => %s\n", yytext); nchar += yyleng; return ENUM_QB__G2R; }
+#line 326 "bas.l"
+{	printf("_G2R => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__G2R; }
 	YY_BREAK
 case 121:
 YY_RULE_SETUP
-#line 1458 "bas.l"
-{	printf("ELSE => %s\n", yytext); nchar += yyleng; return ENUM_QB_ELSE; }
+#line 327 "bas.l"
+{	printf("ELSE => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_ELSE; }
 	YY_BREAK
 case 122:
 YY_RULE_SETUP
-#line 1459 "bas.l"
-{	printf("_G2D => %s\n", yytext); nchar += yyleng; return ENUM_QB__G2D; }
+#line 328 "bas.l"
+{	printf("_G2D => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__G2D; }
 	YY_BREAK
 case 123:
 YY_RULE_SETUP
-#line 1460 "bas.l"
-{	printf("KILL => %s\n", yytext); nchar += yyleng; return ENUM_QB_KILL; }
+#line 329 "bas.l"
+{	printf("KILL => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_KILL; }
 	YY_BREAK
 case 124:
 YY_RULE_SETUP
-#line 1461 "bas.l"
-{	printf("READ => %s\n", yytext); nchar += yyleng; return ENUM_QB_READ; }
+#line 330 "bas.l"
+{	printf("READ => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_READ; }
 	YY_BREAK
 case 125:
 YY_RULE_SETUP
-#line 1462 "bas.l"
-{	printf("RSET => %s\n", yytext); nchar += yyleng; return ENUM_QB_RSET; }
+#line 331 "bas.l"
+{	printf("RSET => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_RSET; }
 	YY_BREAK
 case 126:
 YY_RULE_SETUP
-#line 1463 "bas.l"
-{	printf("STEP => %s\n", yytext); nchar += yyleng; return ENUM_QB_STEP; }
+#line 332 "bas.l"
+{	printf("STEP => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_STEP; }
 	YY_BREAK
 case 127:
 YY_RULE_SETUP
-#line 1464 "bas.l"
-{	printf("PSET => %s\n", yytext); nchar += yyleng; return ENUM_QB_PSET; }
+#line 333 "bas.l"
+{	printf("PSET => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_PSET; }
 	YY_BREAK
 case 128:
 YY_RULE_SETUP
-#line 1465 "bas.l"
-{	printf("_COT => %s\n", yytext); nchar += yyleng; return ENUM_QB__COT; }
+#line 334 "bas.l"
+{	printf("_COT => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__COT; }
 	YY_BREAK
 case 129:
 YY_RULE_SETUP
-#line 1466 "bas.l"
-{	printf("_D2G => %s\n", yytext); nchar += yyleng; return ENUM_QB__D2G; }
+#line 335 "bas.l"
+{	printf("_D2G => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__D2G; }
 	YY_BREAK
 case 130:
 YY_RULE_SETUP
-#line 1467 "bas.l"
-{	printf("POKE => %s\n", yytext); nchar += yyleng; return ENUM_QB_POKE; }
+#line 336 "bas.l"
+{	printf("POKE => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_POKE; }
 	YY_BREAK
 case 131:
 YY_RULE_SETUP
-#line 1468 "bas.l"
-{	printf("_CSC => %s\n", yytext); nchar += yyleng; return ENUM_QB__CSC; }
+#line 337 "bas.l"
+{	printf("_CSC => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__CSC; }
 	YY_BREAK
 case 132:
 YY_RULE_SETUP
-#line 1469 "bas.l"
-{	printf("STOP => %s\n", yytext); nchar += yyleng; return ENUM_QB_STOP; }
+#line 338 "bas.l"
+{	printf("STOP => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_STOP; }
 	YY_BREAK
 case 133:
 YY_RULE_SETUP
-#line 1470 "bas.l"
-{	printf("SWAP => %s\n", yytext); nchar += yyleng; return ENUM_QB_SWAP; }
+#line 339 "bas.l"
+{	printf("SWAP => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_SWAP; }
 	YY_BREAK
 case 134:
 YY_RULE_SETUP
-#line 1471 "bas.l"
-{	printf("VIEW => %s\n", yytext); nchar += yyleng; return ENUM_QB_VIEW; }
+#line 340 "bas.l"
+{	printf("VIEW => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_VIEW; }
 	YY_BREAK
 case 135:
 YY_RULE_SETUP
-#line 1472 "bas.l"
-{	printf("WAIT => %s\n", yytext); nchar += yyleng; return ENUM_QB_WAIT; }
+#line 341 "bas.l"
+{	printf("WAIT => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_WAIT; }
 	YY_BREAK
 case 136:
 YY_RULE_SETUP
-#line 1473 "bas.l"
-{	printf("WEND => %s\n", yytext); nchar += yyleng; return ENUM_QB_WEND; }
+#line 342 "bas.l"
+{	printf("WEND => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_WEND; }
 	YY_BREAK
 case 137:
 YY_RULE_SETUP
-#line 1474 "bas.l"
-{	printf("TYPE => %s\n", yytext); nchar += yyleng; return ENUM_QB_TYPE; }
+#line 343 "bas.l"
+{	printf("TYPE => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_TYPE; }
 	YY_BREAK
 case 138:
 YY_RULE_SETUP
-#line 1475 "bas.l"
-{	printf("TRON => %s\n", yytext); nchar += yyleng; return ENUM_QB_TRON; }
+#line 344 "bas.l"
+{	printf("TRON => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_TRON; }
 	YY_BREAK
 case 139:
 YY_RULE_SETUP
-#line 1476 "bas.l"
-{	printf("_BIT => %s\n", yytext); nchar += yyleng; return ENUM_QB__BIT; }
+#line 345 "bas.l"
+{	printf("_BIT => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__BIT; }
 	YY_BREAK
 case 140:
 YY_RULE_SETUP
-#line 1477 "bas.l"
-{	printf("THEN => %s\n", yytext); nchar += yyleng; return ENUM_QB_THEN; }
+#line 346 "bas.l"
+{	printf("THEN => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_THEN; }
 	YY_BREAK
 case 141:
 YY_RULE_SETUP
-#line 1478 "bas.l"
-{	printf("_D2R => %s\n", yytext); nchar += yyleng; return ENUM_QB__D2R; }
+#line 347 "bas.l"
+{	printf("_D2R => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__D2R; }
 	YY_BREAK
 case 142:
 YY_RULE_SETUP
-#line 1479 "bas.l"
-{	printf("SADD => %s\n", yytext); nchar += yyleng; return ENUM_QB_SADD; }
+#line 348 "bas.l"
+{	printf("SADD => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_SADD; }
 	YY_BREAK
 case 143:
 YY_RULE_SETUP
-#line 1480 "bas.l"
-{	printf("LPOS => %s\n", yytext); nchar += yyleng; return ENUM_QB_LPOS; }
+#line 349 "bas.l"
+{	printf("LPOS => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_LPOS; }
 	YY_BREAK
 case 144:
 YY_RULE_SETUP
-#line 1481 "bas.l"
-{	printf("NAME => %s\n", yytext); nchar += yyleng; return ENUM_QB_NAME; }
+#line 350 "bas.l"
+{	printf("NAME => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_NAME; }
 	YY_BREAK
 case 145:
 YY_RULE_SETUP
-#line 1482 "bas.l"
-{	printf("LONG => %s\n", yytext); nchar += yyleng; return ENUM_QB_LONG; }
+#line 351 "bas.l"
+{	printf("LONG => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_LONG; }
 	YY_BREAK
 case 146:
 YY_RULE_SETUP
-#line 1483 "bas.l"
-{	printf("OPEN => %s\n", yytext); nchar += yyleng; return ENUM_QB_OPEN; }
+#line 352 "bas.l"
+{	printf("OPEN => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_OPEN; }
 	YY_BREAK
 case 147:
 YY_RULE_SETUP
-#line 1484 "bas.l"
-{	printf("LIST => %s\n", yytext); nchar += yyleng; return ENUM_QB_LIST; }
+#line 353 "bas.l"
+{	printf("LIST => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_LIST; }
 	YY_BREAK
 case 148:
 YY_RULE_SETUP
-#line 1485 "bas.l"
-{	printf("_R2D => %s\n", yytext); nchar += yyleng; return ENUM_QB__R2D; }
+#line 354 "bas.l"
+{	printf("_R2D => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__R2D; }
 	YY_BREAK
 case 149:
 YY_RULE_SETUP
-#line 1486 "bas.l"
-{	printf("PMAP => %s\n", yytext); nchar += yyleng; return ENUM_QB_PMAP; }
+#line 355 "bas.l"
+{	printf("PMAP => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_PMAP; }
 	YY_BREAK
 case 150:
 YY_RULE_SETUP
-#line 1487 "bas.l"
-{	printf("PEEK => %s\n", yytext); nchar += yyleng; return ENUM_QB_PEEK; }
+#line 356 "bas.l"
+{	printf("PEEK => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_PEEK; }
 	YY_BREAK
 case 151:
 YY_RULE_SETUP
-#line 1488 "bas.l"
-{	printf("LOCK => %s\n", yytext); nchar += yyleng; return ENUM_QB_LOCK; }
+#line 357 "bas.l"
+{	printf("LOCK => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_LOCK; }
 	YY_BREAK
 case 152:
 YY_RULE_SETUP
-#line 1489 "bas.l"
-{	printf("LINE => %s\n", yytext); nchar += yyleng; return ENUM_QB_LINE; }
+#line 358 "bas.l"
+{	printf("LINE => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_LINE; }
 	YY_BREAK
 case 153:
 YY_RULE_SETUP
-#line 1490 "bas.l"
-{	printf("LSET => %s\n", yytext); nchar += yyleng; return ENUM_QB_LSET; }
+#line 359 "bas.l"
+{	printf("LSET => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_LSET; }
 	YY_BREAK
 case 154:
 YY_RULE_SETUP
-#line 1491 "bas.l"
-{	printf("GOSUB => %s\n", yytext); nchar += yyleng; return ENUM_QB_GOSUB; }
+#line 360 "bas.l"
+{	printf("GOSUB => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_GOSUB; }
 	YY_BREAK
 case 155:
 YY_RULE_SETUP
-#line 1492 "bas.l"
-{	printf("BYVAL => %s\n", yytext); nchar += yyleng; return ENUM_QB_BYVAL; }
+#line 361 "bas.l"
+{	printf("BYVAL => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_BYVAL; }
 	YY_BREAK
 case 156:
 YY_RULE_SETUP
-#line 1493 "bas.l"
-{	printf("STICK => %s\n", yytext); nchar += yyleng; return ENUM_QB_STICK; }
+#line 362 "bas.l"
+{	printf("STICK => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_STICK; }
 	YY_BREAK
 case 157:
 YY_RULE_SETUP
-#line 1494 "bas.l"
-{	printf("CALLS => %s\n", yytext); nchar += yyleng; return ENUM_QB_CALLS; }
+#line 363 "bas.l"
+{	printf("CALLS => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_CALLS; }
 	YY_BREAK
 case 158:
 YY_RULE_SETUP
-#line 1495 "bas.l"
-{	printf("TROFF => %s\n", yytext); nchar += yyleng; return ENUM_QB_TROFF; }
+#line 364 "bas.l"
+{	printf("TROFF => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_TROFF; }
 	YY_BREAK
 case 159:
 YY_RULE_SETUP
-#line 1496 "bas.l"
-{	printf("BSAVE => %s\n", yytext); nchar += yyleng; return ENUM_QB_BSAVE; }
+#line 365 "bas.l"
+{	printf("BSAVE => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_BSAVE; }
 	YY_BREAK
 case 160:
 YY_RULE_SETUP
-#line 1497 "bas.l"
-{	printf("BLOAD => %s\n", yytext); nchar += yyleng; return ENUM_QB_BLOAD; }
+#line 366 "bas.l"
+{	printf("BLOAD => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_BLOAD; }
 	YY_BREAK
 case 161:
 YY_RULE_SETUP
-#line 1498 "bas.l"
-{	printf("ALIAS => %s\n", yytext); nchar += yyleng; return ENUM_QB_ALIAS; }
+#line 367 "bas.l"
+{	printf("ALIAS => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_ALIAS; }
 	YY_BREAK
 case 162:
 YY_RULE_SETUP
-#line 1499 "bas.l"
-{	printf("_RGBA => %s\n", yytext); nchar += yyleng; return ENUM_QB__RGBA; }
+#line 368 "bas.l"
+{	printf("_RGBA => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__RGBA; }
 	YY_BREAK
 case 163:
 YY_RULE_SETUP
-#line 1500 "bas.l"
-{	printf("WHILE => %s\n", yytext); nchar += yyleng; return ENUM_QB_WHILE; }
+#line 369 "bas.l"
+{	printf("WHILE => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_WHILE; }
 	YY_BREAK
 case 164:
 YY_RULE_SETUP
-#line 1501 "bas.l"
-{	printf("WIDTH => %s\n", yytext); nchar += yyleng; return ENUM_QB_WIDTH; }
+#line 370 "bas.l"
+{	printf("WIDTH => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_WIDTH; }
 	YY_BREAK
 case 165:
 YY_RULE_SETUP
-#line 1502 "bas.l"
-{	printf("INSTR => %s\n", yytext); nchar += yyleng; return ENUM_QB_INSTR; }
+#line 371 "bas.l"
+{	printf("INSTR => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_INSTR; }
 	YY_BREAK
 case 166:
 YY_RULE_SETUP
-#line 1503 "bas.l"
-{	printf("_SECH => %s\n", yytext); nchar += yyleng; return ENUM_QB__SECH; }
+#line 372 "bas.l"
+{	printf("_SECH => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__SECH; }
 	YY_BREAK
 case 167:
 YY_RULE_SETUP
-#line 1504 "bas.l"
-{	printf("CDECL => %s\n", yytext); nchar += yyleng; return ENUM_QB_CDECL; }
+#line 373 "bas.l"
+{	printf("CDECL => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_CDECL; }
 	YY_BREAK
 case 168:
 YY_RULE_SETUP
-#line 1505 "bas.l"
-{	printf("_TANH => %s\n", yytext); nchar += yyleng; return ENUM_QB__TANH; }
+#line 374 "bas.l"
+{	printf("_TANH => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__TANH; }
 	YY_BREAK
 case 169:
 YY_RULE_SETUP
-#line 1506 "bas.l"
-{	printf("_SINH => %s\n", yytext); nchar += yyleng; return ENUM_QB__SINH; }
+#line 375 "bas.l"
+{	printf("_SINH => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__SINH; }
 	YY_BREAK
 case 170:
 YY_RULE_SETUP
-#line 1507 "bas.l"
-{	printf("UNTIL => %s\n", yytext); nchar += yyleng; return ENUM_QB_UNTIL; }
+#line 376 "bas.l"
+{	printf("UNTIL => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_UNTIL; }
 	YY_BREAK
 case 171:
 YY_RULE_SETUP
-#line 1508 "bas.l"
-{	printf("MKDIR => %s\n", yytext); nchar += yyleng; return ENUM_QB_MKDIR; }
+#line 377 "bas.l"
+{	printf("MKDIR => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_MKDIR; }
 	YY_BREAK
 case 172:
 YY_RULE_SETUP
-#line 1509 "bas.l"
-{	printf("PCOPY => %s\n", yytext); nchar += yyleng; return ENUM_QB_PCOPY; }
+#line 378 "bas.l"
+{	printf("PCOPY => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_PCOPY; }
 	YY_BREAK
 case 173:
 YY_RULE_SETUP
-#line 1510 "bas.l"
-{	printf("PAINT => %s\n", yytext); nchar += yyleng; return ENUM_QB_PAINT; }
+#line 379 "bas.l"
+{	printf("PAINT => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_PAINT; }
 	YY_BREAK
 case 174:
 YY_RULE_SETUP
-#line 1511 "bas.l"
-{	printf("REDIM => %s\n", yytext); nchar += yyleng; return ENUM_QB_REDIM; }
+#line 380 "bas.l"
+{	printf("REDIM => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_REDIM; }
 	YY_BREAK
 case 175:
 YY_RULE_SETUP
-#line 1512 "bas.l"
-{	printf("RESET => %s\n", yytext); nchar += yyleng; return ENUM_QB_RESET; }
+#line 381 "bas.l"
+{	printf("RESET => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_RESET; }
 	YY_BREAK
 case 176:
 YY_RULE_SETUP
-#line 1513 "bas.l"
-{	printf("PRINT => %s\n", yytext); nchar += yyleng; return ENUM_QB_PRINT; }
+#line 382 "bas.l"
+{	printf("PRINT => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_PRINT; }
 	YY_BREAK
 case 177:
 YY_RULE_SETUP
-#line 1514 "bas.l"
-{	printf("FILES => %s\n", yytext); nchar += yyleng; return ENUM_QB_FILES; }
+#line 383 "bas.l"
+{	printf("FILES => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_FILES; }
 	YY_BREAK
 case 178:
 YY_RULE_SETUP
-#line 1515 "bas.l"
-{	printf("ERDEV => %s\n", yytext); nchar += yyleng; return ENUM_QB_ERDEV; }
+#line 384 "bas.l"
+{	printf("ERDEV => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_ERDEV; }
 	YY_BREAK
 case 179:
 YY_RULE_SETUP
-#line 1516 "bas.l"
-{	printf("ERASE => %s\n", yytext); nchar += yyleng; return ENUM_QB_ERASE; }
+#line 385 "bas.l"
+{	printf("ERASE => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_ERASE; }
 	YY_BREAK
 case 180:
 YY_RULE_SETUP
-#line 1517 "bas.l"
-{	printf("POINT => %s\n", yytext); nchar += yyleng; return ENUM_QB_POINT; }
+#line 386 "bas.l"
+{	printf("POINT => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_POINT; }
 	YY_BREAK
 case 181:
 YY_RULE_SETUP
-#line 1518 "bas.l"
-{	printf("FIELD => %s\n", yytext); nchar += yyleng; return ENUM_QB_FIELD; }
+#line 387 "bas.l"
+{	printf("FIELD => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_FIELD; }
 	YY_BREAK
 case 182:
 YY_RULE_SETUP
-#line 1519 "bas.l"
-{	printf("RMDIR => %s\n", yytext); nchar += yyleng; return ENUM_QB_RMDIR; }
+#line 388 "bas.l"
+{	printf("RMDIR => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_RMDIR; }
 	YY_BREAK
 case 183:
 YY_RULE_SETUP
-#line 1520 "bas.l"
-{	printf("IOCTL => %s\n", yytext); nchar += yyleng; return ENUM_QB_IOCTL; }
+#line 389 "bas.l"
+{	printf("IOCTL => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_IOCTL; }
 	YY_BREAK
 case 184:
 YY_RULE_SETUP
-#line 1521 "bas.l"
-{	printf("SOUND => %s\n", yytext); nchar += yyleng; return ENUM_QB_SOUND; }
+#line 390 "bas.l"
+{	printf("SOUND => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_SOUND; }
 	YY_BREAK
 case 185:
 YY_RULE_SETUP
-#line 1522 "bas.l"
-{	printf("CLEAR => %s\n", yytext); nchar += yyleng; return ENUM_QB_CLEAR; }
+#line 391 "bas.l"
+{	printf("CLEAR => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_CLEAR; }
 	YY_BREAK
 case 186:
 YY_RULE_SETUP
-#line 1523 "bas.l"
-{	printf("ERROR => %s\n", yytext); nchar += yyleng; return ENUM_QB_ERROR; }
+#line 392 "bas.l"
+{	printf("ERROR => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_ERROR; }
 	YY_BREAK
 case 187:
 YY_RULE_SETUP
-#line 1524 "bas.l"
-{	printf("CHDIR => %s\n", yytext); nchar += yyleng; return ENUM_QB_CHDIR; }
+#line 393 "bas.l"
+{	printf("CHDIR => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_CHDIR; }
 	YY_BREAK
 case 188:
 YY_RULE_SETUP
-#line 1525 "bas.l"
-{	printf("CLOSE => %s\n", yytext); nchar += yyleng; return ENUM_QB_CLOSE; }
+#line 394 "bas.l"
+{	printf("CLOSE => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_CLOSE; }
 	YY_BREAK
 case 189:
 YY_RULE_SETUP
-#line 1526 "bas.l"
-{	printf("SLEEP => %s\n", yytext); nchar += yyleng; return ENUM_QB_SLEEP; }
+#line 395 "bas.l"
+{	printf("SLEEP => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_SLEEP; }
 	YY_BREAK
 case 190:
 YY_RULE_SETUP
-#line 1527 "bas.l"
-{	printf("_ACOS => %s\n", yytext); nchar += yyleng; return ENUM_QB__ACOS; }
+#line 396 "bas.l"
+{	printf("_ACOS => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__ACOS; }
 	YY_BREAK
 case 191:
 YY_RULE_SETUP
-#line 1528 "bas.l"
-{	printf("SHELL => %s\n", yytext); nchar += yyleng; return ENUM_QB_SHELL; }
+#line 397 "bas.l"
+{	printf("SHELL => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_SHELL; }
 	YY_BREAK
 case 192:
 YY_RULE_SETUP
-#line 1529 "bas.l"
-{	printf("CONST => %s\n", yytext); nchar += yyleng; return ENUM_QB_CONST; }
+#line 398 "bas.l"
+{	printf("CONST => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_CONST; }
 	YY_BREAK
 case 193:
 YY_RULE_SETUP
-#line 1530 "bas.l"
-{	printf("COLOR => %s\n", yytext); nchar += yyleng; return ENUM_QB_COLOR; }
+#line 399 "bas.l"
+{	printf("COLOR => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_COLOR; }
 	YY_BREAK
 case 194:
 YY_RULE_SETUP
-#line 1531 "bas.l"
-{	printf("CHAIN => %s\n", yytext); nchar += yyleng; return ENUM_QB_CHAIN; }
+#line 400 "bas.l"
+{	printf("CHAIN => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_CHAIN; }
 	YY_BREAK
 case 195:
 YY_RULE_SETUP
-#line 1532 "bas.l"
-{	printf("INPUT => %s\n", yytext); nchar += yyleng; return ENUM_QB_INPUT; }
+#line 401 "bas.l"
+{	printf("INPUT => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_INPUT; }
 	YY_BREAK
 case 196:
 YY_RULE_SETUP
-#line 1533 "bas.l"
-{	printf("_ICON => %s\n", yytext); nchar += yyleng; return ENUM_QB__ICON; }
+#line 402 "bas.l"
+{	printf("_ICON => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__ICON; }
 	YY_BREAK
 case 197:
 YY_RULE_SETUP
-#line 1534 "bas.l"
-{	printf("_COSH => %s\n", yytext); nchar += yyleng; return ENUM_QB__COSH; }
+#line 403 "bas.l"
+{	printf("_COSH => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__COSH; }
 	YY_BREAK
 case 198:
 YY_RULE_SETUP
-#line 1535 "bas.l"
-{	printf("_ASIN => %s\n", yytext); nchar += yyleng; return ENUM_QB__ASIN; }
+#line 404 "bas.l"
+{	printf("_ASIN => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__ASIN; }
 	YY_BREAK
 case 199:
 YY_RULE_SETUP
-#line 1536 "bas.l"
-{	printf("_COTH => %s\n", yytext); nchar += yyleng; return ENUM_QB__COTH; }
+#line 405 "bas.l"
+{	printf("_COTH => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__COTH; }
 	YY_BREAK
 case 200:
 YY_RULE_SETUP
-#line 1537 "bas.l"
-{	printf("_CEIL => %s\n", yytext); nchar += yyleng; return ENUM_QB__CEIL; }
+#line 406 "bas.l"
+{	printf("_CEIL => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__CEIL; }
 	YY_BREAK
 case 201:
 YY_RULE_SETUP
-#line 1538 "bas.l"
-{	printf("_AXIS => %s\n", yytext); nchar += yyleng; return ENUM_QB__AXIS; }
+#line 407 "bas.l"
+{	printf("_AXIS => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__AXIS; }
 	YY_BREAK
 case 202:
 YY_RULE_SETUP
-#line 1539 "bas.l"
-{	printf("_EXIT => %s\n", yytext); nchar += yyleng; return ENUM_QB__EXIT; }
+#line 408 "bas.l"
+{	printf("_EXIT => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__EXIT; }
 	YY_BREAK
 case 203:
 YY_RULE_SETUP
-#line 1540 "bas.l"
-{	printf("_CSCH => %s\n", yytext); nchar += yyleng; return ENUM_QB__CSCH; }
+#line 409 "bas.l"
+{	printf("_CSCH => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__CSCH; }
 	YY_BREAK
 case 204:
 YY_RULE_SETUP
-#line 1541 "bas.l"
-{	printf("$IF => %s\n", yytext); nchar += yyleng; return ENUM_QB_DS_IF; }
+#line 410 "bas.l"
+{	printf("$IF => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_DS_IF; }
 	YY_BREAK
 case 205:
 YY_RULE_SETUP
-#line 1542 "bas.l"
-{	printf("_BYTE => %s\n", yytext); nchar += yyleng; return ENUM_QB__BYTE; }
+#line 411 "bas.l"
+{	printf("_BYTE => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__BYTE; }
 	YY_BREAK
 case 206:
 YY_RULE_SETUP
-#line 1543 "bas.l"
-{	printf("_CLIP => %s\n", yytext); nchar += yyleng; return ENUM_QB__CLIP; }
+#line 412 "bas.l"
+{	printf("_CLIP => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__CLIP; }
 	YY_BREAK
 case 207:
 YY_RULE_SETUP
-#line 1544 "bas.l"
-{	printf("_HIDE => %s\n", yytext); nchar += yyleng; return ENUM_QB__HIDE; }
+#line 413 "bas.l"
+{	printf("_HIDE => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__HIDE; }
 	YY_BREAK
 case 208:
 YY_RULE_SETUP
-#line 1545 "bas.l"
-{	printf("_BLUE => %s\n", yytext); nchar += yyleng; return ENUM_QB__BLUE; }
+#line 414 "bas.l"
+{	printf("_BLUE => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__BLUE; }
 	YY_BREAK
 case 209:
 YY_RULE_SETUP
-#line 1546 "bas.l"
-{	printf("ACCESS => %s\n", yytext); nchar += yyleng; return ENUM_QB_ACCESS; }
+#line 415 "bas.l"
+{	printf("ACCESS => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_ACCESS; }
 	YY_BREAK
 case 210:
 YY_RULE_SETUP
-#line 1547 "bas.l"
-{	printf("LBOUND => %s\n", yytext); nchar += yyleng; return ENUM_QB_LBOUND; }
+#line 416 "bas.l"
+{	printf("LBOUND => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_LBOUND; }
 	YY_BREAK
 case 211:
 YY_RULE_SETUP
-#line 1548 "bas.l"
-{	printf("_FLOAT => %s\n", yytext); nchar += yyleng; return ENUM_QB__FLOAT; }
+#line 417 "bas.l"
+{	printf("_FLOAT => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__FLOAT; }
 	YY_BREAK
 case 212:
 YY_RULE_SETUP
-#line 1549 "bas.l"
-{	printf("APPEND => %s\n", yytext); nchar += yyleng; return ENUM_QB_APPEND; }
+#line 418 "bas.l"
+{	printf("APPEND => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_APPEND; }
 	YY_BREAK
 case 213:
 YY_RULE_SETUP
-#line 1550 "bas.l"
-{	printf("$END => %s\n", yytext); nchar += yyleng; return ENUM_QB_DS_END; }
+#line 419 "bas.l"
+{	printf("$END => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_DS_END; }
 	YY_BREAK
 case 214:
 YY_RULE_SETUP
-#line 1551 "bas.l"
-{	printf("MKL$ => %s\n", yytext); nchar += yyleng; return ENUM_QB_MKL_DS; }
+#line 420 "bas.l"
+{	printf("MKL$ => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_MKL_DS; }
 	YY_BREAK
 case 215:
 YY_RULE_SETUP
-#line 1552 "bas.l"
-{	printf("MKS$ => %s\n", yytext); nchar += yyleng; return ENUM_QB_MKS_DS; }
+#line 421 "bas.l"
+{	printf("MKS$ => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_MKS_DS; }
 	YY_BREAK
 case 216:
 YY_RULE_SETUP
-#line 1553 "bas.l"
-{	printf("OCT$ => %s\n", yytext); nchar += yyleng; return ENUM_QB_OCT_DS; }
+#line 422 "bas.l"
+{	printf("OCT$ => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_OCT_DS; }
 	YY_BREAK
 case 217:
 YY_RULE_SETUP
-#line 1554 "bas.l"
-{	printf("ON COM => %s\n", yytext); nchar += yyleng; return ENUM_QB_ON_COM; }
+#line 423 "bas.l"
+{	printf("ON COM => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_ON_COM; }
 	YY_BREAK
 case 218:
 YY_RULE_SETUP
-#line 1555 "bas.l"
-{	printf("MKI$ => %s\n", yytext); nchar += yyleng; return ENUM_QB_MKI_DS; }
+#line 424 "bas.l"
+{	printf("MKI$ => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_MKI_DS; }
 	YY_BREAK
 case 219:
 YY_RULE_SETUP
-#line 1556 "bas.l"
-{	printf("MKD$ => %s\n", yytext); nchar += yyleng; return ENUM_QB_MKD_DS; }
+#line 425 "bas.l"
+{	printf("MKD$ => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_MKD_DS; }
 	YY_BREAK
 case 220:
 YY_RULE_SETUP
-#line 1557 "bas.l"
-{	printf("_WHEEL => %s\n", yytext); nchar += yyleng; return ENUM_QB__WHEEL; }
+#line 426 "bas.l"
+{	printf("_WHEEL => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__WHEEL; }
 	YY_BREAK
 case 221:
 YY_RULE_SETUP
-#line 1558 "bas.l"
-{	printf("LOCATE => %s\n", yytext); nchar += yyleng; return ENUM_QB_LOCATE; }
+#line 427 "bas.l"
+{	printf("LOCATE => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_LOCATE; }
 	YY_BREAK
 case 222:
 YY_RULE_SETUP
-#line 1559 "bas.l"
-{	printf("_TITLE => %s\n", yytext); nchar += yyleng; return ENUM_QB__TITLE; }
+#line 428 "bas.l"
+{	printf("_TITLE => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__TITLE; }
 	YY_BREAK
 case 223:
 YY_RULE_SETUP
-#line 1560 "bas.l"
-{	printf("LPRINT => %s\n", yytext); nchar += yyleng; return ENUM_QB_LPRINT; }
+#line 429 "bas.l"
+{	printf("LPRINT => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_LPRINT; }
 	YY_BREAK
 case 224:
 YY_RULE_SETUP
-#line 1561 "bas.l"
-{	printf("_WIDTH => %s\n", yytext); nchar += yyleng; return ENUM_QB__WIDTH; }
+#line 430 "bas.l"
+{	printf("_WIDTH => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__WIDTH; }
 	YY_BREAK
 case 225:
 YY_RULE_SETUP
-#line 1562 "bas.l"
-{	printf("BINARY => %s\n", yytext); nchar += yyleng; return ENUM_QB_BINARY; }
+#line 431 "bas.l"
+{	printf("BINARY => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_BINARY; }
 	YY_BREAK
 case 226:
 YY_RULE_SETUP
-#line 1563 "bas.l"
-{	printf("DEFLNG => %s\n", yytext); nchar += yyleng; return ENUM_QB_DEFLNG; }
+#line 432 "bas.l"
+{	printf("DEFLNG => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_DEFLNG; }
 	YY_BREAK
 case 227:
 YY_RULE_SETUP
-#line 1564 "bas.l"
-{	printf("CIRCLE => %s\n", yytext); nchar += yyleng; return ENUM_QB_CIRCLE; }
+#line 433 "bas.l"
+{	printf("CIRCLE => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_CIRCLE; }
 	YY_BREAK
 case 228:
 YY_RULE_SETUP
-#line 1565 "bas.l"
-{	printf("DEFSNG => %s\n", yytext); nchar += yyleng; return ENUM_QB_DEFSNG; }
+#line 434 "bas.l"
+{	printf("DEFSNG => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_DEFSNG; }
 	YY_BREAK
 case 229:
 YY_RULE_SETUP
-#line 1566 "bas.l"
-{	printf("CHR$ => %s\n", yytext); nchar += yyleng; return ENUM_QB_CHR_DS; }
+#line 435 "bas.l"
+{	printf("CHR$ => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_CHR_DS; }
 	YY_BREAK
 case 230:
 YY_RULE_SETUP
-#line 1567 "bas.l"
-{	printf("DEFINT => %s\n", yytext); nchar += yyleng; return ENUM_QB_DEFINT; }
+#line 436 "bas.l"
+{	printf("DEFINT => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_DEFINT; }
 	YY_BREAK
 case 231:
 YY_RULE_SETUP
-#line 1568 "bas.l"
-{	printf("DEFDBL => %s\n", yytext); nchar += yyleng; return ENUM_QB_DEFDBL; }
+#line 437 "bas.l"
+{	printf("DEFDBL => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_DEFDBL; }
 	YY_BREAK
 case 232:
 YY_RULE_SETUP
-#line 1569 "bas.l"
-{	printf("CVDMBF => %s\n", yytext); nchar += yyleng; return ENUM_QB_CVDMBF; }
+#line 438 "bas.l"
+{	printf("CVDMBF => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_CVDMBF; }
 	YY_BREAK
 case 233:
 YY_RULE_SETUP
-#line 1570 "bas.l"
-{	printf("CVSMBF => %s\n", yytext); nchar += yyleng; return ENUM_QB_CVSMBF; }
+#line 439 "bas.l"
+{	printf("CVSMBF => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_CVSMBF; }
 	YY_BREAK
 case 234:
 YY_RULE_SETUP
-#line 1571 "bas.l"
-{	printf("COMMON => %s\n", yytext); nchar += yyleng; return ENUM_QB_COMMON; }
+#line 440 "bas.l"
+{	printf("COMMON => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_COMMON; }
 	YY_BREAK
 case 235:
 YY_RULE_SETUP
-#line 1572 "bas.l"
-{	printf("DEF FN => %s\n", yytext); nchar += yyleng; return ENUM_QB_DEF_FN; }
+#line 441 "bas.l"
+{	printf("DEF FN => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_DEF_FN; }
 	YY_BREAK
 case 236:
 YY_RULE_SETUP
-#line 1573 "bas.l"
-{	printf("DEFSTR => %s\n", yytext); nchar += yyleng; return ENUM_QB_DEFSTR; }
+#line 442 "bas.l"
+{	printf("DEFSTR => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_DEFSTR; }
 	YY_BREAK
 case 237:
 YY_RULE_SETUP
-#line 1574 "bas.l"
-{	printf("_MK$ => %s\n", yytext); nchar += yyleng; return ENUM_QB__MK_DS; }
+#line 443 "bas.l"
+{	printf("_MK$ => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__MK_DS; }
 	YY_BREAK
 case 238:
 YY_RULE_SETUP
-#line 1575 "bas.l"
-{	printf("$LET => %s\n", yytext); nchar += yyleng; return ENUM_QB_DS_LET; }
+#line 444 "bas.l"
+{	printf("$LET => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_DS_LET; }
 	YY_BREAK
 case 239:
 YY_RULE_SETUP
-#line 1576 "bas.l"
-{	printf("_HYPOT => %s\n", yytext); nchar += yyleng; return ENUM_QB__HYPOT; }
+#line 445 "bas.l"
+{	printf("_HYPOT => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__HYPOT; }
 	YY_BREAK
 case 240:
 YY_RULE_SETUP
-#line 1577 "bas.l"
-{	printf("ON KEY => %s\n", yytext); nchar += yyleng; return ENUM_QB_ON_KEY; }
+#line 446 "bas.l"
+{	printf("ON KEY => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_ON_KEY; }
 	YY_BREAK
 case 241:
 YY_RULE_SETUP
-#line 1578 "bas.l"
-{	printf("_GREEN => %s\n", yytext); nchar += yyleng; return ENUM_QB__GREEN; }
+#line 447 "bas.l"
+{	printf("_GREEN => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__GREEN; }
 	YY_BREAK
 case 242:
 YY_RULE_SETUP
-#line 1579 "bas.l"
-{	printf("END IF => %s\n", yytext); nchar += yyleng; return ENUM_QB_END_IF; }
+#line 448 "bas.l"
+{	printf("END IF => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_END_IF; }
 	YY_BREAK
 case 243:
 YY_RULE_SETUP
-#line 1580 "bas.l"
-{	printf("ELSEIF => %s\n", yytext); nchar += yyleng; return ENUM_QB_ELSEIF; }
+#line 449 "bas.l"
+{	printf("ELSEIF => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_ELSEIF; }
 	YY_BREAK
 case 244:
 YY_RULE_SETUP
-#line 1581 "bas.l"
-{	printf("DIR$ => %s\n", yytext); nchar += yyleng; return ENUM_QB_DIR_DS; }
+#line 450 "bas.l"
+{	printf("DIR$ => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_DIR_DS; }
 	YY_BREAK
 case 245:
 YY_RULE_SETUP
-#line 1582 "bas.l"
-{	printf("DOUBLE => %s\n", yytext); nchar += yyleng; return ENUM_QB_DOUBLE; }
+#line 451 "bas.l"
+{	printf("DOUBLE => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_DOUBLE; }
 	YY_BREAK
 case 246:
 YY_RULE_SETUP
-#line 1583 "bas.l"
-{	printf("_LIMIT => %s\n", yytext); nchar += yyleng; return ENUM_QB__LIMIT; }
+#line 452 "bas.l"
+{	printf("_LIMIT => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__LIMIT; }
 	YY_BREAK
 case 247:
 YY_RULE_SETUP
-#line 1584 "bas.l"
-{	printf("HEX$ => %s\n", yytext); nchar += yyleng; return ENUM_QB_HEX_DS; }
+#line 453 "bas.l"
+{	printf("HEX$ => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_HEX_DS; }
 	YY_BREAK
 case 248:
 YY_RULE_SETUP
-#line 1585 "bas.l"
-{	printf("ON PEN => %s\n", yytext); nchar += yyleng; return ENUM_QB_ON_PEN; }
+#line 454 "bas.l"
+{	printf("ON PEN => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_ON_PEN; }
 	YY_BREAK
 case 249:
 YY_RULE_SETUP
-#line 1586 "bas.l"
-{	printf("UBOUND => %s\n", yytext); nchar += yyleng; return ENUM_QB_UBOUND; }
+#line 455 "bas.l"
+{	printf("UBOUND => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_UBOUND; }
 	YY_BREAK
 case 250:
 YY_RULE_SETUP
-#line 1587 "bas.l"
-{	printf("UEVENT => %s\n", yytext); nchar += yyleng; return ENUM_QB_UEVENT; }
+#line 456 "bas.l"
+{	printf("UEVENT => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_UEVENT; }
 	YY_BREAK
 case 251:
 YY_RULE_SETUP
-#line 1588 "bas.l"
-{	printf("_ROUND => %s\n", yytext); nchar += yyleng; return ENUM_QB__ROUND; }
+#line 457 "bas.l"
+{	printf("_ROUND => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__ROUND; }
 	YY_BREAK
 case 252:
 YY_RULE_SETUP
-#line 1589 "bas.l"
-{	printf("_ATAN2 => %s\n", yytext); nchar += yyleng; return ENUM_QB__ATAN2; }
+#line 458 "bas.l"
+{	printf("_ATAN2 => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__ATAN2; }
 	YY_BREAK
 case 253:
 YY_RULE_SETUP
-#line 1590 "bas.l"
-{	printf("_ATANH => %s\n", yytext); nchar += yyleng; return ENUM_QB__ATANH; }
+#line 459 "bas.l"
+{	printf("_ATANH => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__ATANH; }
 	YY_BREAK
 case 254:
 YY_RULE_SETUP
-#line 1591 "bas.l"
-{	printf("STR$ => %s\n", yytext); nchar += yyleng; return ENUM_QB_STR_DS; }
+#line 460 "bas.l"
+{	printf("STR$ => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_STR_DS; }
 	YY_BREAK
 case 255:
 YY_RULE_SETUP
-#line 1592 "bas.l"
-{	printf("CSRLIN => %s\n", yytext); nchar += yyleng; return ENUM_QB_CSRLIN; }
+#line 461 "bas.l"
+{	printf("CSRLIN => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_CSRLIN; }
 	YY_BREAK
 case 256:
 YY_RULE_SETUP
-#line 1593 "bas.l"
-{	printf("SYSTEM => %s\n", yytext); nchar += yyleng; return ENUM_QB_SYSTEM; }
+#line 462 "bas.l"
+{	printf("SYSTEM => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_SYSTEM; }
 	YY_BREAK
 case 257:
 YY_RULE_SETUP
-#line 1594 "bas.l"
-{	printf("UNLOCK => %s\n", yytext); nchar += yyleng; return ENUM_QB_UNLOCK; }
+#line 463 "bas.l"
+{	printf("UNLOCK => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_UNLOCK; }
 	YY_BREAK
 case 258:
 YY_RULE_SETUP
-#line 1595 "bas.l"
-{	printf("_ASINH => %s\n", yytext); nchar += yyleng; return ENUM_QB__ASINH; }
+#line 464 "bas.l"
+{	printf("_ASINH => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__ASINH; }
 	YY_BREAK
 case 259:
 YY_RULE_SETUP
-#line 1596 "bas.l"
-{	printf("_ALPHA => %s\n", yytext); nchar += yyleng; return ENUM_QB__ALPHA; }
+#line 465 "bas.l"
+{	printf("_ALPHA => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__ALPHA; }
 	YY_BREAK
 case 260:
 YY_RULE_SETUP
-#line 1597 "bas.l"
-{	printf("WINDOW => %s\n", yytext); nchar += yyleng; return ENUM_QB_WINDOW; }
+#line 466 "bas.l"
+{	printf("WINDOW => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_WINDOW; }
 	YY_BREAK
 case 261:
 YY_RULE_SETUP
-#line 1598 "bas.l"
-{	printf("_ACOSH => %s\n", yytext); nchar += yyleng; return ENUM_QB__ACOSH; }
+#line 467 "bas.l"
+{	printf("_ACOSH => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__ACOSH; }
 	YY_BREAK
 case 262:
 YY_RULE_SETUP
-#line 1599 "bas.l"
-{	printf("_RED32 => %s\n", yytext); nchar += yyleng; return ENUM_QB__RED32; }
+#line 468 "bas.l"
+{	printf("_RED32 => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__RED32; }
 	YY_BREAK
 case 263:
 YY_RULE_SETUP
-#line 1600 "bas.l"
-{	printf("_ARCSC => %s\n", yytext); nchar += yyleng; return ENUM_QB__ARCSC; }
+#line 469 "bas.l"
+{	printf("_ARCSC => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__ARCSC; }
 	YY_BREAK
 case 264:
 YY_RULE_SETUP
-#line 1601 "bas.l"
-{	printf("_RGB32 => %s\n", yytext); nchar += yyleng; return ENUM_QB__RGB32; }
+#line 470 "bas.l"
+{	printf("_RGB32 => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__RGB32; }
 	YY_BREAK
 case 265:
 YY_RULE_SETUP
-#line 1602 "bas.l"
-{	printf("VARPTR => %s\n", yytext); nchar += yyleng; return ENUM_QB_VARPTR; }
+#line 471 "bas.l"
+{	printf("VARPTR => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_VARPTR; }
 	YY_BREAK
 case 266:
 YY_RULE_SETUP
-#line 1603 "bas.l"
-{	printf("VARSEG => %s\n", yytext); nchar += yyleng; return ENUM_QB_VARSEG; }
+#line 472 "bas.l"
+{	printf("VARSEG => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_VARSEG; }
 	YY_BREAK
 case 267:
 YY_RULE_SETUP
-#line 1604 "bas.l"
-{	printf("STATIC => %s\n", yytext); nchar += yyleng; return ENUM_QB_STATIC; }
+#line 473 "bas.l"
+{	printf("STATIC => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_STATIC; }
 	YY_BREAK
 case 268:
 YY_RULE_SETUP
-#line 1605 "bas.l"
-{	printf("STRING => %s\n", yytext); nchar += yyleng; return ENUM_QB_STRING; }
+#line 474 "bas.l"
+{	printf("STRING => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_STRING; }
 	YY_BREAK
 case 269:
 YY_RULE_SETUP
-#line 1606 "bas.l"
-{	printf("SINGLE => %s\n", yytext); nchar += yyleng; return ENUM_QB_SINGLE; }
+#line 475 "bas.l"
+{	printf("SINGLE => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_SINGLE; }
 	YY_BREAK
 case 270:
 YY_RULE_SETUP
-#line 1607 "bas.l"
-{	printf("RETURN => %s\n", yytext); nchar += yyleng; return ENUM_QB_RETURN; }
+#line 476 "bas.l"
+{	printf("RETURN => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_RETURN; }
 	YY_BREAK
 case 271:
 YY_RULE_SETUP
-#line 1608 "bas.l"
-{	printf("SETMEM => %s\n", yytext); nchar += yyleng; return ENUM_QB_SETMEM; }
+#line 477 "bas.l"
+{	printf("SETMEM => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_SETMEM; }
 	YY_BREAK
 case 272:
 YY_RULE_SETUP
-#line 1609 "bas.l"
-{	printf("RANDOM => %s\n", yytext); nchar += yyleng; return ENUM_QB_RANDOM; }
+#line 478 "bas.l"
+{	printf("RANDOM => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_RANDOM; }
 	YY_BREAK
 case 273:
 YY_RULE_SETUP
-#line 1610 "bas.l"
-{	printf("PRESET => %s\n", yytext); nchar += yyleng; return ENUM_QB_PRESET; }
+#line 479 "bas.l"
+{	printf("PRESET => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_PRESET; }
 	YY_BREAK
 case 274:
 YY_RULE_SETUP
-#line 1611 "bas.l"
-{	printf("OUTPUT => %s\n", yytext); nchar += yyleng; return ENUM_QB_OUTPUT; }
+#line 480 "bas.l"
+{	printf("OUTPUT => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_OUTPUT; }
 	YY_BREAK
 case 275:
 YY_RULE_SETUP
-#line 1612 "bas.l"
-{	printf("_DELAY => %s\n", yytext); nchar += yyleng; return ENUM_QB__DELAY; }
+#line 481 "bas.l"
+{	printf("_DELAY => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__DELAY; }
 	YY_BREAK
 case 276:
 YY_RULE_SETUP
-#line 1613 "bas.l"
-{	printf("SHARED => %s\n", yytext); nchar += yyleng; return ENUM_QB_SHARED; }
+#line 482 "bas.l"
+{	printf("SHARED => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_SHARED; }
 	YY_BREAK
 case 277:
 YY_RULE_SETUP
-#line 1614 "bas.l"
-{	printf("RESUME => %s\n", yytext); nchar += yyleng; return ENUM_QB_RESUME; }
+#line 483 "bas.l"
+{	printf("RESUME => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_RESUME; }
 	YY_BREAK
 case 278:
 YY_RULE_SETUP
-#line 1615 "bas.l"
-{	printf("SIGNAL => %s\n", yytext); nchar += yyleng; return ENUM_QB_SIGNAL; }
+#line 484 "bas.l"
+{	printf("SIGNAL => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_SIGNAL; }
 	YY_BREAK
 case 279:
 YY_RULE_SETUP
-#line 1616 "bas.l"
-{	printf("_OS$ => %s\n", yytext); nchar += yyleng; return ENUM_QB__OS_DS; }
+#line 485 "bas.l"
+{	printf("_OS$ => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__OS_DS; }
 	YY_BREAK
 case 280:
 YY_RULE_SETUP
-#line 1617 "bas.l"
-{	printf("DEF SEG => %s\n", yytext); nchar += yyleng; return ENUM_QB_DEF_SEG; }
+#line 486 "bas.l"
+{	printf("DEF SEG => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_DEF_SEG; }
 	YY_BREAK
 case 281:
 YY_RULE_SETUP
-#line 1618 "bas.l"
-{	printf("_ARCCOT => %s\n", yytext); nchar += yyleng; return ENUM_QB__ARCCOT; }
+#line 487 "bas.l"
+{	printf("_ARCCOT => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__ARCCOT; }
 	YY_BREAK
 case 282:
 YY_RULE_SETUP
-#line 1619 "bas.l"
-{	printf("PALETTE => %s\n", yytext); nchar += yyleng; return ENUM_QB_PALETTE; }
+#line 488 "bas.l"
+{	printf("PALETTE => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_PALETTE; }
 	YY_BREAK
 case 283:
 YY_RULE_SETUP
-#line 1620 "bas.l"
-{	printf("_BUTTON => %s\n", yytext); nchar += yyleng; return ENUM_QB__BUTTON; }
+#line 489 "bas.l"
+{	printf("_BUTTON => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__BUTTON; }
 	YY_BREAK
 case 284:
 YY_RULE_SETUP
-#line 1621 "bas.l"
-{	printf("DECLARE => %s\n", yytext); nchar += yyleng; return ENUM_QB_DECLARE; }
+#line 490 "bas.l"
+{	printf("DECLARE => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_DECLARE; }
 	YY_BREAK
 case 285:
 YY_RULE_SETUP
-#line 1622 "bas.l"
-{	printf("_glEnd => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glEnd; }
+#line 491 "bas.l"
+{	printf("_glEnd => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glEnd; }
 	YY_BREAK
 case 286:
 YY_RULE_SETUP
-#line 1623 "bas.l"
-{	printf("ON PLAY => %s\n", yytext); nchar += yyleng; return ENUM_QB_ON_PLAY; }
+#line 492 "bas.l"
+{	printf("ON PLAY => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_ON_PLAY; }
 	YY_BREAK
 case 287:
 YY_RULE_SETUP
-#line 1624 "bas.l"
-{	printf("ON GOTO => %s\n", yytext); nchar += yyleng; return ENUM_QB_ON_GOTO; }
+#line 493 "bas.l"
+{	printf("ON GOTO => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_ON_GOTO; }
 	YY_BREAK
 case 288:
 YY_RULE_SETUP
-#line 1625 "bas.l"
-{	printf("_HEIGHT => %s\n", yytext); nchar += yyleng; return ENUM_QB__HEIGHT; }
+#line 494 "bas.l"
+{	printf("_HEIGHT => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__HEIGHT; }
 	YY_BREAK
 case 289:
 YY_RULE_SETUP
-#line 1626 "bas.l"
-{	printf("_CWD$ => %s\n", yytext); nchar += yyleng; return ENUM_QB__CWD_DS; }
+#line 495 "bas.l"
+{	printf("_CWD$ => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__CWD_DS; }
 	YY_BREAK
 case 290:
 YY_RULE_SETUP
-#line 1627 "bas.l"
-{	printf("ELSE IF => %s\n", yytext); nchar += yyleng; return ENUM_QB_ELSE_IF; }
+#line 496 "bas.l"
+{	printf("ELSE IF => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_ELSE_IF; }
 	YY_BREAK
 case 291:
 YY_RULE_SETUP
-#line 1628 "bas.l"
-{	printf("LEFT$ => %s\n", yytext); nchar += yyleng; return ENUM_QB_LEFT_DS; }
+#line 497 "bas.l"
+{	printf("LEFT$ => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_LEFT_DS; }
 	YY_BREAK
 case 292:
 YY_RULE_SETUP
-#line 1629 "bas.l"
-{	printf("ENVIRON => %s\n", yytext); nchar += yyleng; return ENUM_QB_ENVIRON; }
+#line 498 "bas.l"
+{	printf("ENVIRON => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_ENVIRON; }
 	YY_BREAK
 case 293:
 YY_RULE_SETUP
-#line 1630 "bas.l"
-{	printf("_BLUE32 => %s\n", yytext); nchar += yyleng; return ENUM_QB__BLUE32; }
+#line 499 "bas.l"
+{	printf("_BLUE32 => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__BLUE32; }
 	YY_BREAK
 case 294:
 YY_RULE_SETUP
-#line 1631 "bas.l"
-{	printf("RESTORE => %s\n", yytext); nchar += yyleng; return ENUM_QB_RESTORE; }
+#line 500 "bas.l"
+{	printf("RESTORE => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_RESTORE; }
 	YY_BREAK
 case 295:
 YY_RULE_SETUP
-#line 1632 "bas.l"
-{	printf("_KEYHIT => %s\n", yytext); nchar += yyleng; return ENUM_QB__KEYHIT; }
+#line 501 "bas.l"
+{	printf("_KEYHIT => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__KEYHIT; }
 	YY_BREAK
 case 296:
 YY_RULE_SETUP
-#line 1633 "bas.l"
-{	printf("$ELSE => %s\n", yytext); nchar += yyleng; return ENUM_QB_DS_ELSE; }
+#line 502 "bas.l"
+{	printf("$ELSE => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_DS_ELSE; }
 	YY_BREAK
 case 297:
 YY_RULE_SETUP
-#line 1634 "bas.l"
-{	printf("INTEGER => %s\n", yytext); nchar += yyleng; return ENUM_QB_INTEGER; }
+#line 503 "bas.l"
+{	printf("INTEGER => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_INTEGER; }
 	YY_BREAK
 case 298:
 YY_RULE_SETUP
-#line 1635 "bas.l"
-{	printf("_ARCSEC => %s\n", yytext); nchar += yyleng; return ENUM_QB__ARCSEC; }
+#line 504 "bas.l"
+{	printf("_ARCSEC => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__ARCSEC; }
 	YY_BREAK
 case 299:
 YY_RULE_SETUP
-#line 1636 "bas.l"
-{	printf("_DEFINE => %s\n", yytext); nchar += yyleng; return ENUM_QB__DEFINE; }
+#line 505 "bas.l"
+{	printf("_DEFINE => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__DEFINE; }
 	YY_BREAK
 case 300:
 YY_RULE_SETUP
-#line 1637 "bas.l"
-{	printf("_MOUSEY => %s\n", yytext); nchar += yyleng; return ENUM_QB__MOUSEY; }
+#line 506 "bas.l"
+{	printf("_MOUSEY => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__MOUSEY; }
 	YY_BREAK
 case 301:
 YY_RULE_SETUP
-#line 1638 "bas.l"
-{	printf("CASE IS => %s\n", yytext); nchar += yyleng; return ENUM_QB_CASE_IS; }
+#line 507 "bas.l"
+{	printf("CASE IS => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_CASE_IS; }
 	YY_BREAK
 case 302:
 YY_RULE_SETUP
-#line 1639 "bas.l"
-{	printf("_RGBA32 => %s\n", yytext); nchar += yyleng; return ENUM_QB__RGBA32; }
+#line 508 "bas.l"
+{	printf("_RGBA32 => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__RGBA32; }
 	YY_BREAK
 case 303:
 YY_RULE_SETUP
-#line 1640 "bas.l"
-{	printf("_SNDLEN => %s\n", yytext); nchar += yyleng; return ENUM_QB__SNDLEN; }
+#line 509 "bas.l"
+{	printf("_SNDLEN => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__SNDLEN; }
 	YY_BREAK
 case 304:
 YY_RULE_SETUP
-#line 1641 "bas.l"
-{	printf("_MEMNEW => %s\n", yytext); nchar += yyleng; return ENUM_QB__MEMNEW; }
+#line 510 "bas.l"
+{	printf("_MEMNEW => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__MEMNEW; }
 	YY_BREAK
 case 305:
 YY_RULE_SETUP
-#line 1642 "bas.l"
-{	printf("_MOUSEX => %s\n", yytext); nchar += yyleng; return ENUM_QB__MOUSEX; }
+#line 511 "bas.l"
+{	printf("_MOUSEX => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__MOUSEX; }
 	YY_BREAK
 case 306:
 YY_RULE_SETUP
-#line 1643 "bas.l"
-{	printf("_MEMPUT => %s\n", yytext); nchar += yyleng; return ENUM_QB__MEMPUT; }
+#line 512 "bas.l"
+{	printf("_MEMPUT => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__MEMPUT; }
 	YY_BREAK
 case 307:
 YY_RULE_SETUP
-#line 1644 "bas.l"
-{	printf("_RESIZE => %s\n", yytext); nchar += yyleng; return ENUM_QB__RESIZE; }
+#line 513 "bas.l"
+{	printf("_RESIZE => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__RESIZE; }
 	YY_BREAK
 case 308:
 YY_RULE_SETUP
-#line 1645 "bas.l"
-{	printf("_STRCMP => %s\n", yytext); nchar += yyleng; return ENUM_QB__STRCMP; }
+#line 514 "bas.l"
+{	printf("_STRCMP => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__STRCMP; }
 	YY_BREAK
 case 309:
 YY_RULE_SETUP
-#line 1646 "bas.l"
-{	printf("_SNDBAL => %s\n", yytext); nchar += yyleng; return ENUM_QB__SNDBAL; }
+#line 515 "bas.l"
+{	printf("_SNDBAL => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__SNDBAL; }
 	YY_BREAK
 case 310:
 YY_RULE_SETUP
-#line 1647 "bas.l"
-{	printf("_SNDVOL => %s\n", yytext); nchar += yyleng; return ENUM_QB__SNDVOL; }
+#line 516 "bas.l"
+{	printf("_SNDVOL => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__SNDVOL; }
 	YY_BREAK
 case 311:
 YY_RULE_SETUP
-#line 1648 "bas.l"
-{	printf("_SOURCE => %s\n", yytext); nchar += yyleng; return ENUM_QB__SOURCE; }
+#line 517 "bas.l"
+{	printf("_SOURCE => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__SOURCE; }
 	YY_BREAK
 case 312:
 YY_RULE_SETUP
-#line 1649 "bas.l"
-{	printf("_SNDRAW => %s\n", yytext); nchar += yyleng; return ENUM_QB__SNDRAW; }
+#line 518 "bas.l"
+{	printf("_SNDRAW => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__SNDRAW; }
 	YY_BREAK
 case 313:
 YY_RULE_SETUP
-#line 1650 "bas.l"
-{	printf("FILEATTR => %s\n", yytext); nchar += yyleng; return ENUM_QB_FILEATTR; }
+#line 519 "bas.l"
+{	printf("FILEATTR => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_FILEATTR; }
 	YY_BREAK
 case 314:
 YY_RULE_SETUP
-#line 1651 "bas.l"
-{	printf("_KEYDOWN => %s\n", yytext); nchar += yyleng; return ENUM_QB__KEYDOWN; }
+#line 520 "bas.l"
+{	printf("_KEYDOWN => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__KEYDOWN; }
 	YY_BREAK
 case 315:
 YY_RULE_SETUP
-#line 1652 "bas.l"
-{	printf("ERDEV$ => %s\n", yytext); nchar += yyleng; return ENUM_QB_ERDEV_DS; }
+#line 521 "bas.l"
+{	printf("ERDEV$ => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_ERDEV_DS; }
 	YY_BREAK
 case 316:
 YY_RULE_SETUP
-#line 1653 "bas.l"
-{	printf("ON GOSUB => %s\n", yytext); nchar += yyleng; return ENUM_QB_ON_GOSUB; }
+#line 522 "bas.l"
+{	printf("ON GOSUB => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_ON_GOSUB; }
 	YY_BREAK
 case 317:
 YY_RULE_SETUP
-#line 1654 "bas.l"
-{	printf("OPEN COM => %s\n", yytext); nchar += yyleng; return ENUM_QB_OPEN_COM; }
+#line 523 "bas.l"
+{	printf("OPEN COM => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_OPEN_COM; }
 	YY_BREAK
 case 318:
 YY_RULE_SETUP
-#line 1655 "bas.l"
-{	printf("_SNDRATE => %s\n", yytext); nchar += yyleng; return ENUM_QB__SNDRATE; }
+#line 524 "bas.l"
+{	printf("_SNDRATE => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__SNDRATE; }
 	YY_BREAK
 case 319:
 YY_RULE_SETUP
-#line 1656 "bas.l"
-{	printf("INPUT$ => %s\n", yytext); nchar += yyleng; return ENUM_QB_INPUT_DS; }
+#line 525 "bas.l"
+{	printf("INPUT$ => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_INPUT_DS; }
 	YY_BREAK
 case 320:
 YY_RULE_SETUP
-#line 1657 "bas.l"
-{	printf("LCASE$ => %s\n", yytext); nchar += yyleng; return ENUM_QB_LCASE_DS; }
+#line 526 "bas.l"
+{	printf("LCASE$ => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_LCASE_DS; }
 	YY_BREAK
 case 321:
 YY_RULE_SETUP
-#line 1658 "bas.l"
-{	printf("FOR FILE => %s\n", yytext); nchar += yyleng; return ENUM_QB_FOR_FILE; }
+#line 527 "bas.l"
+{	printf("FOR FILE => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_FOR_FILE; }
 	YY_BREAK
 case 322:
 YY_RULE_SETUP
-#line 1659 "bas.l"
-{	printf("ON STRIG => %s\n", yytext); nchar += yyleng; return ENUM_QB_ON_STRIG; }
+#line 528 "bas.l"
+{	printf("ON STRIG => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_ON_STRIG; }
 	YY_BREAK
 case 323:
 YY_RULE_SETUP
-#line 1660 "bas.l"
-{	printf("_glFogf => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glFogf; }
+#line 529 "bas.l"
+{	printf("_glFogf => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glFogf; }
 	YY_BREAK
 case 324:
 YY_RULE_SETUP
-#line 1661 "bas.l"
-{	printf("ON ERROR => %s\n", yytext); nchar += yyleng; return ENUM_QB_ON_ERROR; }
+#line 530 "bas.l"
+{	printf("ON ERROR => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_ON_ERROR; }
 	YY_BREAK
 case 325:
 YY_RULE_SETUP
-#line 1662 "bas.l"
-{	printf("_SNDSTOP => %s\n", yytext); nchar += yyleng; return ENUM_QB__SNDSTOP; }
+#line 531 "bas.l"
+{	printf("_SNDSTOP => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__SNDSTOP; }
 	YY_BREAK
 case 326:
 YY_RULE_SETUP
-#line 1663 "bas.l"
-{	printf("INKEY$ => %s\n", yytext); nchar += yyleng; return ENUM_QB_INKEY_DS; }
+#line 532 "bas.l"
+{	printf("INKEY$ => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_INKEY_DS; }
 	YY_BREAK
 case 327:
 YY_RULE_SETUP
-#line 1664 "bas.l"
-{	printf("_DEVICES => %s\n", yytext); nchar += yyleng; return ENUM_QB__DEVICES; }
+#line 533 "bas.l"
+{	printf("_DEVICES => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__DEVICES; }
 	YY_BREAK
 case 328:
 YY_RULE_SETUP
-#line 1665 "bas.l"
-{	printf("GET QB64 => %s\n", yytext); nchar += yyleng; return ENUM_QB_GET_QB64; }
+#line 534 "bas.l"
+{	printf("GET QB64 => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_GET_QB64; }
 	YY_BREAK
 case 329:
 YY_RULE_SETUP
-#line 1666 "bas.l"
-{	printf("GET FILE => %s\n", yytext); nchar += yyleng; return ENUM_QB_GET_FILE; }
+#line 535 "bas.l"
+{	printf("GET FILE => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_GET_FILE; }
 	YY_BREAK
 case 330:
 YY_RULE_SETUP
-#line 1667 "bas.l"
-{	printf("LTRIM$ => %s\n", yytext); nchar += yyleng; return ENUM_QB_LTRIM_DS; }
+#line 536 "bas.l"
+{	printf("LTRIM$ => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_LTRIM_DS; }
 	YY_BREAK
 case 331:
 YY_RULE_SETUP
-#line 1668 "bas.l"
-{	printf("_glFogi => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glFogi; }
+#line 537 "bas.l"
+{	printf("_glFogi => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glFogi; }
 	YY_BREAK
 case 332:
 YY_RULE_SETUP
-#line 1669 "bas.l"
-{	printf("ON TIMER => %s\n", yytext); nchar += yyleng; return ENUM_QB_ON_TIMER; }
+#line 538 "bas.l"
+{	printf("ON TIMER => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_ON_TIMER; }
 	YY_BREAK
 case 333:
 YY_RULE_SETUP
-#line 1670 "bas.l"
-{	printf("FREEFILE => %s\n", yytext); nchar += yyleng; return ENUM_QB_FREEFILE; }
+#line 539 "bas.l"
+{	printf("FREEFILE => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_FREEFILE; }
 	YY_BREAK
 case 334:
 YY_RULE_SETUP
-#line 1671 "bas.l"
-{	printf("_GREEN32 => %s\n", yytext); nchar += yyleng; return ENUM_QB__GREEN32; }
+#line 540 "bas.l"
+{	printf("_GREEN32 => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__GREEN32; }
 	YY_BREAK
 case 335:
 YY_RULE_SETUP
-#line 1672 "bas.l"
-{	printf("END TYPE => %s\n", yytext); nchar += yyleng; return ENUM_QB_END_TYPE; }
+#line 541 "bas.l"
+{	printf("END TYPE => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_END_TYPE; }
 	YY_BREAK
 case 336:
 YY_RULE_SETUP
-#line 1673 "bas.l"
-{	printf("_CONSOLE => %s\n", yytext); nchar += yyleng; return ENUM_QB__CONSOLE; }
+#line 542 "bas.l"
+{	printf("_CONSOLE => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__CONSOLE; }
 	YY_BREAK
 case 337:
 YY_RULE_SETUP
-#line 1674 "bas.l"
-{	printf("RTRIM$ => %s\n", yytext); nchar += yyleng; return ENUM_QB_RTRIM_DS; }
+#line 543 "bas.l"
+{	printf("RTRIM$ => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_RTRIM_DS; }
 	YY_BREAK
 case 338:
 YY_RULE_SETUP
-#line 1675 "bas.l"
-{	printf("NEW LINE => %s\n", yytext); nchar += yyleng; return ENUM_QB_NEW_LINE; }
+#line 544 "bas.l"
+{	printf("NEW LINE => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_NEW_LINE; }
 	YY_BREAK
 case 339:
 YY_RULE_SETUP
-#line 1676 "bas.l"
-{	printf("_MEMFREE => %s\n", yytext); nchar += yyleng; return ENUM_QB__MEMFREE; }
+#line 545 "bas.l"
+{	printf("_MEMFREE => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__MEMFREE; }
 	YY_BREAK
 case 340:
 YY_RULE_SETUP
-#line 1677 "bas.l"
-{	printf("RIGHT$ => %s\n", yytext); nchar += yyleng; return ENUM_QB_RIGHT_DS; }
+#line 546 "bas.l"
+{	printf("RIGHT$ => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_RIGHT_DS; }
 	YY_BREAK
 case 341:
 YY_RULE_SETUP
-#line 1678 "bas.l"
-{	printf("_SCREENX => %s\n", yytext); nchar += yyleng; return ENUM_QB__SCREENX; }
+#line 547 "bas.l"
+{	printf("_SCREENX => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__SCREENX; }
 	YY_BREAK
 case 342:
 YY_RULE_SETUP
-#line 1679 "bas.l"
-{	printf("_SNDCOPY => %s\n", yytext); nchar += yyleng; return ENUM_QB__SNDCOPY; }
+#line 548 "bas.l"
+{	printf("_SNDCOPY => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__SNDCOPY; }
 	YY_BREAK
 case 343:
 YY_RULE_SETUP
-#line 1680 "bas.l"
-{	printf("ABSOLUTE => %s\n", yytext); nchar += yyleng; return ENUM_QB_ABSOLUTE; }
+#line 549 "bas.l"
+{	printf("ABSOLUTE => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_ABSOLUTE; }
 	YY_BREAK
 case 344:
 YY_RULE_SETUP
-#line 1681 "bas.l"
-{	printf("_MEMCOPY => %s\n", yytext); nchar += yyleng; return ENUM_QB__MEMCOPY; }
+#line 550 "bas.l"
+{	printf("_MEMCOPY => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__MEMCOPY; }
 	YY_BREAK
 case 345:
 YY_RULE_SETUP
-#line 1682 "bas.l"
-{	printf("_SCREENY => %s\n", yytext); nchar += yyleng; return ENUM_QB__SCREENY; }
+#line 551 "bas.l"
+{	printf("_SCREENY => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__SCREENY; }
 	YY_BREAK
 case 346:
 YY_RULE_SETUP
-#line 1683 "bas.l"
-{	printf("KEY LIST => %s\n", yytext); nchar += yyleng; return ENUM_QB_KEY_LIST; }
+#line 552 "bas.l"
+{	printf("KEY LIST => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_KEY_LIST; }
 	YY_BREAK
 case 347:
 YY_RULE_SETUP
-#line 1684 "bas.l"
-{	printf("_MEMFILL => %s\n", yytext); nchar += yyleng; return ENUM_QB__MEMFILL; }
+#line 553 "bas.l"
+{	printf("_MEMFILL => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__MEMFILL; }
 	YY_BREAK
 case 348:
 YY_RULE_SETUP
-#line 1685 "bas.l"
-{	printf("_ALPHA32 => %s\n", yytext); nchar += yyleng; return ENUM_QB__ALPHA32; }
+#line 554 "bas.l"
+{	printf("_ALPHA32 => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__ALPHA32; }
 	YY_BREAK
 case 349:
 YY_RULE_SETUP
-#line 1686 "bas.l"
-{	printf("IOCTL$ => %s\n", yytext); nchar += yyleng; return ENUM_QB_IOCTL_DS; }
+#line 555 "bas.l"
+{	printf("IOCTL$ => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_IOCTL_DS; }
 	YY_BREAK
 case 350:
 YY_RULE_SETUP
-#line 1687 "bas.l"
-{	printf("_SNDPLAY => %s\n", yytext); nchar += yyleng; return ENUM_QB__SNDPLAY; }
+#line 556 "bas.l"
+{	printf("_SNDPLAY => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__SNDPLAY; }
 	YY_BREAK
 case 351:
 YY_RULE_SETUP
-#line 1688 "bas.l"
-{	printf("UCASE$ => %s\n", yytext); nchar += yyleng; return ENUM_QB_UCASE_DS; }
+#line 557 "bas.l"
+{	printf("UCASE$ => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_UCASE_DS; }
 	YY_BREAK
 case 352:
 YY_RULE_SETUP
-#line 1689 "bas.l"
-{	printf("PUT FILE => %s\n", yytext); nchar += yyleng; return ENUM_QB_PUT_FILE; }
+#line 558 "bas.l"
+{	printf("PUT FILE => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_PUT_FILE; }
 	YY_BREAK
 case 353:
 YY_RULE_SETUP
-#line 1690 "bas.l"
-{	printf("PUT QB64 => %s\n", yytext); nchar += yyleng; return ENUM_QB_PUT_QB64; }
+#line 559 "bas.l"
+{	printf("PUT QB64 => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_PUT_QB64; }
 	YY_BREAK
 case 354:
 YY_RULE_SETUP
-#line 1691 "bas.l"
-{	printf("_SNDLOOP => %s\n", yytext); nchar += yyleng; return ENUM_QB__SNDLOOP; }
+#line 560 "bas.l"
+{	printf("_SNDLOOP => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__SNDLOOP; }
 	YY_BREAK
 case 355:
 YY_RULE_SETUP
-#line 1692 "bas.l"
-{	printf("_glHint => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glHint; }
+#line 561 "bas.l"
+{	printf("_glHint => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glHint; }
 	YY_BREAK
 case 356:
 YY_RULE_SETUP
-#line 1693 "bas.l"
-{	printf("_SNDOPEN => %s\n", yytext); nchar += yyleng; return ENUM_QB__SNDOPEN; }
+#line 562 "bas.l"
+{	printf("_SNDOPEN => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__SNDOPEN; }
 	YY_BREAK
 case 357:
 YY_RULE_SETUP
-#line 1694 "bas.l"
-{	printf("SPACE$ => %s\n", yytext); nchar += yyleng; return ENUM_QB_SPACE_DS; }
+#line 563 "bas.l"
+{	printf("SPACE$ => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_SPACE_DS; }
 	YY_BREAK
 case 358:
 YY_RULE_SETUP
-#line 1695 "bas.l"
-{	printf("_STRICMP => %s\n", yytext); nchar += yyleng; return ENUM_QB__STRICMP; }
+#line 564 "bas.l"
+{	printf("_STRICMP => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__STRICMP; }
 	YY_BREAK
 case 359:
 YY_RULE_SETUP
-#line 1696 "bas.l"
-{	printf("_glRects => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glRects; }
+#line 565 "bas.l"
+{	printf("_glRects => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glRects; }
 	YY_BREAK
 case 360:
 YY_RULE_SETUP
-#line 1697 "bas.l"
-{	printf("_glRecti => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glRecti; }
+#line 566 "bas.l"
+{	printf("_glRecti => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glRecti; }
 	YY_BREAK
 case 361:
 YY_RULE_SETUP
-#line 1698 "bas.l"
-{	printf("MKDMBF$ => %s\n", yytext); nchar += yyleng; return ENUM_QB_MKDMBF_DS; }
+#line 567 "bas.l"
+{	printf("MKDMBF$ => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_MKDMBF_DS; }
 	YY_BREAK
 case 362:
 YY_RULE_SETUP
-#line 1699 "bas.l"
-{	printf("$ELSEIF => %s\n", yytext); nchar += yyleng; return ENUM_QB_DS_ELSEIF; }
+#line 568 "bas.l"
+{	printf("$ELSEIF => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_DS_ELSEIF; }
 	YY_BREAK
 case 363:
 YY_RULE_SETUP
-#line 1700 "bas.l"
-{	printf("_OPENHOST => %s\n", yytext); nchar += yyleng; return ENUM_QB__OPENHOST; }
+#line 569 "bas.l"
+{	printf("_OPENHOST => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__OPENHOST; }
 	YY_BREAK
 case 364:
 YY_RULE_SETUP
-#line 1701 "bas.l"
-{	printf("_DONTWAIT => %s\n", yytext); nchar += yyleng; return ENUM_QB__DONTWAIT; }
+#line 570 "bas.l"
+{	printf("_DONTWAIT => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__DONTWAIT; }
 	YY_BREAK
 case 365:
 YY_RULE_SETUP
-#line 1702 "bas.l"
-{	printf("_glAccum => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glAccum; }
+#line 571 "bas.l"
+{	printf("_glAccum => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glAccum; }
 	YY_BREAK
 case 366:
 YY_RULE_SETUP
-#line 1703 "bas.l"
-{	printf("_SNDLIMIT => %s\n", yytext); nchar += yyleng; return ENUM_QB__SNDLIMIT; }
+#line 572 "bas.l"
+{	printf("_SNDLIMIT => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__SNDLIMIT; }
 	YY_BREAK
 case 367:
 YY_RULE_SETUP
-#line 1704 "bas.l"
-{	printf("RANDOMIZE => %s\n", yytext); nchar += yyleng; return ENUM_QB_RANDOMIZE; }
+#line 573 "bas.l"
+{	printf("RANDOMIZE => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_RANDOMIZE; }
 	YY_BREAK
 case 368:
 YY_RULE_SETUP
-#line 1705 "bas.l"
-{	printf("STRING$ => %s\n", yytext); nchar += yyleng; return ENUM_QB_STRING_DS; }
+#line 574 "bas.l"
+{	printf("STRING$ => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_STRING_DS; }
 	YY_BREAK
 case 369:
 YY_RULE_SETUP
-#line 1706 "bas.l"
-{	printf("$STATIC => %s\n", yytext); nchar += yyleng; return ENUM_QB_DS_STATIC; }
+#line 575 "bas.l"
+{	printf("$STATIC => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_DS_STATIC; }
 	YY_BREAK
 case 370:
 YY_RULE_SETUP
-#line 1707 "bas.l"
-{	printf("_SETALPHA => %s\n", yytext); nchar += yyleng; return ENUM_QB__SETALPHA; }
+#line 576 "bas.l"
+{	printf("_SETALPHA => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__SETALPHA; }
 	YY_BREAK
 case 371:
 YY_RULE_SETUP
-#line 1708 "bas.l"
-{	printf("_SNDCLOSE => %s\n", yytext); nchar += yyleng; return ENUM_QB__SNDCLOSE; }
+#line 577 "bas.l"
+{	printf("_SNDCLOSE => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__SNDCLOSE; }
 	YY_BREAK
 case 372:
 YY_RULE_SETUP
-#line 1709 "bas.l"
-{	printf("_PRESERVE => %s\n", yytext); nchar += yyleng; return ENUM_QB__PRESERVE; }
+#line 578 "bas.l"
+{	printf("_PRESERVE => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__PRESERVE; }
 	YY_BREAK
 case 373:
 YY_RULE_SETUP
-#line 1710 "bas.l"
-{	printf("VARPTR$ => %s\n", yytext); nchar += yyleng; return ENUM_QB_VARPTR_DS; }
+#line 579 "bas.l"
+{	printf("VARPTR$ => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_VARPTR_DS; }
 	YY_BREAK
 case 374:
 YY_RULE_SETUP
-#line 1711 "bas.l"
-{	printf("_glClear => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glClear; }
+#line 580 "bas.l"
+{	printf("_glClear => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glClear; }
 	YY_BREAK
 case 375:
 YY_RULE_SETUP
-#line 1712 "bas.l"
-{	printf("ON UEVENT => %s\n", yytext); nchar += yyleng; return ENUM_QB_ON_UEVENT; }
+#line 581 "bas.l"
+{	printf("ON UEVENT => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_ON_UEVENT; }
 	YY_BREAK
 case 376:
 YY_RULE_SETUP
-#line 1713 "bas.l"
-{	printf("_glBegin => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glBegin; }
+#line 582 "bas.l"
+{	printf("_glBegin => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glBegin; }
 	YY_BREAK
 case 377:
 YY_RULE_SETUP
-#line 1714 "bas.l"
-{	printf("_PUTIMAGE => %s\n", yytext); nchar += yyleng; return ENUM_QB__PUTIMAGE; }
+#line 583 "bas.l"
+{	printf("_PUTIMAGE => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__PUTIMAGE; }
 	YY_BREAK
 case 378:
 YY_RULE_SETUP
-#line 1715 "bas.l"
-{	printf("_SNDPAUSE => %s\n", yytext); nchar += yyleng; return ENUM_QB__SNDPAUSE; }
+#line 584 "bas.l"
+{	printf("_SNDPAUSE => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__SNDPAUSE; }
 	YY_BREAK
 case 379:
 YY_RULE_SETUP
-#line 1716 "bas.l"
-{	printf("$RESIZE => %s\n", yytext); nchar += yyleng; return ENUM_QB_DS_RESIZE; }
+#line 585 "bas.l"
+{	printf("$RESIZE => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_DS_RESIZE; }
 	YY_BREAK
 case 380:
 YY_RULE_SETUP
-#line 1717 "bas.l"
-{	printf("MKSMBF$ => %s\n", yytext); nchar += yyleng; return ENUM_QB_MKSMBF_DS; }
+#line 586 "bas.l"
+{	printf("MKSMBF$ => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_MKSMBF_DS; }
 	YY_BREAK
 case 381:
 YY_RULE_SETUP
-#line 1718 "bas.l"
-{	printf("_UNSIGNED => %s\n", yytext); nchar += yyleng; return ENUM_QB__UNSIGNED; }
+#line 587 "bas.l"
+{	printf("_UNSIGNED => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__UNSIGNED; }
 	YY_BREAK
 case 382:
 YY_RULE_SETUP
-#line 1719 "bas.l"
-{	printf("_FREEFONT => %s\n", yytext); nchar += yyleng; return ENUM_QB__FREEFONT; }
+#line 588 "bas.l"
+{	printf("_FREEFONT => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__FREEFONT; }
 	YY_BREAK
 case 383:
 YY_RULE_SETUP
-#line 1720 "bas.l"
-{	printf("_glMap1f => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glMap1f; }
+#line 589 "bas.l"
+{	printf("_glMap1f => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glMap1f; }
 	YY_BREAK
 case 384:
 YY_RULE_SETUP
-#line 1721 "bas.l"
-{	printf("_glMap1d => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glMap1d; }
+#line 590 "bas.l"
+{	printf("_glMap1d => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glMap1d; }
 	YY_BREAK
 case 385:
 YY_RULE_SETUP
-#line 1722 "bas.l"
-{	printf("_glFlush => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glFlush; }
+#line 591 "bas.l"
+{	printf("_glFlush => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glFlush; }
 	YY_BREAK
 case 386:
 YY_RULE_SETUP
-#line 1723 "bas.l"
-{	printf("_LOADFONT => %s\n", yytext); nchar += yyleng; return ENUM_QB__LOADFONT; }
+#line 592 "bas.l"
+{	printf("_LOADFONT => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__LOADFONT; }
 	YY_BREAK
 case 387:
 YY_RULE_SETUP
-#line 1724 "bas.l"
-{	printf("_glOrtho => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glOrtho; }
+#line 593 "bas.l"
+{	printf("_glOrtho => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glOrtho; }
 	YY_BREAK
 case 388:
 YY_RULE_SETUP
-#line 1725 "bas.l"
-{	printf("_NEWIMAGE => %s\n", yytext); nchar += yyleng; return ENUM_QB__NEWIMAGE; }
+#line 594 "bas.l"
+{	printf("_NEWIMAGE => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__NEWIMAGE; }
 	YY_BREAK
 case 389:
 YY_RULE_SETUP
-#line 1726 "bas.l"
-{	printf("_LASTAXIS => %s\n", yytext); nchar += yyleng; return ENUM_QB__LASTAXIS; }
+#line 595 "bas.l"
+{	printf("_LASTAXIS => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__LASTAXIS; }
 	YY_BREAK
 case 390:
 YY_RULE_SETUP
-#line 1727 "bas.l"
-{	printf("_KEYCLEAR => %s\n", yytext); nchar += yyleng; return ENUM_QB__KEYCLEAR; }
+#line 596 "bas.l"
+{	printf("_KEYCLEAR => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__KEYCLEAR; }
 	YY_BREAK
 case 391:
 YY_RULE_SETUP
-#line 1728 "bas.l"
-{	printf("_glRectf => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glRectf; }
+#line 597 "bas.l"
+{	printf("_glRectf => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glRectf; }
 	YY_BREAK
 case 392:
 YY_RULE_SETUP
-#line 1729 "bas.l"
-{	printf("_glMap2f => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glMap2f; }
+#line 598 "bas.l"
+{	printf("_glMap2f => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glMap2f; }
 	YY_BREAK
 case 393:
 YY_RULE_SETUP
-#line 1730 "bas.l"
-{	printf("_glFogiv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glFogiv; }
+#line 599 "bas.l"
+{	printf("_glFogiv => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glFogiv; }
 	YY_BREAK
 case 394:
 YY_RULE_SETUP
-#line 1731 "bas.l"
-{	printf("_glMap2d => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glMap2d; }
+#line 600 "bas.l"
+{	printf("_glMap2d => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glMap2d; }
 	YY_BREAK
 case 395:
 YY_RULE_SETUP
-#line 1732 "bas.l"
-{	printf("_glFogfv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glFogfv; }
+#line 601 "bas.l"
+{	printf("_glFogfv => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glFogfv; }
 	YY_BREAK
 case 396:
 YY_RULE_SETUP
-#line 1733 "bas.l"
-{	printf("_MEMIMAGE => %s\n", yytext); nchar += yyleng; return ENUM_QB__MEMIMAGE; }
+#line 602 "bas.l"
+{	printf("_MEMIMAGE => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__MEMIMAGE; }
 	YY_BREAK
 case 397:
 YY_RULE_SETUP
-#line 1734 "bas.l"
-{	printf("CASE ELSE => %s\n", yytext); nchar += yyleng; return ENUM_QB_CASE_ELSE; }
+#line 603 "bas.l"
+{	printf("CASE ELSE => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_CASE_ELSE; }
 	YY_BREAK
 case 398:
 YY_RULE_SETUP
-#line 1735 "bas.l"
-{	printf("_glRectd => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glRectd; }
+#line 604 "bas.l"
+{	printf("_glRectd => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glRectd; }
 	YY_BREAK
 case 399:
 YY_RULE_SETUP
-#line 1736 "bas.l"
-{	printf("INTERRUPT => %s\n", yytext); nchar += yyleng; return ENUM_QB_INTERRUPT; }
+#line 605 "bas.l"
+{	printf("INTERRUPT => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_INTERRUPT; }
 	YY_BREAK
 case 400:
 YY_RULE_SETUP
-#line 1737 "bas.l"
-{	printf("WHILE WEND => %s\n", yytext); nchar += yyleng; return ENUM_QB_WHILE_WEND; }
+#line 606 "bas.l"
+{	printf("WHILE WEND => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_WHILE_WEND; }
 	YY_BREAK
 case 401:
 YY_RULE_SETUP
-#line 1738 "bas.l"
-{	printf("WRITE FILE => %s\n", yytext); nchar += yyleng; return ENUM_QB_WRITE_FILE; }
+#line 607 "bas.l"
+{	printf("WRITE FILE => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_WRITE_FILE; }
 	YY_BREAK
 case 402:
 YY_RULE_SETUP
-#line 1739 "bas.l"
-{	printf("_CONNECTED => %s\n", yytext); nchar += yyleng; return ENUM_QB__CONNECTED; }
+#line 608 "bas.l"
+{	printf("_CONNECTED => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__CONNECTED; }
 	YY_BREAK
 case 403:
 YY_RULE_SETUP
-#line 1740 "bas.l"
-{	printf("ENVIRON$ => %s\n", yytext); nchar += yyleng; return ENUM_QB_ENVIRON_DS; }
+#line 609 "bas.l"
+{	printf("ENVIRON$ => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_ENVIRON_DS; }
 	YY_BREAK
 case 404:
 YY_RULE_SETUP
-#line 1741 "bas.l"
-{	printf("COMMAND$ => %s\n", yytext); nchar += yyleng; return ENUM_QB_COMMAND_DS; }
+#line 610 "bas.l"
+{	printf("COMMAND$ => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_COMMAND_DS; }
 	YY_BREAK
 case 405:
 YY_RULE_SETUP
-#line 1742 "bas.l"
-{	printf("_glIndexi => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glIndexi; }
+#line 611 "bas.l"
+{	printf("_glIndexi => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glIndexi; }
 	YY_BREAK
 case 406:
 YY_RULE_SETUP
-#line 1743 "bas.l"
-{	printf("_glIndexs => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glIndexs; }
+#line 612 "bas.l"
+{	printf("_glIndexs => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glIndexs; }
 	YY_BREAK
 case 407:
 YY_RULE_SETUP
-#line 1744 "bas.l"
-{	printf("_MEMEXISTS => %s\n", yytext); nchar += yyleng; return ENUM_QB__MEMEXISTS; }
+#line 613 "bas.l"
+{	printf("_MEMEXISTS => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__MEMEXISTS; }
 	YY_BREAK
 case 408:
 YY_RULE_SETUP
-#line 1745 "bas.l"
-{	printf("_glScalef => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glScalef; }
+#line 614 "bas.l"
+{	printf("_glScalef => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glScalef; }
 	YY_BREAK
 case 409:
 YY_RULE_SETUP
-#line 1746 "bas.l"
-{	printf("_glBitmap => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glBitmap; }
+#line 615 "bas.l"
+{	printf("_glBitmap => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glBitmap; }
 	YY_BREAK
 case 410:
 YY_RULE_SETUP
-#line 1747 "bas.l"
-{	printf("_SHELLHIDE => %s\n", yytext); nchar += yyleng; return ENUM_QB__SHELLHIDE; }
+#line 616 "bas.l"
+{	printf("_SHELLHIDE => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__SHELLHIDE; }
 	YY_BREAK
 case 411:
 YY_RULE_SETUP
-#line 1748 "bas.l"
-{	printf("SHELL QB64 => %s\n", yytext); nchar += yyleng; return ENUM_QB_SHELL_QB64; }
+#line 617 "bas.l"
+{	printf("SHELL QB64 => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_SHELL_QB64; }
 	YY_BREAK
 case 412:
 YY_RULE_SETUP
-#line 1749 "bas.l"
-{	printf("_glIsList => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glIsList; }
+#line 618 "bas.l"
+{	printf("_glIsList => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glIsList; }
 	YY_BREAK
 case 413:
 YY_RULE_SETUP
-#line 1750 "bas.l"
-{	printf("$CONSOLE => %s\n", yytext); nchar += yyleng; return ENUM_QB_DS_CONSOLE; }
+#line 619 "bas.l"
+{	printf("$CONSOLE => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_DS_CONSOLE; }
 	YY_BREAK
 case 414:
 YY_RULE_SETUP
-#line 1751 "bas.l"
-{	printf("_MOUSEMOVE => %s\n", yytext); nchar += yyleng; return ENUM_QB__MOUSEMOVE; }
+#line 620 "bas.l"
+{	printf("_MOUSEMOVE => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__MOUSEMOVE; }
 	YY_BREAK
 case 415:
 YY_RULE_SETUP
-#line 1752 "bas.l"
-{	printf("_glIndexd => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glIndexd; }
+#line 621 "bas.l"
+{	printf("_glIndexd => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glIndexd; }
 	YY_BREAK
 case 416:
 YY_RULE_SETUP
-#line 1753 "bas.l"
-{	printf("$DYNAMIC => %s\n", yytext); nchar += yyleng; return ENUM_QB_DS_DYNAMIC; }
+#line 622 "bas.l"
+{	printf("$DYNAMIC => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_DS_DYNAMIC; }
 	YY_BREAK
 case 417:
 YY_RULE_SETUP
-#line 1754 "bas.l"
-{	printf("_MOUSEHIDE => %s\n", yytext); nchar += yyleng; return ENUM_QB__MOUSEHIDE; }
+#line 623 "bas.l"
+{	printf("_MOUSEHIDE => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__MOUSEHIDE; }
 	YY_BREAK
 case 418:
 YY_RULE_SETUP
-#line 1755 "bas.l"
-{	printf("_PIXELSIZE => %s\n", yytext); nchar += yyleng; return ENUM_QB__PIXELSIZE; }
+#line 624 "bas.l"
+{	printf("_PIXELSIZE => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__PIXELSIZE; }
 	YY_BREAK
 case 419:
 YY_RULE_SETUP
-#line 1756 "bas.l"
-{	printf("_COPYIMAGE => %s\n", yytext); nchar += yyleng; return ENUM_QB__COPYIMAGE; }
+#line 625 "bas.l"
+{	printf("_COPYIMAGE => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__COPYIMAGE; }
 	YY_BREAK
 case 420:
 YY_RULE_SETUP
-#line 1757 "bas.l"
-{	printf("_LOADIMAGE => %s\n", yytext); nchar += yyleng; return ENUM_QB__LOADIMAGE; }
+#line 626 "bas.l"
+{	printf("_LOADIMAGE => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__LOADIMAGE; }
 	YY_BREAK
 case 421:
 YY_RULE_SETUP
-#line 1758 "bas.l"
-{	printf("_glScaled => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glScaled; }
+#line 627 "bas.l"
+{	printf("_glScaled => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glScaled; }
 	YY_BREAK
 case 422:
 YY_RULE_SETUP
-#line 1759 "bas.l"
-{	printf("_SNDGETPOS => %s\n", yytext); nchar += yyleng; return ENUM_QB__SNDGETPOS; }
+#line 628 "bas.l"
+{	printf("_SNDGETPOS => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__SNDGETPOS; }
 	YY_BREAK
 case 423:
 YY_RULE_SETUP
-#line 1760 "bas.l"
-{	printf("VIEW PRINT => %s\n", yytext); nchar += yyleng; return ENUM_QB_VIEW_PRINT; }
+#line 629 "bas.l"
+{	printf("VIEW PRINT => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_VIEW_PRINT; }
 	YY_BREAK
 case 424:
 YY_RULE_SETUP
-#line 1761 "bas.l"
-{	printf("_glLighti => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glLighti; }
+#line 630 "bas.l"
+{	printf("_glLighti => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glLighti; }
 	YY_BREAK
 case 425:
 YY_RULE_SETUP
-#line 1762 "bas.l"
-{	printf("_glIndexf => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glIndexf; }
+#line 631 "bas.l"
+{	printf("_glIndexf => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glIndexf; }
 	YY_BREAK
 case 426:
 YY_RULE_SETUP
-#line 1763 "bas.l"
-{	printf("PRINT FILE => %s\n", yytext); nchar += yyleng; return ENUM_QB_PRINT_FILE; }
+#line 632 "bas.l"
+{	printf("PRINT FILE => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_PRINT_FILE; }
 	YY_BREAK
 case 427:
 YY_RULE_SETUP
-#line 1764 "bas.l"
-{	printf("_LASTWHEEL => %s\n", yytext); nchar += yyleng; return ENUM_QB__LASTWHEEL; }
+#line 633 "bas.l"
+{	printf("_LASTWHEEL => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__LASTWHEEL; }
 	YY_BREAK
 case 428:
 YY_RULE_SETUP
-#line 1765 "bas.l"
-{	printf("PRINT QB64 => %s\n", yytext); nchar += yyleng; return ENUM_QB_PRINT_QB64; }
+#line 634 "bas.l"
+{	printf("PRINT QB64 => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_PRINT_QB64; }
 	YY_BREAK
 case 429:
 YY_RULE_SETUP
-#line 1766 "bas.l"
-{	printf("_SNDPAUSED => %s\n", yytext); nchar += yyleng; return ENUM_QB__SNDPAUSED; }
+#line 635 "bas.l"
+{	printf("_SNDPAUSED => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__SNDPAUSED; }
 	YY_BREAK
 case 430:
 YY_RULE_SETUP
-#line 1767 "bas.l"
-{	printf("_INTEGER64 => %s\n", yytext); nchar += yyleng; return ENUM_QB__INTEGER64; }
+#line 636 "bas.l"
+{	printf("_INTEGER64 => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__INTEGER64; }
 	YY_BREAK
 case 431:
 YY_RULE_SETUP
-#line 1768 "bas.l"
-{	printf("_DIREXISTS => %s\n", yytext); nchar += yyleng; return ENUM_QB__DIREXISTS; }
+#line 637 "bas.l"
+{	printf("_DIREXISTS => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__DIREXISTS; }
 	YY_BREAK
 case 432:
 YY_RULE_SETUP
-#line 1769 "bas.l"
-{	printf("INPUT QB64 => %s\n", yytext); nchar += yyleng; return ENUM_QB_INPUT_QB64; }
+#line 638 "bas.l"
+{	printf("INPUT QB64 => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_INPUT_QB64; }
 	YY_BREAK
 case 433:
 YY_RULE_SETUP
-#line 1770 "bas.l"
-{	printf("_glFinish => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glFinish; }
+#line 639 "bas.l"
+{	printf("_glFinish => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glFinish; }
 	YY_BREAK
 case 434:
 YY_RULE_SETUP
-#line 1771 "bas.l"
-{	printf("_glLightf => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glLightf; }
+#line 640 "bas.l"
+{	printf("_glLightf => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glLightf; }
 	YY_BREAK
 case 435:
 YY_RULE_SETUP
-#line 1772 "bas.l"
-{	printf("LINE INPUT => %s\n", yytext); nchar += yyleng; return ENUM_QB_LINE_INPUT; }
+#line 641 "bas.l"
+{	printf("LINE INPUT => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_LINE_INPUT; }
 	YY_BREAK
 case 436:
 YY_RULE_SETUP
-#line 1773 "bas.l"
-{	printf("_glRectiv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glRectiv; }
+#line 642 "bas.l"
+{	printf("_glRectiv => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glRectiv; }
 	YY_BREAK
 case 437:
 YY_RULE_SETUP
-#line 1774 "bas.l"
-{	printf("$ELSE IF => %s\n", yytext); nchar += yyleng; return ENUM_QB_DS_ELSE_IF; }
+#line 643 "bas.l"
+{	printf("$ELSE IF => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_DS_ELSE_IF; }
 	YY_BREAK
 case 438:
 YY_RULE_SETUP
-#line 1775 "bas.l"
-{	printf("_glRectsv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glRectsv; }
+#line 644 "bas.l"
+{	printf("_glRectsv => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glRectsv; }
 	YY_BREAK
 case 439:
 YY_RULE_SETUP
-#line 1776 "bas.l"
-{	printf("_DONTBLEND => %s\n", yytext); nchar += yyleng; return ENUM_QB__DONTBLEND; }
+#line 645 "bas.l"
+{	printf("_DONTBLEND => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__DONTBLEND; }
 	YY_BREAK
 case 440:
 YY_RULE_SETUP
-#line 1777 "bas.l"
-{	printf("INTERRUPTX => %s\n", yytext); nchar += yyleng; return ENUM_QB_INTERRUPTX; }
+#line 646 "bas.l"
+{	printf("INTERRUPTX => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_INTERRUPTX; }
 	YY_BREAK
 case 441:
 YY_RULE_SETUP
-#line 1778 "bas.l"
-{	printf("_glEnable => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glEnable; }
+#line 647 "bas.l"
+{	printf("_glEnable => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glEnable; }
 	YY_BREAK
 case 442:
 YY_RULE_SETUP
-#line 1779 "bas.l"
-{	printf("_DEVICE$ => %s\n", yytext); nchar += yyleng; return ENUM_QB__DEVICE_DS; }
+#line 648 "bas.l"
+{	printf("_DEVICE$ => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__DEVICE_DS; }
 	YY_BREAK
 case 443:
 YY_RULE_SETUP
-#line 1780 "bas.l"
-{	printf("_FONTWIDTH => %s\n", yytext); nchar += yyleng; return ENUM_QB__FONTWIDTH; }
+#line 649 "bas.l"
+{	printf("_FONTWIDTH => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__FONTWIDTH; }
 	YY_BREAK
 case 444:
 YY_RULE_SETUP
-#line 1781 "bas.l"
-{	printf("_ERRORLINE => %s\n", yytext); nchar += yyleng; return ENUM_QB__ERRORLINE; }
+#line 650 "bas.l"
+{	printf("_ERRORLINE => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__ERRORLINE; }
 	YY_BREAK
 case 445:
 YY_RULE_SETUP
-#line 1782 "bas.l"
-{	printf("_FREEIMAGE => %s\n", yytext); nchar += yyleng; return ENUM_QB__FREEIMAGE; }
+#line 651 "bas.l"
+{	printf("_FREEIMAGE => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__FREEIMAGE; }
 	YY_BREAK
 case 446:
 YY_RULE_SETUP
-#line 1783 "bas.l"
-{	printf("_FREETIMER => %s\n", yytext); nchar += yyleng; return ENUM_QB__FREETIMER; }
+#line 652 "bas.l"
+{	printf("_FREETIMER => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__FREETIMER; }
 	YY_BREAK
 case 447:
 YY_RULE_SETUP
-#line 1784 "bas.l"
-{	printf("_MOUSESHOW => %s\n", yytext); nchar += yyleng; return ENUM_QB__MOUSESHOW; }
+#line 653 "bas.l"
+{	printf("_MOUSESHOW => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__MOUSESHOW; }
 	YY_BREAK
 case 448:
 YY_RULE_SETUP
-#line 1785 "bas.l"
-{	printf("_SNDRAWLEN => %s\n", yytext); nchar += yyleng; return ENUM_QB__SNDRAWLEN; }
+#line 654 "bas.l"
+{	printf("_SNDRAWLEN => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__SNDRAWLEN; }
 	YY_BREAK
 case 449:
 YY_RULE_SETUP
-#line 1786 "bas.l"
-{	printf("_glRectdv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glRectdv; }
+#line 655 "bas.l"
+{	printf("_glRectdv => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glRectdv; }
 	YY_BREAK
 case 450:
 YY_RULE_SETUP
-#line 1787 "bas.l"
-{	printf("_glRectfv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glRectfv; }
+#line 656 "bas.l"
+{	printf("_glRectfv => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glRectfv; }
 	YY_BREAK
 case 451:
 YY_RULE_SETUP
-#line 1788 "bas.l"
-{	printf("_SNDSETPOS => %s\n", yytext); nchar += yyleng; return ENUM_QB__SNDSETPOS; }
+#line 657 "bas.l"
+{	printf("_SNDSETPOS => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__SNDSETPOS; }
 	YY_BREAK
 case 452:
 YY_RULE_SETUP
-#line 1789 "bas.l"
-{	printf("_glIndexfv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glIndexfv; }
+#line 658 "bas.l"
+{	printf("_glIndexfv => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glIndexfv; }
 	YY_BREAK
 case 453:
 YY_RULE_SETUP
-#line 1790 "bas.l"
-{	printf("_SCREENHIDE => %s\n", yytext); nchar += yyleng; return ENUM_QB__SCREENHIDE; }
+#line 659 "bas.l"
+{	printf("_SCREENHIDE => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__SCREENHIDE; }
 	YY_BREAK
 case 454:
 YY_RULE_SETUP
-#line 1791 "bas.l"
-{	printf("_glDisable => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glDisable; }
+#line 660 "bas.l"
+{	printf("_glDisable => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glDisable; }
 	YY_BREAK
 case 455:
 YY_RULE_SETUP
-#line 1792 "bas.l"
-{	printf("_glIndexdv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glIndexdv; }
+#line 661 "bas.l"
+{	printf("_glIndexdv => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glIndexdv; }
 	YY_BREAK
 case 456:
 YY_RULE_SETUP
-#line 1793 "bas.l"
-{	printf("_SCREENSHOW => %s\n", yytext); nchar += yyleng; return ENUM_QB__SCREENSHOW; }
+#line 662 "bas.l"
+{	printf("_SCREENSHOW => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__SCREENSHOW; }
 	YY_BREAK
 case 457:
 YY_RULE_SETUP
-#line 1794 "bas.l"
-{	printf("_glPopName => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glPopName; }
+#line 663 "bas.l"
+{	printf("_glPopName => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glPopName; }
 	YY_BREAK
 case 458:
 YY_RULE_SETUP
-#line 1795 "bas.l"
-{	printf("_glIndexsv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glIndexsv; }
+#line 664 "bas.l"
+{	printf("_glIndexsv => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glIndexsv; }
 	YY_BREAK
 case 459:
 YY_RULE_SETUP
-#line 1796 "bas.l"
-{	printf("_glIndexub => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glIndexub; }
+#line 665 "bas.l"
+{	printf("_glIndexub => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glIndexub; }
 	YY_BREAK
 case 460:
 YY_RULE_SETUP
-#line 1797 "bas.l"
-{	printf("_glIndexiv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glIndexiv; }
+#line 666 "bas.l"
+{	printf("_glIndexiv => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glIndexiv; }
 	YY_BREAK
 case 461:
 YY_RULE_SETUP
-#line 1798 "bas.l"
-{	printf("_MEMELEMENT => %s\n", yytext); nchar += yyleng; return ENUM_QB__MEMELEMENT; }
+#line 667 "bas.l"
+{	printf("_MEMELEMENT => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__MEMELEMENT; }
 	YY_BREAK
 case 462:
 YY_RULE_SETUP
-#line 1799 "bas.l"
-{	printf("_glLightfv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glLightfv; }
+#line 668 "bas.l"
+{	printf("_glLightfv => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glLightfv; }
 	YY_BREAK
 case 463:
 YY_RULE_SETUP
-#line 1800 "bas.l"
-{	printf("_SCREENMOVE => %s\n", yytext); nchar += yyleng; return ENUM_QB__SCREENMOVE; }
+#line 669 "bas.l"
+{	printf("_SCREENMOVE => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__SCREENMOVE; }
 	YY_BREAK
 case 464:
 YY_RULE_SETUP
-#line 1801 "bas.l"
-{	printf("_glColor4s => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glColor4s; }
+#line 670 "bas.l"
+{	printf("_glColor4s => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glColor4s; }
 	YY_BREAK
 case 465:
 YY_RULE_SETUP
-#line 1802 "bas.l"
-{	printf("_PRINTIMAGE => %s\n", yytext); nchar += yyleng; return ENUM_QB__PRINTIMAGE; }
+#line 671 "bas.l"
+{	printf("_PRINTIMAGE => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__PRINTIMAGE; }
 	YY_BREAK
 case 466:
 YY_RULE_SETUP
-#line 1803 "bas.l"
-{	printf("_glColor3i => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glColor3i; }
+#line 672 "bas.l"
+{	printf("_glColor3i => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glColor3i; }
 	YY_BREAK
 case 467:
 YY_RULE_SETUP
-#line 1804 "bas.l"
-{	printf("_glColor3s => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glColor3s; }
+#line 673 "bas.l"
+{	printf("_glColor3s => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glColor3s; }
 	YY_BREAK
 case 468:
 YY_RULE_SETUP
-#line 1805 "bas.l"
-{	printf("_glColor4b => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glColor4b; }
+#line 674 "bas.l"
+{	printf("_glColor4b => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glColor4b; }
 	YY_BREAK
 case 469:
 YY_RULE_SETUP
-#line 1806 "bas.l"
-{	printf("_glColor3f => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glColor3f; }
+#line 675 "bas.l"
+{	printf("_glColor3f => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glColor3f; }
 	YY_BREAK
 case 470:
 YY_RULE_SETUP
-#line 1807 "bas.l"
-{	printf("_glFrustum => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glFrustum; }
+#line 676 "bas.l"
+{	printf("_glFrustum => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glFrustum; }
 	YY_BREAK
 case 471:
 YY_RULE_SETUP
-#line 1808 "bas.l"
-{	printf("_glScissor => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glScissor; }
+#line 677 "bas.l"
+{	printf("_glScissor => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glScissor; }
 	YY_BREAK
 case 472:
 YY_RULE_SETUP
-#line 1809 "bas.l"
-{	printf("_glNewList => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glNewList; }
+#line 678 "bas.l"
+{	printf("_glNewList => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glNewList; }
 	YY_BREAK
 case 473:
 YY_RULE_SETUP
-#line 1810 "bas.l"
-{	printf("_glColor3d => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glColor3d; }
+#line 679 "bas.l"
+{	printf("_glColor3d => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glColor3d; }
 	YY_BREAK
 case 474:
 YY_RULE_SETUP
-#line 1811 "bas.l"
-{	printf("_glColor4d => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glColor4d; }
+#line 680 "bas.l"
+{	printf("_glColor4d => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glColor4d; }
 	YY_BREAK
 case 475:
 YY_RULE_SETUP
-#line 1812 "bas.l"
-{	printf("_glColor4f => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glColor4f; }
+#line 681 "bas.l"
+{	printf("_glColor4f => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glColor4f; }
 	YY_BREAK
 case 476:
 YY_RULE_SETUP
-#line 1813 "bas.l"
-{	printf("_glRotatef => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glRotatef; }
+#line 682 "bas.l"
+{	printf("_glRotatef => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glRotatef; }
 	YY_BREAK
 case 477:
 YY_RULE_SETUP
-#line 1814 "bas.l"
-{	printf("_PRINTWIDTH => %s\n", yytext); nchar += yyleng; return ENUM_QB__PRINTWIDTH; }
+#line 683 "bas.l"
+{	printf("_PRINTWIDTH => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__PRINTWIDTH; }
 	YY_BREAK
 case 478:
 YY_RULE_SETUP
-#line 1815 "bas.l"
-{	printf("WHITE SPACE => %s\n", yytext); nchar += yyleng; return ENUM_QB_WHITE_SPACE; }
+#line 684 "bas.l"
+{	printf("WHITE SPACE => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_WHITE_SPACE; }
 	YY_BREAK
 case 479:
 YY_RULE_SETUP
-#line 1816 "bas.l"
-{	printf("_glLightiv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glLightiv; }
+#line 685 "bas.l"
+{	printf("_glLightiv => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glLightiv; }
 	YY_BREAK
 case 480:
 YY_RULE_SETUP
-#line 1817 "bas.l"
-{	printf("_glColor3b => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glColor3b; }
+#line 686 "bas.l"
+{	printf("_glColor3b => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glColor3b; }
 	YY_BREAK
 case 481:
 YY_RULE_SETUP
-#line 1818 "bas.l"
-{	printf("_glColor4i => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glColor4i; }
+#line 687 "bas.l"
+{	printf("_glColor4i => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glColor4i; }
 	YY_BREAK
 case 482:
 YY_RULE_SETUP
-#line 1819 "bas.l"
-{	printf("_glEndList => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glEndList; }
+#line 688 "bas.l"
+{	printf("_glEndList => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glEndList; }
 	YY_BREAK
 case 483:
 YY_RULE_SETUP
-#line 1820 "bas.l"
-{	printf("_glLogicOp => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glLogicOp; }
+#line 689 "bas.l"
+{	printf("_glLogicOp => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glLogicOp; }
 	YY_BREAK
 case 484:
 YY_RULE_SETUP
-#line 1821 "bas.l"
-{	printf("_glRotated => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glRotated; }
+#line 690 "bas.l"
+{	printf("_glRotated => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glRotated; }
 	YY_BREAK
 case 485:
 YY_RULE_SETUP
-#line 1822 "bas.l"
-{	printf("$CHECKING => %s\n", yytext); nchar += yyleng; return ENUM_QB_DS_CHECKING; }
+#line 691 "bas.l"
+{	printf("$CHECKING => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_DS_CHECKING; }
 	YY_BREAK
 case 486:
 YY_RULE_SETUP
-#line 1823 "bas.l"
-{	printf("_SNDOPENRAW => %s\n", yytext); nchar += yyleng; return ENUM_QB__SNDOPENRAW; }
+#line 692 "bas.l"
+{	printf("_SNDOPENRAW => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__SNDOPENRAW; }
 	YY_BREAK
 case 487:
 YY_RULE_SETUP
-#line 1824 "bas.l"
-{	printf("OPTION BASE => %s\n", yytext); nchar += yyleng; return ENUM_QB_OPTION_BASE; }
+#line 693 "bas.l"
+{	printf("OPTION BASE => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_OPTION_BASE; }
 	YY_BREAK
 case 488:
 YY_RULE_SETUP
-#line 1825 "bas.l"
-{	printf("PRINT USING => %s\n", yytext); nchar += yyleng; return ENUM_QB_PRINT_USING; }
+#line 694 "bas.l"
+{	printf("PRINT USING => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_PRINT_USING; }
 	YY_BREAK
 case 489:
 YY_RULE_SETUP
-#line 1826 "bas.l"
-{	printf("_LASTBUTTON => %s\n", yytext); nchar += yyleng; return ENUM_QB__LASTBUTTON; }
+#line 695 "bas.l"
+{	printf("_LASTBUTTON => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__LASTBUTTON; }
 	YY_BREAK
 case 490:
 YY_RULE_SETUP
-#line 1827 "bas.l"
-{	printf("_glTexGend => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glTexGend; }
+#line 696 "bas.l"
+{	printf("_glTexGend => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glTexGend; }
 	YY_BREAK
 case 491:
 YY_RULE_SETUP
-#line 1828 "bas.l"
-{	printf("_MOUSEINPUT => %s\n", yytext); nchar += yyleng; return ENUM_QB__MOUSEINPUT; }
+#line 697 "bas.l"
+{	printf("_MOUSEINPUT => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__MOUSEINPUT; }
 	YY_BREAK
 case 492:
 YY_RULE_SETUP
-#line 1829 "bas.l"
-{	printf("_SNDRAWDONE => %s\n", yytext); nchar += yyleng; return ENUM_QB__SNDRAWDONE; }
+#line 698 "bas.l"
+{	printf("_SNDRAWDONE => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__SNDRAWDONE; }
 	YY_BREAK
 case 493:
 YY_RULE_SETUP
-#line 1830 "bas.l"
-{	printf("_MOUSEWHEEL => %s\n", yytext); nchar += yyleng; return ENUM_QB__MOUSEWHEEL; }
+#line 699 "bas.l"
+{	printf("_MOUSEWHEEL => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__MOUSEWHEEL; }
 	YY_BREAK
 case 494:
 YY_RULE_SETUP
-#line 1831 "bas.l"
-{	printf("_OPENCLIENT => %s\n", yytext); nchar += yyleng; return ENUM_QB__OPENCLIENT; }
+#line 700 "bas.l"
+{	printf("_OPENCLIENT => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__OPENCLIENT; }
 	YY_BREAK
 case 495:
 YY_RULE_SETUP
-#line 1832 "bas.l"
-{	printf("_FILEEXISTS => %s\n", yytext); nchar += yyleng; return ENUM_QB__FILEEXISTS; }
+#line 701 "bas.l"
+{	printf("_FILEEXISTS => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__FILEEXISTS; }
 	YY_BREAK
 case 496:
 YY_RULE_SETUP
-#line 1833 "bas.l"
-{	printf("_glTexEnvf => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glTexEnvf; }
+#line 702 "bas.l"
+{	printf("_glTexEnvf => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glTexEnvf; }
 	YY_BREAK
 case 497:
 YY_RULE_SETUP
-#line 1834 "bas.l"
-{	printf("_glTexEnvi => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glTexEnvi; }
+#line 703 "bas.l"
+{	printf("_glTexEnvi => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glTexEnvi; }
 	YY_BREAK
 case 498:
 YY_RULE_SETUP
-#line 1835 "bas.l"
-{	printf("_FONTHEIGHT => %s\n", yytext); nchar += yyleng; return ENUM_QB__FONTHEIGHT; }
+#line 704 "bas.l"
+{	printf("_FONTHEIGHT => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__FONTHEIGHT; }
 	YY_BREAK
 case 499:
 YY_RULE_SETUP
-#line 1836 "bas.l"
-{	printf("_glTexGenf => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glTexGenf; }
+#line 705 "bas.l"
+{	printf("_glTexGenf => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glTexGenf; }
 	YY_BREAK
 case 500:
 YY_RULE_SETUP
-#line 1837 "bas.l"
-{	printf("_SNDPLAYING => %s\n", yytext); nchar += yyleng; return ENUM_QB__SNDPLAYING; }
+#line 706 "bas.l"
+{	printf("_SNDPLAYING => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__SNDPLAYING; }
 	YY_BREAK
 case 501:
 YY_RULE_SETUP
-#line 1838 "bas.l"
-{	printf("_glTexGeni => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glTexGeni; }
+#line 707 "bas.l"
+{	printf("_glTexGeni => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glTexGeni; }
 	YY_BREAK
 case 502:
 YY_RULE_SETUP
-#line 1839 "bas.l"
-{	printf("SELECT CASE => %s\n", yytext); nchar += yyleng; return ENUM_QB_SELECT_CASE; }
+#line 708 "bas.l"
+{	printf("SELECT CASE => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_SELECT_CASE; }
 	YY_BREAK
 case 503:
 YY_RULE_SETUP
-#line 1840 "bas.l"
-{	printf("_glColor3us => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glColor3us; }
+#line 709 "bas.l"
+{	printf("_glColor3us => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glColor3us; }
 	YY_BREAK
 case 504:
 YY_RULE_SETUP
-#line 1841 "bas.l"
-{	printf("_glVertex4d => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glVertex4d; }
+#line 710 "bas.l"
+{	printf("_glVertex4d => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glVertex4d; }
 	YY_BREAK
 case 505:
 YY_RULE_SETUP
-#line 1842 "bas.l"
-{	printf("_glNormal3f => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glNormal3f; }
+#line 711 "bas.l"
+{	printf("_glNormal3f => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glNormal3f; }
 	YY_BREAK
 case 506:
 YY_RULE_SETUP
-#line 1843 "bas.l"
-{	printf("_glColor3ui => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glColor3ui; }
+#line 712 "bas.l"
+{	printf("_glColor3ui => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glColor3ui; }
 	YY_BREAK
 case 507:
 YY_RULE_SETUP
-#line 1844 "bas.l"
-{	printf("_glGenLists => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glGenLists; }
+#line 713 "bas.l"
+{	printf("_glGenLists => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glGenLists; }
 	YY_BREAK
 case 508:
 YY_RULE_SETUP
-#line 1845 "bas.l"
-{	printf("_DEVICEINPUT => %s\n", yytext); nchar += yyleng; return ENUM_QB__DEVICEINPUT; }
+#line 714 "bas.l"
+{	printf("_DEVICEINPUT => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__DEVICEINPUT; }
 	YY_BREAK
 case 509:
 YY_RULE_SETUP
-#line 1846 "bas.l"
-{	printf("_glColor4dv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glColor4dv; }
+#line 715 "bas.l"
+{	printf("_glColor4dv => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glColor4dv; }
 	YY_BREAK
 case 510:
 YY_RULE_SETUP
-#line 1847 "bas.l"
-{	printf("_STARTDIR$ => %s\n", yytext); nchar += yyleng; return ENUM_QB__STARTDIR_DS; }
+#line 716 "bas.l"
+{	printf("_STARTDIR$ => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__STARTDIR_DS; }
 	YY_BREAK
 case 511:
 YY_RULE_SETUP
-#line 1848 "bas.l"
-{	printf("_glColor4bv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glColor4bv; }
+#line 717 "bas.l"
+{	printf("_glColor4bv => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glColor4bv; }
 	YY_BREAK
 case 512:
 YY_RULE_SETUP
-#line 1849 "bas.l"
-{	printf("_glColor3ub => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glColor3ub; }
+#line 718 "bas.l"
+{	printf("_glColor3ub => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glColor3ub; }
 	YY_BREAK
 case 513:
 YY_RULE_SETUP
-#line 1850 "bas.l"
-{	printf("_glColor3sv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glColor3sv; }
+#line 719 "bas.l"
+{	printf("_glColor3sv => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glColor3sv; }
 	YY_BREAK
 case 514:
 YY_RULE_SETUP
-#line 1851 "bas.l"
-{	printf("_glTexGenfv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glTexGenfv; }
+#line 720 "bas.l"
+{	printf("_glTexGenfv => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glTexGenfv; }
 	YY_BREAK
 case 515:
 YY_RULE_SETUP
-#line 1852 "bas.l"
-{	printf("_glColor3bv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glColor3bv; }
+#line 721 "bas.l"
+{	printf("_glColor3bv => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glColor3bv; }
 	YY_BREAK
 case 516:
 YY_RULE_SETUP
-#line 1853 "bas.l"
-{	printf("_glIndexubv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glIndexubv; }
+#line 722 "bas.l"
+{	printf("_glIndexubv => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glIndexubv; }
 	YY_BREAK
 case 517:
 YY_RULE_SETUP
-#line 1854 "bas.l"
-{	printf("_glGetError => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glGetError; }
+#line 723 "bas.l"
+{	printf("_glGetError => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glGetError; }
 	YY_BREAK
 case 518:
 YY_RULE_SETUP
-#line 1855 "bas.l"
-{	printf("_glColor3fv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glColor3fv; }
+#line 724 "bas.l"
+{	printf("_glColor3fv => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glColor3fv; }
 	YY_BREAK
 case 519:
 YY_RULE_SETUP
-#line 1856 "bas.l"
-{	printf("_glVertex4i => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glVertex4i; }
+#line 725 "bas.l"
+{	printf("_glVertex4i => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glVertex4i; }
 	YY_BREAK
 case 520:
 YY_RULE_SETUP
-#line 1857 "bas.l"
-{	printf("_glColor4fv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glColor4fv; }
+#line 726 "bas.l"
+{	printf("_glColor4fv => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glColor4fv; }
 	YY_BREAK
 case 521:
 YY_RULE_SETUP
-#line 1858 "bas.l"
-{	printf("_glNormal3d => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glNormal3d; }
+#line 727 "bas.l"
+{	printf("_glNormal3d => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glNormal3d; }
 	YY_BREAK
 case 522:
 YY_RULE_SETUP
-#line 1859 "bas.l"
-{	printf("_glColor3iv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glColor3iv; }
+#line 728 "bas.l"
+{	printf("_glColor3iv => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glColor3iv; }
 	YY_BREAK
 case 523:
 YY_RULE_SETUP
-#line 1860 "bas.l"
-{	printf("_glVertex4s => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glVertex4s; }
+#line 729 "bas.l"
+{	printf("_glVertex4s => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glVertex4s; }
 	YY_BREAK
 case 524:
 YY_RULE_SETUP
-#line 1861 "bas.l"
-{	printf("_glColor4sv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glColor4sv; }
+#line 730 "bas.l"
+{	printf("_glColor4sv => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glColor4sv; }
 	YY_BREAK
 case 525:
 YY_RULE_SETUP
-#line 1862 "bas.l"
-{	printf("_glNormal3s => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glNormal3s; }
+#line 731 "bas.l"
+{	printf("_glNormal3s => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glNormal3s; }
 	YY_BREAK
 case 526:
 YY_RULE_SETUP
-#line 1863 "bas.l"
-{	printf("BIT VARIABLE => %s\n", yytext); nchar += yyleng; return ENUM_QB_BIT_VARIABLE; }
+#line 732 "bas.l"
+{	printf("BIT VARIABLE => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_BIT_VARIABLE; }
 	YY_BREAK
 case 527:
 YY_RULE_SETUP
-#line 1864 "bas.l"
-{	printf("_glCullFace => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glCullFace; }
+#line 733 "bas.l"
+{	printf("_glCullFace => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glCullFace; }
 	YY_BREAK
 case 528:
 YY_RULE_SETUP
-#line 1865 "bas.l"
-{	printf("_glTexEnvfv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glTexEnvfv; }
+#line 734 "bas.l"
+{	printf("_glTexEnvfv => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glTexEnvfv; }
 	YY_BREAK
 case 529:
 YY_RULE_SETUP
-#line 1866 "bas.l"
-{	printf("_glPushName => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glPushName; }
+#line 735 "bas.l"
+{	printf("_glPushName => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glPushName; }
 	YY_BREAK
 case 530:
 YY_RULE_SETUP
-#line 1867 "bas.l"
-{	printf("_glVertex2i => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glVertex2i; }
+#line 736 "bas.l"
+{	printf("_glVertex2i => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glVertex2i; }
 	YY_BREAK
 case 531:
 YY_RULE_SETUP
-#line 1868 "bas.l"
-{	printf("_OFFSET TYPE => %s\n", yytext); nchar += yyleng; return ENUM_QB__OFFSET_TYPE; }
+#line 737 "bas.l"
+{	printf("_OFFSET TYPE => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__OFFSET_TYPE; }
 	YY_BREAK
 case 532:
 YY_RULE_SETUP
-#line 1869 "bas.l"
-{	printf("_glEdgeFlag => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glEdgeFlag; }
+#line 738 "bas.l"
+{	printf("_glEdgeFlag => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glEdgeFlag; }
 	YY_BREAK
 case 533:
 YY_RULE_SETUP
-#line 1870 "bas.l"
-{	printf("_glNormal3i => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glNormal3i; }
+#line 739 "bas.l"
+{	printf("_glNormal3i => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glNormal3i; }
 	YY_BREAK
 case 534:
 YY_RULE_SETUP
-#line 1871 "bas.l"
-{	printf("_glVertex4f => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glVertex4f; }
+#line 740 "bas.l"
+{	printf("_glVertex4f => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glVertex4f; }
 	YY_BREAK
 case 535:
 YY_RULE_SETUP
-#line 1872 "bas.l"
-{	printf("_glTexEnviv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glTexEnviv; }
+#line 741 "bas.l"
+{	printf("_glTexEnviv => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glTexEnviv; }
 	YY_BREAK
 case 536:
 YY_RULE_SETUP
-#line 1873 "bas.l"
-{	printf("_glColor4ub => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glColor4ub; }
+#line 742 "bas.l"
+{	printf("_glColor4ub => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glColor4ub; }
 	YY_BREAK
 case 537:
 YY_RULE_SETUP
-#line 1874 "bas.l"
-{	printf("_glNormal3b => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glNormal3b; }
+#line 743 "bas.l"
+{	printf("_glNormal3b => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glNormal3b; }
 	YY_BREAK
 case 538:
 YY_RULE_SETUP
-#line 1875 "bas.l"
-{	printf("_glColor4ui => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glColor4ui; }
+#line 744 "bas.l"
+{	printf("_glColor4ui => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glColor4ui; }
 	YY_BREAK
 case 539:
 YY_RULE_SETUP
-#line 1876 "bas.l"
-{	printf("_glVertex3s => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glVertex3s; }
+#line 745 "bas.l"
+{	printf("_glVertex3s => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glVertex3s; }
 	YY_BREAK
 case 540:
 YY_RULE_SETUP
-#line 1877 "bas.l"
-{	printf("LPRINT USING => %s\n", yytext); nchar += yyleng; return ENUM_QB_LPRINT_USING; }
+#line 746 "bas.l"
+{	printf("LPRINT USING => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_LPRINT_USING; }
 	YY_BREAK
 case 541:
 YY_RULE_SETUP
-#line 1878 "bas.l"
-{	printf("NOT EQUAL TO => %s\n", yytext); nchar += yyleng; return ENUM_QB_NOT_EQUAL_TO; }
+#line 747 "bas.l"
+{	printf("NOT EQUAL TO => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_NOT_EQUAL_TO; }
 	YY_BREAK
 case 542:
 YY_RULE_SETUP
-#line 1879 "bas.l"
-{	printf("_glColor4us => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glColor4us; }
+#line 748 "bas.l"
+{	printf("_glColor4us => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glColor4us; }
 	YY_BREAK
 case 543:
 YY_RULE_SETUP
-#line 1880 "bas.l"
-{	printf("_glColor4iv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glColor4iv; }
+#line 749 "bas.l"
+{	printf("_glColor4iv => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glColor4iv; }
 	YY_BREAK
 case 544:
 YY_RULE_SETUP
-#line 1881 "bas.l"
-{	printf("_glColor3dv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glColor3dv; }
+#line 750 "bas.l"
+{	printf("_glColor3dv => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glColor3dv; }
 	YY_BREAK
 case 545:
 YY_RULE_SETUP
-#line 1882 "bas.l"
-{	printf("_COPYPALETTE => %s\n", yytext); nchar += yyleng; return ENUM_QB__COPYPALETTE; }
+#line 751 "bas.l"
+{	printf("_COPYPALETTE => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__COPYPALETTE; }
 	YY_BREAK
 case 546:
 YY_RULE_SETUP
-#line 1883 "bas.l"
-{	printf("PUT GRAPHICS => %s\n", yytext); nchar += yyleng; return ENUM_QB_PUT_GRAPHICS; }
+#line 752 "bas.l"
+{	printf("PUT GRAPHICS => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_PUT_GRAPHICS; }
 	YY_BREAK
 case 547:
 YY_RULE_SETUP
-#line 1884 "bas.l"
-{	printf("_glLoadName => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glLoadName; }
+#line 753 "bas.l"
+{	printf("_glLoadName => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glLoadName; }
 	YY_BREAK
 case 548:
 YY_RULE_SETUP
-#line 1885 "bas.l"
-{	printf("_glListBase => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glListBase; }
+#line 754 "bas.l"
+{	printf("_glListBase => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glListBase; }
 	YY_BREAK
 case 549:
 YY_RULE_SETUP
-#line 1886 "bas.l"
-{	printf("_RESIZEWIDTH => %s\n", yytext); nchar += yyleng; return ENUM_QB__RESIZEWIDTH; }
+#line 755 "bas.l"
+{	printf("_RESIZEWIDTH => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__RESIZEWIDTH; }
 	YY_BREAK
 case 550:
 YY_RULE_SETUP
-#line 1887 "bas.l"
-{	printf("_glVertex2s => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glVertex2s; }
+#line 756 "bas.l"
+{	printf("_glVertex2s => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glVertex2s; }
 	YY_BREAK
 case 551:
 YY_RULE_SETUP
-#line 1888 "bas.l"
-{	printf("_SCREENPRINT => %s\n", yytext); nchar += yyleng; return ENUM_QB__SCREENPRINT; }
+#line 757 "bas.l"
+{	printf("_SCREENPRINT => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__SCREENPRINT; }
 	YY_BREAK
 case 552:
 YY_RULE_SETUP
-#line 1889 "bas.l"
-{	printf("_glVertex3i => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glVertex3i; }
+#line 758 "bas.l"
+{	printf("_glVertex3i => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glVertex3i; }
 	YY_BREAK
 case 553:
 YY_RULE_SETUP
-#line 1890 "bas.l"
-{	printf("_glVertex2f => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glVertex2f; }
+#line 759 "bas.l"
+{	printf("_glVertex2f => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glVertex2f; }
 	YY_BREAK
 case 554:
 YY_RULE_SETUP
-#line 1891 "bas.l"
-{	printf("_SCREENCLICK => %s\n", yytext); nchar += yyleng; return ENUM_QB__SCREENCLICK; }
+#line 760 "bas.l"
+{	printf("_SCREENCLICK => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__SCREENCLICK; }
 	YY_BREAK
 case 555:
 YY_RULE_SETUP
-#line 1892 "bas.l"
-{	printf("_glVertex3f => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glVertex3f; }
+#line 761 "bas.l"
+{	printf("_glVertex3f => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glVertex3f; }
 	YY_BREAK
 case 556:
 YY_RULE_SETUP
-#line 1893 "bas.l"
-{	printf("_glTexGendv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glTexGendv; }
+#line 762 "bas.l"
+{	printf("_glTexGendv => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glTexGendv; }
 	YY_BREAK
 case 557:
 YY_RULE_SETUP
-#line 1894 "bas.l"
-{	printf("_SCREENIMAGE => %s\n", yytext); nchar += yyleng; return ENUM_QB__SCREENIMAGE; }
+#line 763 "bas.l"
+{	printf("_SCREENIMAGE => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__SCREENIMAGE; }
 	YY_BREAK
 case 558:
 YY_RULE_SETUP
-#line 1895 "bas.l"
-{	printf("_glViewport => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glViewport; }
+#line 764 "bas.l"
+{	printf("_glViewport => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glViewport; }
 	YY_BREAK
 case 559:
 YY_RULE_SETUP
-#line 1896 "bas.l"
-{	printf("_glVertex3d => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glVertex3d; }
+#line 765 "bas.l"
+{	printf("_glVertex3d => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glVertex3d; }
 	YY_BREAK
 case 560:
 YY_RULE_SETUP
-#line 1897 "bas.l"
-{	printf("_AUTODISPLAY => %s\n", yytext); nchar += yyleng; return ENUM_QB__AUTODISPLAY; }
+#line 766 "bas.l"
+{	printf("_AUTODISPLAY => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__AUTODISPLAY; }
 	YY_BREAK
 case 561:
 YY_RULE_SETUP
-#line 1898 "bas.l"
-{	printf("_MOUSEBUTTON => %s\n", yytext); nchar += yyleng; return ENUM_QB__MOUSEBUTTON; }
+#line 767 "bas.l"
+{	printf("_MOUSEBUTTON => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__MOUSEBUTTON; }
 	YY_BREAK
 case 562:
 YY_RULE_SETUP
-#line 1899 "bas.l"
-{	printf("_MAPTRIANGLE => %s\n", yytext); nchar += yyleng; return ENUM_QB__MAPTRIANGLE; }
+#line 768 "bas.l"
+{	printf("_MAPTRIANGLE => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__MAPTRIANGLE; }
 	YY_BREAK
 case 563:
 YY_RULE_SETUP
-#line 1900 "bas.l"
-{	printf("_glVertex2d => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glVertex2d; }
+#line 769 "bas.l"
+{	printf("_glVertex2d => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glVertex2d; }
 	YY_BREAK
 case 564:
 YY_RULE_SETUP
-#line 1901 "bas.l"
-{	printf("_glTexGeniv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glTexGeniv; }
+#line 770 "bas.l"
+{	printf("_glTexGeniv => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glTexGeniv; }
 	YY_BREAK
 case 565:
 YY_RULE_SETUP
-#line 1902 "bas.l"
-{	printf("_SNDPLAYFILE => %s\n", yytext); nchar += yyleng; return ENUM_QB__SNDPLAYFILE; }
+#line 771 "bas.l"
+{	printf("_SNDPLAYFILE => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__SNDPLAYFILE; }
 	YY_BREAK
 case 566:
 YY_RULE_SETUP
-#line 1903 "bas.l"
-{	printf("_SNDPLAYCOPY => %s\n", yytext); nchar += yyleng; return ENUM_QB__SNDPLAYCOPY; }
+#line 772 "bas.l"
+{	printf("_SNDPLAYCOPY => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__SNDPLAYCOPY; }
 	YY_BREAK
 case 567:
 YY_RULE_SETUP
-#line 1904 "bas.l"
-{	printf("_PRINTSTRING => %s\n", yytext); nchar += yyleng; return ENUM_QB__PRINTSTRING; }
+#line 773 "bas.l"
+{	printf("_PRINTSTRING => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__PRINTSTRING; }
 	YY_BREAK
 case 568:
 YY_RULE_SETUP
-#line 1905 "bas.l"
-{	printf("WRITE SCREEN => %s\n", yytext); nchar += yyleng; return ENUM_QB_WRITE_SCREEN; }
+#line 774 "bas.l"
+{	printf("WRITE SCREEN => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_WRITE_SCREEN; }
 	YY_BREAK
 case 569:
 YY_RULE_SETUP
-#line 1906 "bas.l"
-{	printf("_glGetMapiv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glGetMapiv; }
+#line 775 "bas.l"
+{	printf("_glGetMapiv => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glGetMapiv; }
 	YY_BREAK
 case 570:
 YY_RULE_SETUP
-#line 1907 "bas.l"
-{	printf("_glGetMapfv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glGetMapfv; }
+#line 776 "bas.l"
+{	printf("_glGetMapfv => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glGetMapfv; }
 	YY_BREAK
 case 571:
 YY_RULE_SETUP
-#line 1908 "bas.l"
-{	printf("_DEPTHBUFFER => %s\n", yytext); nchar += yyleng; return ENUM_QB__DEPTHBUFFER; }
+#line 777 "bas.l"
+{	printf("_DEPTHBUFFER => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__DEPTHBUFFER; }
 	YY_BREAK
 case 572:
 YY_RULE_SETUP
-#line 1909 "bas.l"
-{	printf("_glGetMapdv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glGetMapdv; }
+#line 778 "bas.l"
+{	printf("_glGetMapdv => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glGetMapdv; }
 	YY_BREAK
 case 573:
 YY_RULE_SETUP
-#line 1910 "bas.l"
-{	printf("_glCallList => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glCallList; }
+#line 779 "bas.l"
+{	printf("_glCallList => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glCallList; }
 	YY_BREAK
 case 574:
 YY_RULE_SETUP
-#line 1911 "bas.l"
-{	printf("_glIsTexture => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glIsTexture; }
+#line 780 "bas.l"
+{	printf("_glIsTexture => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glIsTexture; }
 	YY_BREAK
 case 575:
 YY_RULE_SETUP
-#line 1912 "bas.l"
-{	printf("_glEvalMesh2 => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glEvalMesh2; }
+#line 781 "bas.l"
+{	printf("_glEvalMesh2 => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glEvalMesh2; }
 	YY_BREAK
 case 576:
 YY_RULE_SETUP
-#line 1913 "bas.l"
-{	printf("_glNormal3bv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glNormal3bv; }
+#line 782 "bas.l"
+{	printf("_glNormal3bv => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glNormal3bv; }
 	YY_BREAK
 case 577:
 YY_RULE_SETUP
-#line 1914 "bas.l"
-{	printf("_glNormal3iv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glNormal3iv; }
+#line 783 "bas.l"
+{	printf("_glNormal3iv => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glNormal3iv; }
 	YY_BREAK
 case 578:
 YY_RULE_SETUP
-#line 1915 "bas.l"
-{	printf("_glIndexMask => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glIndexMask; }
+#line 784 "bas.l"
+{	printf("_glIndexMask => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glIndexMask; }
 	YY_BREAK
 case 579:
 YY_RULE_SETUP
-#line 1916 "bas.l"
-{	printf("_glEvalMesh1 => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glEvalMesh1; }
+#line 785 "bas.l"
+{	printf("_glEvalMesh1 => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glEvalMesh1; }
 	YY_BREAK
 case 580:
 YY_RULE_SETUP
-#line 1917 "bas.l"
-{	printf("_glVertex3dv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glVertex3dv; }
+#line 786 "bas.l"
+{	printf("_glVertex3dv => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glVertex3dv; }
 	YY_BREAK
 case 581:
 YY_RULE_SETUP
-#line 1918 "bas.l"
-{	printf("_glPopAttrib => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glPopAttrib; }
+#line 787 "bas.l"
+{	printf("_glPopAttrib => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glPopAttrib; }
 	YY_BREAK
 case 582:
 YY_RULE_SETUP
-#line 1919 "bas.l"
-{	printf("_glPopMatrix => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glPopMatrix; }
+#line 788 "bas.l"
+{	printf("_glPopMatrix => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glPopMatrix; }
 	YY_BREAK
 case 583:
 YY_RULE_SETUP
-#line 1920 "bas.l"
-{	printf("_glPointSize => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glPointSize; }
+#line 789 "bas.l"
+{	printf("_glPointSize => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glPointSize; }
 	YY_BREAK
 case 584:
 YY_RULE_SETUP
-#line 1921 "bas.l"
-{	printf("_glGetFloatv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glGetFloatv; }
+#line 790 "bas.l"
+{	printf("_glGetFloatv => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glGetFloatv; }
 	YY_BREAK
 case 585:
 YY_RULE_SETUP
-#line 1922 "bas.l"
-{	printf("_glPixelZoom => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glPixelZoom; }
+#line 791 "bas.l"
+{	printf("_glPixelZoom => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glPixelZoom; }
 	YY_BREAK
 case 586:
 YY_RULE_SETUP
-#line 1923 "bas.l"
-{	printf("_glNormal3sv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glNormal3sv; }
+#line 792 "bas.l"
+{	printf("_glNormal3sv => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glNormal3sv; }
 	YY_BREAK
 case 587:
 YY_RULE_SETUP
-#line 1924 "bas.l"
-{	printf("_glLineWidth => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glLineWidth; }
+#line 793 "bas.l"
+{	printf("_glLineWidth => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glLineWidth; }
 	YY_BREAK
 case 588:
 YY_RULE_SETUP
-#line 1925 "bas.l"
-{	printf("_glMapGrid1f => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glMapGrid1f; }
+#line 794 "bas.l"
+{	printf("_glMapGrid1f => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glMapGrid1f; }
 	YY_BREAK
 case 589:
 YY_RULE_SETUP
-#line 1926 "bas.l"
-{	printf("_glVertex3fv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glVertex3fv; }
+#line 795 "bas.l"
+{	printf("_glVertex3fv => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glVertex3fv; }
 	YY_BREAK
 case 590:
 YY_RULE_SETUP
-#line 1927 "bas.l"
-{	printf("_glVertex3iv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glVertex3iv; }
+#line 796 "bas.l"
+{	printf("_glVertex3iv => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glVertex3iv; }
 	YY_BREAK
 case 591:
 YY_RULE_SETUP
-#line 1928 "bas.l"
-{	printf("_glFrontFace => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glFrontFace; }
+#line 797 "bas.l"
+{	printf("_glFrontFace => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glFrontFace; }
 	YY_BREAK
 case 592:
 YY_RULE_SETUP
-#line 1929 "bas.l"
-{	printf("_glVertex2iv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glVertex2iv; }
+#line 798 "bas.l"
+{	printf("_glVertex2iv => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glVertex2iv; }
 	YY_BREAK
 case 593:
 YY_RULE_SETUP
-#line 1930 "bas.l"
-{	printf("_glMapGrid1d => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glMapGrid1d; }
+#line 799 "bas.l"
+{	printf("_glMapGrid1d => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glMapGrid1d; }
 	YY_BREAK
 case 594:
 YY_RULE_SETUP
-#line 1931 "bas.l"
-{	printf("_glVertex2sv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glVertex2sv; }
+#line 800 "bas.l"
+{	printf("_glVertex2sv => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glVertex2sv; }
 	YY_BREAK
 case 595:
 YY_RULE_SETUP
-#line 1932 "bas.l"
-{	printf("CALL ABSOLUTE => %s\n", yytext); nchar += yyleng; return ENUM_QB_CALL_ABSOLUTE; }
+#line 801 "bas.l"
+{	printf("CALL ABSOLUTE => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_CALL_ABSOLUTE; }
 	YY_BREAK
 case 596:
 YY_RULE_SETUP
-#line 1933 "bas.l"
-{	printf("_glNormal3dv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glNormal3dv; }
+#line 802 "bas.l"
+{	printf("_glNormal3dv => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glNormal3dv; }
 	YY_BREAK
 case 597:
 YY_RULE_SETUP
-#line 1934 "bas.l"
-{	printf("_glMapGrid2d => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glMapGrid2d; }
+#line 803 "bas.l"
+{	printf("_glMapGrid2d => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glMapGrid2d; }
 	YY_BREAK
 case 598:
 YY_RULE_SETUP
-#line 1935 "bas.l"
-{	printf("_glIsEnabled => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glIsEnabled; }
+#line 804 "bas.l"
+{	printf("_glIsEnabled => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glIsEnabled; }
 	YY_BREAK
 case 599:
 YY_RULE_SETUP
-#line 1936 "bas.l"
-{	printf("_glGetString => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glGetString; }
+#line 805 "bas.l"
+{	printf("_glGetString => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glGetString; }
 	YY_BREAK
 case 600:
 YY_RULE_SETUP
-#line 1937 "bas.l"
-{	printf("_glNormal3fv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glNormal3fv; }
+#line 806 "bas.l"
+{	printf("_glNormal3fv => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glNormal3fv; }
 	YY_BREAK
 case 601:
 YY_RULE_SETUP
-#line 1938 "bas.l"
-{	printf("_glInitNames => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glInitNames; }
+#line 807 "bas.l"
+{	printf("_glInitNames => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glInitNames; }
 	YY_BREAK
 case 602:
 YY_RULE_SETUP
-#line 1939 "bas.l"
-{	printf("_glMateriali => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glMateriali; }
+#line 808 "bas.l"
+{	printf("_glMateriali => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glMateriali; }
 	YY_BREAK
 case 603:
 YY_RULE_SETUP
-#line 1940 "bas.l"
-{	printf("_glMapGrid2f => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glMapGrid2f; }
+#line 809 "bas.l"
+{	printf("_glMapGrid2f => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glMapGrid2f; }
 	YY_BREAK
 case 604:
 YY_RULE_SETUP
-#line 1941 "bas.l"
-{	printf("_glMaterialf => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glMaterialf; }
+#line 810 "bas.l"
+{	printf("_glMaterialf => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glMaterialf; }
 	YY_BREAK
 case 605:
 YY_RULE_SETUP
-#line 1942 "bas.l"
-{	printf("_glVertex3sv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glVertex3sv; }
+#line 811 "bas.l"
+{	printf("_glVertex3sv => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glVertex3sv; }
 	YY_BREAK
 case 606:
 YY_RULE_SETUP
-#line 1943 "bas.l"
-{	printf("_glColor4usv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glColor4usv; }
+#line 812 "bas.l"
+{	printf("_glColor4usv => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glColor4usv; }
 	YY_BREAK
 case 607:
 YY_RULE_SETUP
-#line 1944 "bas.l"
-{	printf("_DESKTOPWIDTH => %s\n", yytext); nchar += yyleng; return ENUM_QB__DESKTOPWIDTH; }
+#line 813 "bas.l"
+{	printf("_DESKTOPWIDTH => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__DESKTOPWIDTH; }
 	YY_BREAK
 case 608:
 YY_RULE_SETUP
-#line 1945 "bas.l"
-{	printf("_glStencilOp => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glStencilOp; }
+#line 814 "bas.l"
+{	printf("_glStencilOp => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glStencilOp; }
 	YY_BREAK
 case 609:
 YY_RULE_SETUP
-#line 1946 "bas.l"
-{	printf("_glCallLists => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glCallLists; }
+#line 815 "bas.l"
+{	printf("_glCallLists => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glCallLists; }
 	YY_BREAK
 case 610:
 YY_RULE_SETUP
-#line 1947 "bas.l"
-{	printf("_glBlendFunc => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glBlendFunc; }
+#line 816 "bas.l"
+{	printf("_glBlendFunc => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glBlendFunc; }
 	YY_BREAK
 case 611:
 YY_RULE_SETUP
-#line 1948 "bas.l"
-{	printf("_glClipPlane => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glClipPlane; }
+#line 817 "bas.l"
+{	printf("_glClipPlane => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glClipPlane; }
 	YY_BREAK
 case 612:
 YY_RULE_SETUP
-#line 1949 "bas.l"
-{	printf("_glVertex4iv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glVertex4iv; }
+#line 818 "bas.l"
+{	printf("_glVertex4iv => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glVertex4iv; }
 	YY_BREAK
 case 613:
 YY_RULE_SETUP
-#line 1950 "bas.l"
-{	printf("_glColor3uiv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glColor3uiv; }
+#line 819 "bas.l"
+{	printf("_glColor3uiv => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glColor3uiv; }
 	YY_BREAK
 case 614:
 YY_RULE_SETUP
-#line 1951 "bas.l"
-{	printf("_glColor3ubv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glColor3ubv; }
+#line 820 "bas.l"
+{	printf("_glColor3ubv => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glColor3ubv; }
 	YY_BREAK
 case 615:
 YY_RULE_SETUP
-#line 1952 "bas.l"
-{	printf("_SCREENEXISTS => %s\n", yytext); nchar += yyleng; return ENUM_QB__SCREENEXISTS; }
+#line 821 "bas.l"
+{	printf("_SCREENEXISTS => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__SCREENEXISTS; }
 	YY_BREAK
 case 616:
 YY_RULE_SETUP
-#line 1953 "bas.l"
-{	printf("_glVertex4dv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glVertex4dv; }
+#line 822 "bas.l"
+{	printf("_glVertex4dv => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glVertex4dv; }
 	YY_BREAK
 case 617:
 YY_RULE_SETUP
-#line 1954 "bas.l"
-{	printf("PALETTE USING => %s\n", yytext); nchar += yyleng; return ENUM_QB_PALETTE_USING; }
+#line 823 "bas.l"
+{	printf("PALETTE USING => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_PALETTE_USING; }
 	YY_BREAK
 case 618:
 YY_RULE_SETUP
-#line 1955 "bas.l"
-{	printf("_RESIZEHEIGHT => %s\n", yytext); nchar += yyleng; return ENUM_QB__RESIZEHEIGHT; }
+#line 824 "bas.l"
+{	printf("_RESIZEHEIGHT => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__RESIZEHEIGHT; }
 	YY_BREAK
 case 619:
 YY_RULE_SETUP
-#line 1956 "bas.l"
-{	printf("$SCREENHIDE => %s\n", yytext); nchar += yyleng; return ENUM_QB_DS_SCREENHIDE; }
+#line 825 "bas.l"
+{	printf("$SCREENHIDE => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_DS_SCREENHIDE; }
 	YY_BREAK
 case 620:
 YY_RULE_SETUP
-#line 1957 "bas.l"
-{	printf("_glVertex2dv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glVertex2dv; }
+#line 826 "bas.l"
+{	printf("_glVertex2dv => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glVertex2dv; }
 	YY_BREAK
 case 621:
 YY_RULE_SETUP
-#line 1958 "bas.l"
-{	printf("_glVertex4sv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glVertex4sv; }
+#line 827 "bas.l"
+{	printf("_glVertex4sv => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glVertex4sv; }
 	YY_BREAK
 case 622:
 YY_RULE_SETUP
-#line 1959 "bas.l"
-{	printf("_DEFAULTCOLOR => %s\n", yytext); nchar += yyleng; return ENUM_QB__DEFAULTCOLOR; }
+#line 828 "bas.l"
+{	printf("_DEFAULTCOLOR => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__DEFAULTCOLOR; }
 	YY_BREAK
 case 623:
 YY_RULE_SETUP
-#line 1960 "bas.l"
-{	printf("_CONSOLETITLE => %s\n", yytext); nchar += yyleng; return ENUM_QB__CONSOLETITLE; }
+#line 829 "bas.l"
+{	printf("_CONSOLETITLE => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__CONSOLETITLE; }
 	YY_BREAK
 case 624:
 YY_RULE_SETUP
-#line 1961 "bas.l"
-{	printf("_glAlphaFunc => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glAlphaFunc; }
+#line 830 "bas.l"
+{	printf("_glAlphaFunc => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glAlphaFunc; }
 	YY_BREAK
 case 625:
 YY_RULE_SETUP
-#line 1962 "bas.l"
-{	printf("PEN => %s\n", yytext); nchar += yyleng; return ENUM_QB_PEN_STATEMENT; }
+#line 831 "bas.l"
+{	printf("PEN => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_PEN_STATEMENT; }
 	YY_BREAK
 case 626:
 YY_RULE_SETUP
-#line 1963 "bas.l"
-{	printf("_glColor3usv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glColor3usv; }
+#line 832 "bas.l"
+{	printf("_glColor3usv => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glColor3usv; }
 	YY_BREAK
 case 627:
 YY_RULE_SETUP
-#line 1964 "bas.l"
-{	printf("_BUTTONCHANGE => %s\n", yytext); nchar += yyleng; return ENUM_QB__BUTTONCHANGE; }
+#line 833 "bas.l"
+{	printf("_BUTTONCHANGE => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__BUTTONCHANGE; }
 	YY_BREAK
 case 628:
 YY_RULE_SETUP
-#line 1965 "bas.l"
-{	printf("KEY => %s\n", yytext); nchar += yyleng; return ENUM_QB_KEY_STATEMENT; }
+#line 834 "bas.l"
+{	printf("KEY => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_KEY_STATEMENT; }
 	YY_BREAK
 case 629:
 YY_RULE_SETUP
-#line 1966 "bas.l"
-{	printf("_glDepthMask => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glDepthMask; }
+#line 835 "bas.l"
+{	printf("_glDepthMask => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glDepthMask; }
 	YY_BREAK
 case 630:
 YY_RULE_SETUP
-#line 1967 "bas.l"
-{	printf("_glDepthFunc => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glDepthFunc; }
+#line 836 "bas.l"
+{	printf("_glDepthFunc => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glDepthFunc; }
 	YY_BREAK
 case 631:
 YY_RULE_SETUP
-#line 1968 "bas.l"
-{	printf("_COMMANDCOUNT => %s\n", yytext); nchar += yyleng; return ENUM_QB__COMMANDCOUNT; }
+#line 837 "bas.l"
+{	printf("_COMMANDCOUNT => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__COMMANDCOUNT; }
 	YY_BREAK
 case 632:
 YY_RULE_SETUP
-#line 1969 "bas.l"
-{	printf("_glEdgeFlagv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glEdgeFlagv; }
+#line 838 "bas.l"
+{	printf("_glEdgeFlagv => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glEdgeFlagv; }
 	YY_BREAK
 case 633:
 YY_RULE_SETUP
-#line 1970 "bas.l"
-{	printf("BYTE VARIABLE => %s\n", yytext); nchar += yyleng; return ENUM_QB_BYTE_VARIABLE; }
+#line 839 "bas.l"
+{	printf("BYTE VARIABLE => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_BYTE_VARIABLE; }
 	YY_BREAK
 case 634:
 YY_RULE_SETUP
-#line 1971 "bas.l"
-{	printf("LONG VARIABLE => %s\n", yytext); nchar += yyleng; return ENUM_QB_LONG_VARIABLE; }
+#line 840 "bas.l"
+{	printf("LONG VARIABLE => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_LONG_VARIABLE; }
 	YY_BREAK
 case 635:
 YY_RULE_SETUP
-#line 1972 "bas.l"
-{	printf("$SCREENSHOW => %s\n", yytext); nchar += yyleng; return ENUM_QB_DS_SCREENSHOW; }
+#line 841 "bas.l"
+{	printf("$SCREENSHOW => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_DS_SCREENSHOW; }
 	YY_BREAK
 case 636:
 YY_RULE_SETUP
-#line 1973 "bas.l"
-{	printf("_glVertex2fv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glVertex2fv; }
+#line 842 "bas.l"
+{	printf("_glVertex2fv => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glVertex2fv; }
 	YY_BREAK
 case 637:
 YY_RULE_SETUP
-#line 1974 "bas.l"
-{	printf("_glColor4uiv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glColor4uiv; }
+#line 843 "bas.l"
+{	printf("_glColor4uiv => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glColor4uiv; }
 	YY_BREAK
 case 638:
 YY_RULE_SETUP
-#line 1975 "bas.l"
-{	printf("_glColorMask => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glColorMask; }
+#line 844 "bas.l"
+{	printf("_glColorMask => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glColorMask; }
 	YY_BREAK
 case 639:
 YY_RULE_SETUP
-#line 1976 "bas.l"
-{	printf("_glColor4ubv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glColor4ubv; }
+#line 845 "bas.l"
+{	printf("_glColor4ubv => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glColor4ubv; }
 	YY_BREAK
 case 640:
 YY_RULE_SETUP
-#line 1977 "bas.l"
-{	printf("_DISPLAYORDER => %s\n", yytext); nchar += yyleng; return ENUM_QB__DISPLAYORDER; }
+#line 846 "bas.l"
+{	printf("_DISPLAYORDER => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__DISPLAYORDER; }
 	YY_BREAK
 case 641:
 YY_RULE_SETUP
-#line 1978 "bas.l"
-{	printf("_glVertex4fv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glVertex4fv; }
+#line 847 "bas.l"
+{	printf("_glVertex4fv => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glVertex4fv; }
 	YY_BREAK
 case 642:
 YY_RULE_SETUP
-#line 1979 "bas.l"
-{	printf("_glTexCoord2s => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glTexCoord2s; }
+#line 848 "bas.l"
+{	printf("_glTexCoord2s => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glTexCoord2s; }
 	YY_BREAK
 case 643:
 YY_RULE_SETUP
-#line 1980 "bas.l"
-{	printf("_glTexCoord1s => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glTexCoord1s; }
+#line 849 "bas.l"
+{	printf("_glTexCoord1s => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glTexCoord1s; }
 	YY_BREAK
 case 644:
 YY_RULE_SETUP
-#line 1981 "bas.l"
-{	printf("_glTexCoord3i => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glTexCoord3i; }
+#line 850 "bas.l"
+{	printf("_glTexCoord3i => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glTexCoord3i; }
 	YY_BREAK
 case 645:
 YY_RULE_SETUP
-#line 1982 "bas.l"
-{	printf("_glTexCoord2f => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glTexCoord2f; }
+#line 851 "bas.l"
+{	printf("_glTexCoord2f => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glTexCoord2f; }
 	YY_BREAK
 case 646:
 YY_RULE_SETUP
-#line 1983 "bas.l"
-{	printf("FLOAT VARIABLE => %s\n", yytext); nchar += yyleng; return ENUM_QB_FLOAT_VARIABLE; }
+#line 852 "bas.l"
+{	printf("FLOAT VARIABLE => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_FLOAT_VARIABLE; }
 	YY_BREAK
 case 647:
 YY_RULE_SETUP
-#line 1984 "bas.l"
-{	printf("_glTexCoord3f => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glTexCoord3f; }
+#line 853 "bas.l"
+{	printf("_glTexCoord3f => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glTexCoord3f; }
 	YY_BREAK
 case 648:
 YY_RULE_SETUP
-#line 1985 "bas.l"
-{	printf("_glTexCoord2i => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glTexCoord2i; }
+#line 854 "bas.l"
+{	printf("_glTexCoord2i => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glTexCoord2i; }
 	YY_BREAK
 case 649:
 YY_RULE_SETUP
-#line 1986 "bas.l"
-{	printf("_glTexImage2D => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glTexImage2D; }
+#line 855 "bas.l"
+{	printf("_glTexImage2D => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glTexImage2D; }
 	YY_BREAK
 case 650:
 YY_RULE_SETUP
-#line 1987 "bas.l"
-{	printf("_glTranslated => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glTranslated; }
+#line 856 "bas.l"
+{	printf("_glTranslated => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glTranslated; }
 	YY_BREAK
 case 651:
 YY_RULE_SETUP
-#line 1988 "bas.l"
-{	printf("_glTexCoord3d => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glTexCoord3d; }
+#line 857 "bas.l"
+{	printf("_glTexCoord3d => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glTexCoord3d; }
 	YY_BREAK
 case 652:
 YY_RULE_SETUP
-#line 1989 "bas.l"
-{	printf("_glTexCoord2d => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glTexCoord2d; }
+#line 858 "bas.l"
+{	printf("_glTexCoord2d => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glTexCoord2d; }
 	YY_BREAK
 case 653:
 YY_RULE_SETUP
-#line 1990 "bas.l"
-{	printf("_glMaterialiv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glMaterialiv; }
+#line 859 "bas.l"
+{	printf("_glMaterialiv => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glMaterialiv; }
 	YY_BREAK
 case 654:
 YY_RULE_SETUP
-#line 1991 "bas.l"
-{	printf("_glTexImage1D => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glTexImage1D; }
+#line 860 "bas.l"
+{	printf("_glTexImage1D => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glTexImage1D; }
 	YY_BREAK
 case 655:
 YY_RULE_SETUP
-#line 1992 "bas.l"
-{	printf("_glRenderMode => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glRenderMode; }
+#line 861 "bas.l"
+{	printf("_glRenderMode => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glRenderMode; }
 	YY_BREAK
 case 656:
 YY_RULE_SETUP
-#line 1993 "bas.l"
-{	printf("_glTexCoord4s => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glTexCoord4s; }
+#line 862 "bas.l"
+{	printf("_glTexCoord4s => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glTexCoord4s; }
 	YY_BREAK
 case 657:
 YY_RULE_SETUP
-#line 1994 "bas.l"
-{	printf("_glReadPixels => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glReadPixels; }
+#line 863 "bas.l"
+{	printf("_glReadPixels => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glReadPixels; }
 	YY_BREAK
 case 658:
 YY_RULE_SETUP
-#line 1995 "bas.l"
-{	printf("_glReadBuffer => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glReadBuffer; }
+#line 864 "bas.l"
+{	printf("_glReadBuffer => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glReadBuffer; }
 	YY_BREAK
 case 659:
 YY_RULE_SETUP
-#line 1996 "bas.l"
-{	printf("_glPushAttrib => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glPushAttrib; }
+#line 865 "bas.l"
+{	printf("_glPushAttrib => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glPushAttrib; }
 	YY_BREAK
 case 660:
 YY_RULE_SETUP
-#line 1997 "bas.l"
-{	printf("_glPushMatrix => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glPushMatrix; }
+#line 866 "bas.l"
+{	printf("_glPushMatrix => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glPushMatrix; }
 	YY_BREAK
 case 661:
 YY_RULE_SETUP
-#line 1998 "bas.l"
-{	printf("_glPixelMapfv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glPixelMapfv; }
+#line 867 "bas.l"
+{	printf("_glPixelMapfv => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glPixelMapfv; }
 	YY_BREAK
 case 662:
 YY_RULE_SETUP
-#line 1999 "bas.l"
-{	printf("_glTexCoord4i => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glTexCoord4i; }
+#line 868 "bas.l"
+{	printf("_glTexCoord4i => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glTexCoord4i; }
 	YY_BREAK
 case 663:
 YY_RULE_SETUP
-#line 2000 "bas.l"
-{	printf("_glShadeModel => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glShadeModel; }
+#line 869 "bas.l"
+{	printf("_glShadeModel => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glShadeModel; }
 	YY_BREAK
 case 664:
 YY_RULE_SETUP
-#line 2001 "bas.l"
-{	printf("_glTranslatef => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glTranslatef; }
+#line 870 "bas.l"
+{	printf("_glTranslatef => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glTranslatef; }
 	YY_BREAK
 case 665:
 YY_RULE_SETUP
-#line 2002 "bas.l"
-{	printf("_glTexCoord4f => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glTexCoord4f; }
+#line 871 "bas.l"
+{	printf("_glTexCoord4f => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glTexCoord4f; }
 	YY_BREAK
 case 666:
 YY_RULE_SETUP
-#line 2003 "bas.l"
-{	printf("_glTexCoord4d => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glTexCoord4d; }
+#line 872 "bas.l"
+{	printf("_glTexCoord4d => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glTexCoord4d; }
 	YY_BREAK
 case 667:
 YY_RULE_SETUP
-#line 2004 "bas.l"
-{	printf("_glTexCoord1i => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glTexCoord1i; }
+#line 873 "bas.l"
+{	printf("_glTexCoord1i => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glTexCoord1i; }
 	YY_BREAK
 case 668:
 YY_RULE_SETUP
-#line 2005 "bas.l"
-{	printf("_glTexCoord1f => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glTexCoord1f; }
+#line 874 "bas.l"
+{	printf("_glTexCoord1f => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glTexCoord1f; }
 	YY_BREAK
 case 669:
 YY_RULE_SETUP
-#line 2006 "bas.l"
-{	printf("_glMatrixMode => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glMatrixMode; }
+#line 875 "bas.l"
+{	printf("_glMatrixMode => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glMatrixMode; }
 	YY_BREAK
 case 670:
 YY_RULE_SETUP
-#line 2007 "bas.l"
-{	printf("_glTexCoord1d => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glTexCoord1d; }
+#line 876 "bas.l"
+{	printf("_glTexCoord1d => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glTexCoord1d; }
 	YY_BREAK
 case 671:
 YY_RULE_SETUP
-#line 2008 "bas.l"
-{	printf("_glMaterialfv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glMaterialfv; }
+#line 877 "bas.l"
+{	printf("_glMaterialfv => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glMaterialfv; }
 	YY_BREAK
 case 672:
 YY_RULE_SETUP
-#line 2009 "bas.l"
-{	printf("_glTexCoord3s => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glTexCoord3s; }
+#line 878 "bas.l"
+{	printf("_glTexCoord3s => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glTexCoord3s; }
 	YY_BREAK
 case 673:
 YY_RULE_SETUP
-#line 2010 "bas.l"
-{	printf("SEEK => %s\n", yytext); nchar += yyleng; return ENUM_QB_SEEK_STATEMENT; }
+#line 879 "bas.l"
+{	printf("SEEK => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_SEEK_STATEMENT; }
 	YY_BREAK
 case 674:
 YY_RULE_SETUP
-#line 2011 "bas.l"
-{	printf("_glDepthRange => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glDepthRange; }
+#line 880 "bas.l"
+{	printf("_glDepthRange => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glDepthRange; }
 	YY_BREAK
 case 675:
 YY_RULE_SETUP
-#line 2012 "bas.l"
-{	printf("_glCopyPixels => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glCopyPixels; }
+#line 881 "bas.l"
+{	printf("_glCopyPixels => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glCopyPixels; }
 	YY_BREAK
 case 676:
 YY_RULE_SETUP
-#line 2013 "bas.l"
-{	printf("NEXT => %s\n", yytext); nchar += yyleng; return ENUM_QB_NEXT_STATEMENT; }
+#line 882 "bas.l"
+{	printf("NEXT => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_NEXT_STATEMENT; }
 	YY_BREAK
 case 677:
 YY_RULE_SETUP
-#line 2014 "bas.l"
-{	printf("LOOP => %s\n", yytext); nchar += yyleng; return ENUM_QB_LOOP_STATEMENT; }
+#line 883 "bas.l"
+{	printf("LOOP => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_LOOP_STATEMENT; }
 	YY_BREAK
 case 678:
 YY_RULE_SETUP
-#line 2015 "bas.l"
-{	printf("_glDrawBuffer => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glDrawBuffer; }
+#line 884 "bas.l"
+{	printf("_glDrawBuffer => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glDrawBuffer; }
 	YY_BREAK
 case 679:
 YY_RULE_SETUP
-#line 2016 "bas.l"
-{	printf("_glDrawArrays => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glDrawArrays; }
+#line 885 "bas.l"
+{	printf("_glDrawArrays => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glDrawArrays; }
 	YY_BREAK
 case 680:
 YY_RULE_SETUP
-#line 2017 "bas.l"
-{	printf("_glClearIndex => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glClearIndex; }
+#line 886 "bas.l"
+{	printf("_glClearIndex => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glClearIndex; }
 	YY_BREAK
 case 681:
 YY_RULE_SETUP
-#line 2018 "bas.l"
-{	printf("_glClearDepth => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glClearDepth; }
+#line 887 "bas.l"
+{	printf("_glClearDepth => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glClearDepth; }
 	YY_BREAK
 case 682:
 YY_RULE_SETUP
-#line 2019 "bas.l"
-{	printf("_glGetLightiv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glGetLightiv; }
+#line 888 "bas.l"
+{	printf("_glGetLightiv => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glGetLightiv; }
 	YY_BREAK
 case 683:
 YY_RULE_SETUP
-#line 2020 "bas.l"
-{	printf("_glClearAccum => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glClearAccum; }
+#line 889 "bas.l"
+{	printf("_glClearAccum => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glClearAccum; }
 	YY_BREAK
 case 684:
 YY_RULE_SETUP
-#line 2021 "bas.l"
-{	printf("PLAY => %s\n", yytext); nchar += yyleng; return ENUM_QB_PLAY_STATEMENT; }
+#line 890 "bas.l"
+{	printf("PLAY => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_PLAY_STATEMENT; }
 	YY_BREAK
 case 685:
 YY_RULE_SETUP
-#line 2022 "bas.l"
-{	printf("_glGetDoublev => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glGetDoublev; }
+#line 891 "bas.l"
+{	printf("_glGetDoublev => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glGetDoublev; }
 	YY_BREAK
 case 686:
 YY_RULE_SETUP
-#line 2023 "bas.l"
-{	printf("_glClearColor => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glClearColor; }
+#line 892 "bas.l"
+{	printf("_glClearColor => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glClearColor; }
 	YY_BREAK
 case 687:
 YY_RULE_SETUP
-#line 2024 "bas.l"
-{	printf("_glGetLightfv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glGetLightfv; }
+#line 893 "bas.l"
+{	printf("_glGetLightfv => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glGetLightfv; }
 	YY_BREAK
 case 688:
 YY_RULE_SETUP
-#line 2025 "bas.l"
-{	printf("_MOUSEPIPEOPEN => %s\n", yytext); nchar += yyleng; return ENUM_QB__MOUSEPIPEOPEN; }
+#line 894 "bas.l"
+{	printf("_MOUSEPIPEOPEN => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__MOUSEPIPEOPEN; }
 	YY_BREAK
 case 689:
 YY_RULE_SETUP
-#line 2026 "bas.l"
-{	printf("_DESKTOPHEIGHT => %s\n", yytext); nchar += yyleng; return ENUM_QB__DESKTOPHEIGHT; }
+#line 895 "bas.l"
+{	printf("_DESKTOPHEIGHT => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__DESKTOPHEIGHT; }
 	YY_BREAK
 case 690:
 YY_RULE_SETUP
-#line 2027 "bas.l"
-{	printf("_glEvalPoint1 => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glEvalPoint1; }
+#line 896 "bas.l"
+{	printf("_glEvalPoint1 => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glEvalPoint1; }
 	YY_BREAK
 case 691:
 YY_RULE_SETUP
-#line 2028 "bas.l"
-{	printf("_glDrawPixels => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glDrawPixels; }
+#line 897 "bas.l"
+{	printf("_glDrawPixels => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glDrawPixels; }
 	YY_BREAK
 case 692:
 YY_RULE_SETUP
-#line 2029 "bas.l"
-{	printf("_MEM => %s\n", yytext); nchar += yyleng; return ENUM_QB__MEM_STATEMENT; }
+#line 898 "bas.l"
+{	printf("_MEM => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__MEM_STATEMENT; }
 	YY_BREAK
 case 693:
 YY_RULE_SETUP
-#line 2030 "bas.l"
-{	printf("_glEvalPoint2 => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glEvalPoint2; }
+#line 899 "bas.l"
+{	printf("_glEvalPoint2 => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glEvalPoint2; }
 	YY_BREAK
 case 694:
 YY_RULE_SETUP
-#line 2031 "bas.l"
-{	printf("_glTexCoord1dv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glTexCoord1dv; }
+#line 900 "bas.l"
+{	printf("_glTexCoord1dv => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glTexCoord1dv; }
 	YY_BREAK
 case 695:
 YY_RULE_SETUP
-#line 2032 "bas.l"
-{	printf("_glTexCoord2dv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glTexCoord2dv; }
+#line 901 "bas.l"
+{	printf("_glTexCoord2dv => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glTexCoord2dv; }
 	YY_BREAK
 case 696:
 YY_RULE_SETUP
-#line 2033 "bas.l"
-{	printf("_glTexCoord1sv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glTexCoord1sv; }
+#line 902 "bas.l"
+{	printf("_glTexCoord1sv => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glTexCoord1sv; }
 	YY_BREAK
 case 697:
 YY_RULE_SETUP
-#line 2034 "bas.l"
-{	printf("_glTexCoord1fv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glTexCoord1fv; }
+#line 903 "bas.l"
+{	printf("_glTexCoord1fv => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glTexCoord1fv; }
 	YY_BREAK
 case 698:
 YY_RULE_SETUP
-#line 2035 "bas.l"
-{	printf("_glTexCoord1iv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glTexCoord1iv; }
+#line 904 "bas.l"
+{	printf("_glTexCoord1iv => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glTexCoord1iv; }
 	YY_BREAK
 case 699:
 YY_RULE_SETUP
-#line 2036 "bas.l"
-{	printf("TIMER => %s\n", yytext); nchar += yyleng; return ENUM_QB_TIMER_STATEMENT; }
+#line 905 "bas.l"
+{	printf("TIMER => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_TIMER_STATEMENT; }
 	YY_BREAK
 case 700:
 YY_RULE_SETUP
-#line 2037 "bas.l"
-{	printf("_glDeleteLists => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glDeleteLists; }
+#line 906 "bas.l"
+{	printf("_glDeleteLists => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glDeleteLists; }
 	YY_BREAK
 case 701:
 YY_RULE_SETUP
-#line 2038 "bas.l"
-{	printf("_glRasterPos3s => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glRasterPos3s; }
+#line 907 "bas.l"
+{	printf("_glRasterPos3s => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glRasterPos3s; }
 	YY_BREAK
 case 702:
 YY_RULE_SETUP
-#line 2039 "bas.l"
-{	printf("_glRasterPos3i => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glRasterPos3i; }
+#line 908 "bas.l"
+{	printf("_glRasterPos3i => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glRasterPos3i; }
 	YY_BREAK
 case 703:
 YY_RULE_SETUP
-#line 2040 "bas.l"
-{	printf("_glRasterPos3f => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glRasterPos3f; }
+#line 909 "bas.l"
+{	printf("_glRasterPos3f => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glRasterPos3f; }
 	YY_BREAK
 case 704:
 YY_RULE_SETUP
-#line 2041 "bas.l"
-{	printf("_glRasterPos3d => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glRasterPos3d; }
+#line 910 "bas.l"
+{	printf("_glRasterPos3d => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glRasterPos3d; }
 	YY_BREAK
 case 705:
 YY_RULE_SETUP
-#line 2042 "bas.l"
-{	printf("_glRasterPos4d => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glRasterPos4d; }
+#line 911 "bas.l"
+{	printf("_glRasterPos4d => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glRasterPos4d; }
 	YY_BREAK
 case 706:
 YY_RULE_SETUP
-#line 2043 "bas.l"
-{	printf("_glRasterPos4f => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glRasterPos4f; }
+#line 912 "bas.l"
+{	printf("_glRasterPos4f => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glRasterPos4f; }
 	YY_BREAK
 case 707:
 YY_RULE_SETUP
-#line 2044 "bas.l"
-{	printf("_glStencilFunc => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glStencilFunc; }
+#line 913 "bas.l"
+{	printf("_glStencilFunc => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glStencilFunc; }
 	YY_BREAK
 case 708:
 YY_RULE_SETUP
-#line 2045 "bas.l"
-{	printf("_glTexCoord2fv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glTexCoord2fv; }
+#line 914 "bas.l"
+{	printf("_glTexCoord2fv => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glTexCoord2fv; }
 	YY_BREAK
 case 709:
 YY_RULE_SETUP
-#line 2046 "bas.l"
-{	printf("_glRasterPos4s => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glRasterPos4s; }
+#line 915 "bas.l"
+{	printf("_glRasterPos4s => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glRasterPos4s; }
 	YY_BREAK
 case 710:
 YY_RULE_SETUP
-#line 2047 "bas.l"
-{	printf("_glRasterPos4i => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glRasterPos4i; }
+#line 916 "bas.l"
+{	printf("_glRasterPos4i => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glRasterPos4i; }
 	YY_BREAK
 case 711:
 YY_RULE_SETUP
-#line 2048 "bas.l"
-{	printf("_glBindTexture => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glBindTexture; }
+#line 917 "bas.l"
+{	printf("_glBindTexture => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glBindTexture; }
 	YY_BREAK
 case 712:
 YY_RULE_SETUP
-#line 2049 "bas.l"
-{	printf("_MOUSEMOVEMENTY => %s\n", yytext); nchar += yyleng; return ENUM_QB__MOUSEMOVEMENTY; }
+#line 918 "bas.l"
+{	printf("_MOUSEMOVEMENTY => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__MOUSEMOVEMENTY; }
 	YY_BREAK
 case 713:
 YY_RULE_SETUP
-#line 2050 "bas.l"
-{	printf("_MOUSEMOVEMENTX => %s\n", yytext); nchar += yyleng; return ENUM_QB__MOUSEMOVEMENTX; }
+#line 919 "bas.l"
+{	printf("_MOUSEMOVEMENTX => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__MOUSEMOVEMENTX; }
 	YY_BREAK
 case 714:
 YY_RULE_SETUP
-#line 2051 "bas.l"
-{	printf("_OPENCONNECTION => %s\n", yytext); nchar += yyleng; return ENUM_QB__OPENCONNECTION; }
+#line 920 "bas.l"
+{	printf("_OPENCONNECTION => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__OPENCONNECTION; }
 	YY_BREAK
 case 715:
 YY_RULE_SETUP
-#line 2052 "bas.l"
-{	printf("DECLARE LIBRARY => %s\n", yytext); nchar += yyleng; return ENUM_QB_DECLARE_LIBRARY; }
+#line 921 "bas.l"
+{	printf("DECLARE LIBRARY => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_DECLARE_LIBRARY; }
 	YY_BREAK
 case 716:
 YY_RULE_SETUP
-#line 2053 "bas.l"
-{	printf("LINE INPUT FILE => %s\n", yytext); nchar += yyleng; return ENUM_QB_LINE_INPUT_FILE; }
+#line 922 "bas.l"
+{	printf("LINE INPUT FILE => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_LINE_INPUT_FILE; }
 	YY_BREAK
 case 717:
 YY_RULE_SETUP
-#line 2054 "bas.l"
-{	printf("INPUT FILE MODE => %s\n", yytext); nchar += yyleng; return ENUM_QB_INPUT_FILE_MODE; }
+#line 923 "bas.l"
+{	printf("INPUT FILE MODE => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_INPUT_FILE_MODE; }
 	YY_BREAK
 case 718:
 YY_RULE_SETUP
-#line 2055 "bas.l"
-{	printf("_FONT => %s\n", yytext); nchar += yyleng; return ENUM_QB__FONT_STATEMENT; }
+#line 924 "bas.l"
+{	printf("_FONT => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__FONT_STATEMENT; }
 	YY_BREAK
 case 719:
 YY_RULE_SETUP
-#line 2056 "bas.l"
-{	printf("_DEST => %s\n", yytext); nchar += yyleng; return ENUM_QB__DEST_STATEMENT; }
+#line 925 "bas.l"
+{	printf("_DEST => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__DEST_STATEMENT; }
 	YY_BREAK
 case 720:
 YY_RULE_SETUP
-#line 2057 "bas.l"
-{	printf("OFFSET VARIABLE => %s\n", yytext); nchar += yyleng; return ENUM_QB_OFFSET_VARIABLE; }
+#line 926 "bas.l"
+{	printf("OFFSET VARIABLE => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_OFFSET_VARIABLE; }
 	YY_BREAK
 case 721:
 YY_RULE_SETUP
-#line 2058 "bas.l"
-{	printf("DOUBLE VARIABLE => %s\n", yytext); nchar += yyleng; return ENUM_QB_DOUBLE_VARIABLE; }
+#line 927 "bas.l"
+{	printf("DOUBLE VARIABLE => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_DOUBLE_VARIABLE; }
 	YY_BREAK
 case 722:
 YY_RULE_SETUP
-#line 2059 "bas.l"
-{	printf("SINGLE VARIABLE => %s\n", yytext); nchar += yyleng; return ENUM_QB_SINGLE_VARIABLE; }
+#line 928 "bas.l"
+{	printf("SINGLE VARIABLE => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_SINGLE_VARIABLE; }
 	YY_BREAK
 case 723:
 YY_RULE_SETUP
-#line 2060 "bas.l"
-{	printf("STRING VARIABLE => %s\n", yytext); nchar += yyleng; return ENUM_QB_STRING_VARIABLE; }
+#line 929 "bas.l"
+{	printf("STRING VARIABLE => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_STRING_VARIABLE; }
 	YY_BREAK
 case 724:
 YY_RULE_SETUP
-#line 2061 "bas.l"
-{	printf("_glTexCoord4sv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glTexCoord4sv; }
+#line 930 "bas.l"
+{	printf("_glTexCoord4sv => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glTexCoord4sv; }
 	YY_BREAK
 case 725:
 YY_RULE_SETUP
-#line 2062 "bas.l"
-{	printf("MID_$STATMENT => %s\n", yytext); nchar += yyleng; return ENUM_QB_MID_DS_STATMENT; }
+#line 931 "bas.l"
+{	printf("MID_$STATMENT => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_MID_DS_STATMENT; }
 	YY_BREAK
 case 726:
 YY_RULE_SETUP
-#line 2063 "bas.l"
-{	printf("_glRasterPos2s => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glRasterPos2s; }
+#line 932 "bas.l"
+{	printf("_glRasterPos2s => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glRasterPos2s; }
 	YY_BREAK
 case 727:
 YY_RULE_SETUP
-#line 2064 "bas.l"
-{	printf("_glTexCoord3fv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glTexCoord3fv; }
+#line 933 "bas.l"
+{	printf("_glTexCoord3fv => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glTexCoord3fv; }
 	YY_BREAK
 case 728:
 YY_RULE_SETUP
-#line 2065 "bas.l"
-{	printf("_glTexCoord3dv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glTexCoord3dv; }
+#line 934 "bas.l"
+{	printf("_glTexCoord3dv => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glTexCoord3dv; }
 	YY_BREAK
 case 729:
 YY_RULE_SETUP
-#line 2066 "bas.l"
-{	printf("STRIG => %s\n", yytext); nchar += yyleng; return ENUM_QB_STRIG_STATEMENT; }
+#line 935 "bas.l"
+{	printf("STRIG => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_STRIG_STATEMENT; }
 	YY_BREAK
 case 730:
 YY_RULE_SETUP
-#line 2067 "bas.l"
-{	printf("_glTexCoord2sv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glTexCoord2sv; }
+#line 936 "bas.l"
+{	printf("_glTexCoord2sv => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glTexCoord2sv; }
 	YY_BREAK
 case 731:
 YY_RULE_SETUP
-#line 2068 "bas.l"
-{	printf("_glTexCoord3iv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glTexCoord3iv; }
+#line 937 "bas.l"
+{	printf("_glTexCoord3iv => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glTexCoord3iv; }
 	YY_BREAK
 case 732:
 YY_RULE_SETUP
-#line 2069 "bas.l"
-{	printf("RANDOMIZE USING => %s\n", yytext); nchar += yyleng; return ENUM_QB_RANDOMIZE_USING; }
+#line 938 "bas.l"
+{	printf("RANDOMIZE USING => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_RANDOMIZE_USING; }
 	YY_BREAK
 case 733:
 YY_RULE_SETUP
-#line 2070 "bas.l"
-{	printf("_glTexCoord4iv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glTexCoord4iv; }
+#line 939 "bas.l"
+{	printf("_glTexCoord4iv => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glTexCoord4iv; }
 	YY_BREAK
 case 734:
 YY_RULE_SETUP
-#line 2071 "bas.l"
-{	printf("_glTexCoord4fv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glTexCoord4fv; }
+#line 940 "bas.l"
+{	printf("_glTexCoord4fv => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glTexCoord4fv; }
 	YY_BREAK
 case 735:
 YY_RULE_SETUP
-#line 2072 "bas.l"
-{	printf("_glTexCoord4dv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glTexCoord4dv; }
+#line 941 "bas.l"
+{	printf("_glTexCoord4dv => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glTexCoord4dv; }
 	YY_BREAK
 case 736:
 YY_RULE_SETUP
-#line 2073 "bas.l"
-{	printf("_glTexCoord3sv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glTexCoord3sv; }
+#line 942 "bas.l"
+{	printf("_glTexCoord3sv => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glTexCoord3sv; }
 	YY_BREAK
 case 737:
 YY_RULE_SETUP
-#line 2074 "bas.l"
-{	printf("_glTexCoord2iv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glTexCoord2iv; }
+#line 943 "bas.l"
+{	printf("_glTexCoord2iv => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glTexCoord2iv; }
 	YY_BREAK
 case 738:
 YY_RULE_SETUP
-#line 2075 "bas.l"
-{	printf("_glStencilMask => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glStencilMask; }
+#line 944 "bas.l"
+{	printf("_glStencilMask => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glStencilMask; }
 	YY_BREAK
 case 739:
 YY_RULE_SETUP
-#line 2076 "bas.l"
-{	printf("_glGetTexImage => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glGetTexImage; }
+#line 945 "bas.l"
+{	printf("_glGetTexImage => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glGetTexImage; }
 	YY_BREAK
 case 740:
 YY_RULE_SETUP
-#line 2077 "bas.l"
-{	printf("_glGetTexGeniv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glGetTexGeniv; }
+#line 946 "bas.l"
+{	printf("_glGetTexGeniv => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glGetTexGeniv; }
 	YY_BREAK
 case 741:
 YY_RULE_SETUP
-#line 2078 "bas.l"
-{	printf("_glPassThrough => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glPassThrough; }
+#line 947 "bas.l"
+{	printf("_glPassThrough => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glPassThrough; }
 	YY_BREAK
 case 742:
 YY_RULE_SETUP
-#line 2079 "bas.l"
-{	printf("_glLineStipple => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glLineStipple; }
+#line 948 "bas.l"
+{	printf("_glLineStipple => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glLineStipple; }
 	YY_BREAK
 case 743:
 YY_RULE_SETUP
-#line 2080 "bas.l"
-{	printf("_glLoadMatrixf => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glLoadMatrixf; }
+#line 949 "bas.l"
+{	printf("_glLoadMatrixf => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glLoadMatrixf; }
 	YY_BREAK
 case 744:
 YY_RULE_SETUP
-#line 2081 "bas.l"
-{	printf("_glGenTextures => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glGenTextures; }
+#line 950 "bas.l"
+{	printf("_glGenTextures => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glGenTextures; }
 	YY_BREAK
 case 745:
 YY_RULE_SETUP
-#line 2082 "bas.l"
-{	printf("_glEvalCoord1d => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glEvalCoord1d; }
+#line 951 "bas.l"
+{	printf("_glEvalCoord1d => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glEvalCoord1d; }
 	YY_BREAK
 case 746:
 YY_RULE_SETUP
-#line 2083 "bas.l"
-{	printf("_glEvalCoord2f => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glEvalCoord2f; }
+#line 952 "bas.l"
+{	printf("_glEvalCoord2f => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glEvalCoord2f; }
 	YY_BREAK
 case 747:
 YY_RULE_SETUP
-#line 2084 "bas.l"
-{	printf("_glEvalCoord2d => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glEvalCoord2d; }
+#line 953 "bas.l"
+{	printf("_glEvalCoord2d => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glEvalCoord2d; }
 	YY_BREAK
 case 748:
 YY_RULE_SETUP
-#line 2085 "bas.l"
-{	printf("_glPixelMapuiv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glPixelMapuiv; }
+#line 954 "bas.l"
+{	printf("_glPixelMapuiv => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glPixelMapuiv; }
 	YY_BREAK
 case 749:
 YY_RULE_SETUP
-#line 2086 "bas.l"
-{	printf("_glPixelStoref => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glPixelStoref; }
+#line 955 "bas.l"
+{	printf("_glPixelStoref => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glPixelStoref; }
 	YY_BREAK
 case 750:
 YY_RULE_SETUP
-#line 2087 "bas.l"
-{	printf("_glLightModelf => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glLightModelf; }
+#line 956 "bas.l"
+{	printf("_glLightModelf => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glLightModelf; }
 	YY_BREAK
 case 751:
 YY_RULE_SETUP
-#line 2088 "bas.l"
-{	printf("_glPixelStorei => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glPixelStorei; }
+#line 957 "bas.l"
+{	printf("_glPixelStorei => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glPixelStorei; }
 	YY_BREAK
 case 752:
 YY_RULE_SETUP
-#line 2089 "bas.l"
-{	printf("_glEvalCoord1f => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glEvalCoord1f; }
+#line 958 "bas.l"
+{	printf("_glEvalCoord1f => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glEvalCoord1f; }
 	YY_BREAK
 case 753:
 YY_RULE_SETUP
-#line 2090 "bas.l"
-{	printf("_glGetTexEnvfv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glGetTexEnvfv; }
+#line 959 "bas.l"
+{	printf("_glGetTexEnvfv => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glGetTexEnvfv; }
 	YY_BREAK
 case 754:
 YY_RULE_SETUP
-#line 2091 "bas.l"
-{	printf("_glPixelMapusv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glPixelMapusv; }
+#line 960 "bas.l"
+{	printf("_glPixelMapusv => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glPixelMapusv; }
 	YY_BREAK
 case 755:
 YY_RULE_SETUP
-#line 2092 "bas.l"
-{	printf("_glPolygonMode => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glPolygonMode; }
+#line 961 "bas.l"
+{	printf("_glPolygonMode => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glPolygonMode; }
 	YY_BREAK
 case 756:
 YY_RULE_SETUP
-#line 2093 "bas.l"
-{	printf("_glGetBooleanv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glGetBooleanv; }
+#line 962 "bas.l"
+{	printf("_glGetBooleanv => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glGetBooleanv; }
 	YY_BREAK
 case 757:
 YY_RULE_SETUP
-#line 2094 "bas.l"
-{	printf("_glLightModeli => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glLightModeli; }
+#line 963 "bas.l"
+{	printf("_glLightModeli => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glLightModeli; }
 	YY_BREAK
 case 758:
 YY_RULE_SETUP
-#line 2095 "bas.l"
-{	printf("_glGetTexGenfv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glGetTexGenfv; }
+#line 964 "bas.l"
+{	printf("_glGetTexGenfv => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glGetTexGenfv; }
 	YY_BREAK
 case 759:
 YY_RULE_SETUP
-#line 2096 "bas.l"
-{	printf("_glRasterPos2f => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glRasterPos2f; }
+#line 965 "bas.l"
+{	printf("_glRasterPos2f => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glRasterPos2f; }
 	YY_BREAK
 case 760:
 YY_RULE_SETUP
-#line 2097 "bas.l"
-{	printf("_glMultMatrixd => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glMultMatrixd; }
+#line 966 "bas.l"
+{	printf("_glMultMatrixd => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glMultMatrixd; }
 	YY_BREAK
 case 761:
 YY_RULE_SETUP
-#line 2098 "bas.l"
-{	printf("_glGetPointerv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glGetPointerv; }
+#line 967 "bas.l"
+{	printf("_glGetPointerv => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glGetPointerv; }
 	YY_BREAK
 case 762:
 YY_RULE_SETUP
-#line 2099 "bas.l"
-{	printf("_glGetTexGendv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glGetTexGendv; }
+#line 968 "bas.l"
+{	printf("_glGetTexGendv => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glGetTexGendv; }
 	YY_BREAK
 case 763:
 YY_RULE_SETUP
-#line 2100 "bas.l"
-{	printf("_glGetTexEnviv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glGetTexEnviv; }
+#line 969 "bas.l"
+{	printf("_glGetTexEnviv => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glGetTexEnviv; }
 	YY_BREAK
 case 764:
 YY_RULE_SETUP
-#line 2101 "bas.l"
-{	printf("_glRasterPos2i => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glRasterPos2i; }
+#line 970 "bas.l"
+{	printf("_glRasterPos2i => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glRasterPos2i; }
 	YY_BREAK
 case 765:
 YY_RULE_SETUP
-#line 2102 "bas.l"
-{	printf("_glLoadMatrixd => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glLoadMatrixd; }
+#line 971 "bas.l"
+{	printf("_glLoadMatrixd => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glLoadMatrixd; }
 	YY_BREAK
 case 766:
 YY_RULE_SETUP
-#line 2103 "bas.l"
-{	printf("_glRasterPos2d => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glRasterPos2d; }
+#line 972 "bas.l"
+{	printf("_glRasterPos2d => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glRasterPos2d; }
 	YY_BREAK
 case 767:
 YY_RULE_SETUP
-#line 2104 "bas.l"
-{	printf("_glGetIntegerv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glGetIntegerv; }
+#line 973 "bas.l"
+{	printf("_glGetIntegerv => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glGetIntegerv; }
 	YY_BREAK
 case 768:
 YY_RULE_SETUP
-#line 2105 "bas.l"
-{	printf("_glMultMatrixf => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glMultMatrixf; }
+#line 974 "bas.l"
+{	printf("_glMultMatrixf => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glMultMatrixf; }
 	YY_BREAK
 case 769:
 YY_RULE_SETUP
-#line 2106 "bas.l"
-{	printf("SCREEN => %s\n", yytext); nchar += yyleng; return ENUM_QB_SCREEN_STATEMENT; }
+#line 975 "bas.l"
+{	printf("SCREEN => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_SCREEN_STATEMENT; }
 	YY_BREAK
 case 770:
 YY_RULE_SETUP
-#line 2107 "bas.l"
-{	printf("_glEvalCoord2fv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glEvalCoord2fv; }
+#line 976 "bas.l"
+{	printf("_glEvalCoord2fv => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glEvalCoord2fv; }
 	YY_BREAK
 case 771:
 YY_RULE_SETUP
-#line 2108 "bas.l"
-{	printf("_glLightModeliv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glLightModeliv; }
+#line 977 "bas.l"
+{	printf("_glLightModeliv => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glLightModeliv; }
 	YY_BREAK
 case 772:
 YY_RULE_SETUP
-#line 2109 "bas.l"
-{	printf("_glRasterPos2sv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glRasterPos2sv; }
+#line 978 "bas.l"
+{	printf("_glRasterPos2sv => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glRasterPos2sv; }
 	YY_BREAK
 case 773:
 YY_RULE_SETUP
-#line 2110 "bas.l"
-{	printf("_glGetClipPlane => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glGetClipPlane; }
+#line 979 "bas.l"
+{	printf("_glGetClipPlane => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glGetClipPlane; }
 	YY_BREAK
 case 774:
 YY_RULE_SETUP
-#line 2111 "bas.l"
-{	printf("_glLoadIdentity => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glLoadIdentity; }
+#line 980 "bas.l"
+{	printf("_glLoadIdentity => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glLoadIdentity; }
 	YY_BREAK
 case 775:
 YY_RULE_SETUP
-#line 2112 "bas.l"
-{	printf("INTEGER VARIABLE => %s\n", yytext); nchar += yyleng; return ENUM_QB_INTEGER_VARIABLE; }
+#line 981 "bas.l"
+{	printf("INTEGER VARIABLE => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_INTEGER_VARIABLE; }
 	YY_BREAK
 case 776:
 YY_RULE_SETUP
-#line 2113 "bas.l"
-{	printf("_glEvalCoord2dv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glEvalCoord2dv; }
+#line 982 "bas.l"
+{	printf("_glEvalCoord2dv => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glEvalCoord2dv; }
 	YY_BREAK
 case 777:
 YY_RULE_SETUP
-#line 2114 "bas.l"
-{	printf("PRINT USING FILE => %s\n", yytext); nchar += yyleng; return ENUM_QB_PRINT_USING_FILE; }
+#line 983 "bas.l"
+{	printf("PRINT USING FILE => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_PRINT_USING_FILE; }
 	YY_BREAK
 case 778:
 YY_RULE_SETUP
-#line 2115 "bas.l"
-{	printf("_glLightModelfv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glLightModelfv; }
+#line 984 "bas.l"
+{	printf("_glLightModelfv => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glLightModelfv; }
 	YY_BREAK
 case 779:
 YY_RULE_SETUP
-#line 2116 "bas.l"
-{	printf("_glRasterPos4fv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glRasterPos4fv; }
+#line 985 "bas.l"
+{	printf("_glRasterPos4fv => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glRasterPos4fv; }
 	YY_BREAK
 case 780:
 YY_RULE_SETUP
-#line 2117 "bas.l"
-{	printf("_glRasterPos4dv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glRasterPos4dv; }
+#line 986 "bas.l"
+{	printf("_glRasterPos4dv => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glRasterPos4dv; }
 	YY_BREAK
 case 781:
 YY_RULE_SETUP
-#line 2118 "bas.l"
-{	printf("_glDrawElements => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glDrawElements; }
+#line 987 "bas.l"
+{	printf("_glDrawElements => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glDrawElements; }
 	YY_BREAK
 case 782:
 YY_RULE_SETUP
-#line 2119 "bas.l"
-{	printf("_glRasterPos4iv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glRasterPos4iv; }
+#line 988 "bas.l"
+{	printf("_glRasterPos4iv => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glRasterPos4iv; }
 	YY_BREAK
 case 783:
 YY_RULE_SETUP
-#line 2120 "bas.l"
-{	printf("_glRasterPos4sv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glRasterPos4sv; }
+#line 989 "bas.l"
+{	printf("_glRasterPos4sv => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glRasterPos4sv; }
 	YY_BREAK
 case 784:
 YY_RULE_SETUP
-#line 2121 "bas.l"
-{	printf("_glRasterPos2dv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glRasterPos2dv; }
+#line 990 "bas.l"
+{	printf("_glRasterPos2dv => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glRasterPos2dv; }
 	YY_BREAK
 case 785:
 YY_RULE_SETUP
-#line 2122 "bas.l"
-{	printf("_glRasterPos3sv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glRasterPos3sv; }
+#line 991 "bas.l"
+{	printf("_glRasterPos3sv => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glRasterPos3sv; }
 	YY_BREAK
 case 786:
 YY_RULE_SETUP
-#line 2123 "bas.l"
-{	printf("_glRasterPos3dv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glRasterPos3dv; }
+#line 992 "bas.l"
+{	printf("_glRasterPos3dv => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glRasterPos3dv; }
 	YY_BREAK
 case 787:
 YY_RULE_SETUP
-#line 2124 "bas.l"
-{	printf("_glRasterPos2iv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glRasterPos2iv; }
+#line 993 "bas.l"
+{	printf("_glRasterPos2iv => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glRasterPos2iv; }
 	YY_BREAK
 case 788:
 YY_RULE_SETUP
-#line 2125 "bas.l"
-{	printf("_glRasterPos3fv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glRasterPos3fv; }
+#line 994 "bas.l"
+{	printf("_glRasterPos3fv => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glRasterPos3fv; }
 	YY_BREAK
 case 789:
 YY_RULE_SETUP
-#line 2126 "bas.l"
-{	printf("_glRasterPos2fv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glRasterPos2fv; }
+#line 995 "bas.l"
+{	printf("_glRasterPos2fv => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glRasterPos2fv; }
 	YY_BREAK
 case 790:
 YY_RULE_SETUP
-#line 2127 "bas.l"
-{	printf("_glRasterPos3iv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glRasterPos3iv; }
+#line 996 "bas.l"
+{	printf("_glRasterPos3iv => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glRasterPos3iv; }
 	YY_BREAK
 case 791:
 YY_RULE_SETUP
-#line 2128 "bas.l"
-{	printf("_BLEND => %s\n", yytext); nchar += yyleng; return ENUM_QB__BLEND_STATEMENT; }
+#line 997 "bas.l"
+{	printf("_BLEND => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__BLEND_STATEMENT; }
 	YY_BREAK
 case 792:
 YY_RULE_SETUP
-#line 2129 "bas.l"
-{	printf("_BACKGROUNDCOLOR => %s\n", yytext); nchar += yyleng; return ENUM_QB__BACKGROUNDCOLOR; }
+#line 998 "bas.l"
+{	printf("_BACKGROUNDCOLOR => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__BACKGROUNDCOLOR; }
 	YY_BREAK
 case 793:
 YY_RULE_SETUP
-#line 2130 "bas.l"
-{	printf("_glColorPointer => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glColorPointer; }
+#line 999 "bas.l"
+{	printf("_glColorPointer => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glColorPointer; }
 	YY_BREAK
 case 794:
 YY_RULE_SETUP
-#line 2131 "bas.l"
-{	printf("_glSelectBuffer => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glSelectBuffer; }
+#line 1000 "bas.l"
+{	printf("_glSelectBuffer => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glSelectBuffer; }
 	YY_BREAK
 case 795:
 YY_RULE_SETUP
-#line 2132 "bas.l"
-{	printf("_glClearStencil => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glClearStencil; }
+#line 1001 "bas.l"
+{	printf("_glClearStencil => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glClearStencil; }
 	YY_BREAK
 case 796:
 YY_RULE_SETUP
-#line 2133 "bas.l"
-{	printf("_glArrayElement => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glArrayElement; }
+#line 1002 "bas.l"
+{	printf("_glArrayElement => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glArrayElement; }
 	YY_BREAK
 case 797:
 YY_RULE_SETUP
-#line 2134 "bas.l"
-{	printf("_glEvalCoord1dv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glEvalCoord1dv; }
+#line 1003 "bas.l"
+{	printf("_glEvalCoord1dv => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glEvalCoord1dv; }
 	YY_BREAK
 case 798:
 YY_RULE_SETUP
-#line 2135 "bas.l"
-{	printf("_glEvalCoord1fv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glEvalCoord1fv; }
+#line 1004 "bas.l"
+{	printf("_glEvalCoord1fv => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glEvalCoord1fv; }
 	YY_BREAK
 case 799:
 YY_RULE_SETUP
-#line 2136 "bas.l"
-{	printf("_glIndexPointer => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glIndexPointer; }
+#line 1005 "bas.l"
+{	printf("_glIndexPointer => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glIndexPointer; }
 	YY_BREAK
 case 800:
 YY_RULE_SETUP
-#line 2137 "bas.l"
-{	printf("_glVertexPointer => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glVertexPointer; }
+#line 1006 "bas.l"
+{	printf("_glVertexPointer => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glVertexPointer; }
 	YY_BREAK
 case 801:
 YY_RULE_SETUP
-#line 2138 "bas.l"
-{	printf("_glTexParameterf => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glTexParameterf; }
+#line 1007 "bas.l"
+{	printf("_glTexParameterf => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glTexParameterf; }
 	YY_BREAK
 case 802:
 YY_RULE_SETUP
-#line 2139 "bas.l"
-{	printf("_MEMGET => %s\n", yytext); nchar += yyleng; return ENUM_QB__MEMGET_STATEMENT; }
+#line 1008 "bas.l"
+{	printf("_MEMGET => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__MEMGET_STATEMENT; }
 	YY_BREAK
 case 803:
 YY_RULE_SETUP
-#line 2140 "bas.l"
-{	printf("_glTexSubImage2D => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glTexSubImage2D; }
+#line 1009 "bas.l"
+{	printf("_glTexSubImage2D => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glTexSubImage2D; }
 	YY_BREAK
 case 804:
 YY_RULE_SETUP
-#line 2141 "bas.l"
-{	printf("_glTexSubImage1D => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glTexSubImage1D; }
+#line 1010 "bas.l"
+{	printf("_glTexSubImage1D => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glTexSubImage1D; }
 	YY_BREAK
 case 805:
 YY_RULE_SETUP
-#line 2142 "bas.l"
-{	printf("_glTexParameteri => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glTexParameteri; }
+#line 1011 "bas.l"
+{	printf("_glTexParameteri => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glTexParameteri; }
 	YY_BREAK
 case 806:
 YY_RULE_SETUP
-#line 2143 "bas.l"
-{	printf("DATE$ => %s\n", yytext); nchar += yyleng; return ENUM_QB_DATE_DS_STATEMENT; }
+#line 1012 "bas.l"
+{	printf("DATE$ => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_DATE_DS_STATEMENT; }
 	YY_BREAK
 case 807:
 YY_RULE_SETUP
-#line 2144 "bas.l"
-{	printf("_glNormalPointer => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glNormalPointer; }
+#line 1013 "bas.l"
+{	printf("_glNormalPointer => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glNormalPointer; }
 	YY_BREAK
 case 808:
 YY_RULE_SETUP
-#line 2145 "bas.l"
-{	printf("_glGetMaterialiv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glGetMaterialiv; }
+#line 1014 "bas.l"
+{	printf("_glGetMaterialiv => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glGetMaterialiv; }
 	YY_BREAK
 case 809:
 YY_RULE_SETUP
-#line 2146 "bas.l"
-{	printf("_glPolygonOffset => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glPolygonOffset; }
+#line 1015 "bas.l"
+{	printf("_glPolygonOffset => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glPolygonOffset; }
 	YY_BREAK
 case 810:
 YY_RULE_SETUP
-#line 2147 "bas.l"
-{	printf("_glGetMaterialfv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glGetMaterialfv; }
+#line 1016 "bas.l"
+{	printf("_glGetMaterialfv => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glGetMaterialfv; }
 	YY_BREAK
 case 811:
 YY_RULE_SETUP
-#line 2148 "bas.l"
-{	printf("_glColorMaterial => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glColorMaterial; }
+#line 1017 "bas.l"
+{	printf("_glColorMaterial => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glColorMaterial; }
 	YY_BREAK
 case 812:
 YY_RULE_SETUP
-#line 2149 "bas.l"
-{	printf("TIME$ => %s\n", yytext); nchar += yyleng; return ENUM_QB_TIME_DS_STATEMENT; }
+#line 1018 "bas.l"
+{	printf("TIME$ => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_TIME_DS_STATEMENT; }
 	YY_BREAK
 case 813:
 YY_RULE_SETUP
-#line 2150 "bas.l"
-{	printf("_glGetPixelMapfv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glGetPixelMapfv; }
+#line 1019 "bas.l"
+{	printf("_glGetPixelMapfv => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glGetPixelMapfv; }
 	YY_BREAK
 case 814:
 YY_RULE_SETUP
-#line 2151 "bas.l"
-{	printf("UNSIGNED VARIABLE => %s\n", yytext); nchar += yyleng; return ENUM_QB_UNSIGNED_VARIABLE; }
+#line 1020 "bas.l"
+{	printf("UNSIGNED VARIABLE => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_UNSIGNED_VARIABLE; }
 	YY_BREAK
 case 815:
 YY_RULE_SETUP
-#line 2152 "bas.l"
-{	printf("UNKNOWN CHARACTER => %s\n", yytext); nchar += yyleng; return ENUM_QB_UNKNOWN_CHARACTER; }
+#line 1021 "bas.l"
+{	printf("UNKNOWN CHARACTER => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_UNKNOWN_CHARACTER; }
 	YY_BREAK
 case 816:
 YY_RULE_SETUP
-#line 2153 "bas.l"
-{	printf("STANDARD VARIABLE => %s\n", yytext); nchar += yyleng; return ENUM_QB_STANDARD_VARIABLE; }
+#line 1022 "bas.l"
+{	printf("STANDARD VARIABLE => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_STANDARD_VARIABLE; }
 	YY_BREAK
 case 817:
 YY_RULE_SETUP
-#line 2154 "bas.l"
-{	printf("_DISPLAY => %s\n", yytext); nchar += yyleng; return ENUM_QB__DISPLAY_STATEMENT; }
+#line 1023 "bas.l"
+{	printf("_DISPLAY => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__DISPLAY_STATEMENT; }
 	YY_BREAK
 case 818:
 YY_RULE_SETUP
-#line 2155 "bas.l"
-{	printf("_glPolygonStipple => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glPolygonStipple; }
+#line 1024 "bas.l"
+{	printf("_glPolygonStipple => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glPolygonStipple; }
 	YY_BREAK
 case 819:
 YY_RULE_SETUP
-#line 2156 "bas.l"
-{	printf("_glCopyTexImage2D => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glCopyTexImage2D; }
+#line 1025 "bas.l"
+{	printf("_glCopyTexImage2D => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glCopyTexImage2D; }
 	YY_BREAK
 case 820:
 YY_RULE_SETUP
-#line 2157 "bas.l"
-{	printf("_glDeleteTextures => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glDeleteTextures; }
+#line 1026 "bas.l"
+{	printf("_glDeleteTextures => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glDeleteTextures; }
 	YY_BREAK
 case 821:
 YY_RULE_SETUP
-#line 2158 "bas.l"
-{	printf("_MIDDLE SCREENMOVE => %s\n", yytext); nchar += yyleng; return ENUM_QB__MIDDLE_SCREENMOVE; }
+#line 1027 "bas.l"
+{	printf("_MIDDLE SCREENMOVE => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__MIDDLE_SCREENMOVE; }
 	YY_BREAK
 case 822:
 YY_RULE_SETUP
-#line 2159 "bas.l"
-{	printf("_glCopyTexImage1D => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glCopyTexImage1D; }
+#line 1028 "bas.l"
+{	printf("_glCopyTexImage1D => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glCopyTexImage1D; }
 	YY_BREAK
 case 823:
 YY_RULE_SETUP
-#line 2160 "bas.l"
-{	printf("_glPixelTransferi => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glPixelTransferi; }
+#line 1029 "bas.l"
+{	printf("_glPixelTransferi => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glPixelTransferi; }
 	YY_BREAK
 case 824:
 YY_RULE_SETUP
-#line 2161 "bas.l"
-{	printf("_glGetPixelMapuiv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glGetPixelMapuiv; }
+#line 1030 "bas.l"
+{	printf("_glGetPixelMapuiv => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glGetPixelMapuiv; }
 	YY_BREAK
 case 825:
 YY_RULE_SETUP
-#line 2162 "bas.l"
-{	printf("$VIRTUALKEYBOARD => %s\n", yytext); nchar += yyleng; return ENUM_QB_DS_VIRTUALKEYBOARD; }
+#line 1031 "bas.l"
+{	printf("$VIRTUALKEYBOARD => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_DS_VIRTUALKEYBOARD; }
 	YY_BREAK
 case 826:
 YY_RULE_SETUP
-#line 2163 "bas.l"
-{	printf("_glGetPixelMapusv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glGetPixelMapusv; }
+#line 1032 "bas.l"
+{	printf("_glGetPixelMapusv => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glGetPixelMapusv; }
 	YY_BREAK
 case 827:
 YY_RULE_SETUP
-#line 2164 "bas.l"
-{	printf("INTEGER64 VARIABLE => %s\n", yytext); nchar += yyleng; return ENUM_QB_INTEGER64_VARIABLE; }
+#line 1033 "bas.l"
+{	printf("INTEGER64 VARIABLE => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_INTEGER64_VARIABLE; }
 	YY_BREAK
 case 828:
 YY_RULE_SETUP
-#line 2165 "bas.l"
-{	printf("_glFeedbackBuffer => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glFeedbackBuffer; }
+#line 1034 "bas.l"
+{	printf("_glFeedbackBuffer => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glFeedbackBuffer; }
 	YY_BREAK
 case 829:
 YY_RULE_SETUP
-#line 2166 "bas.l"
-{	printf("_glTexParameterfv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glTexParameterfv; }
+#line 1035 "bas.l"
+{	printf("_glTexParameterfv => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glTexParameterfv; }
 	YY_BREAK
 case 830:
 YY_RULE_SETUP
-#line 2167 "bas.l"
-{	printf("_glPixelTransferf => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glPixelTransferf; }
+#line 1036 "bas.l"
+{	printf("_glPixelTransferf => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glPixelTransferf; }
 	YY_BREAK
 case 831:
 YY_RULE_SETUP
-#line 2168 "bas.l"
-{	printf("_glTexParameteriv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glTexParameteriv; }
+#line 1037 "bas.l"
+{	printf("_glTexParameteriv => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glTexParameteriv; }
 	YY_BREAK
 case 832:
 YY_RULE_SETUP
-#line 2169 "bas.l"
-{	printf("_glEdgeFlagPointer => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glEdgeFlagPointer; }
+#line 1038 "bas.l"
+{	printf("_glEdgeFlagPointer => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glEdgeFlagPointer; }
 	YY_BREAK
 case 833:
 YY_RULE_SETUP
-#line 2170 "bas.l"
-{	printf("_glPopClientAttrib => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glPopClientAttrib; }
+#line 1039 "bas.l"
+{	printf("_glPopClientAttrib => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glPopClientAttrib; }
 	YY_BREAK
 case 834:
 YY_RULE_SETUP
-#line 2171 "bas.l"
-{	printf("_glTexCoordPointer => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glTexCoordPointer; }
+#line 1040 "bas.l"
+{	printf("_glTexCoordPointer => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glTexCoordPointer; }
 	YY_BREAK
 case 835:
 YY_RULE_SETUP
-#line 2172 "bas.l"
-{	printf("INPUT FILE => %s\n", yytext); nchar += yyleng; return ENUM_QB_INPUT_FILE_STATEMENT; }
+#line 1041 "bas.l"
+{	printf("INPUT FILE => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_INPUT_FILE_STATEMENT; }
 	YY_BREAK
 case 836:
 YY_RULE_SETUP
-#line 2173 "bas.l"
-{	printf("_PRINTMODE => %s\n", yytext); nchar += yyleng; return ENUM_QB__PRINTMODE_STATEMENT; }
+#line 1042 "bas.l"
+{	printf("_PRINTMODE => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__PRINTMODE_STATEMENT; }
 	YY_BREAK
 case 837:
 YY_RULE_SETUP
-#line 2174 "bas.l"
-{	printf("_glPushClientAttrib => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glPushClientAttrib; }
+#line 1043 "bas.l"
+{	printf("_glPushClientAttrib => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glPushClientAttrib; }
 	YY_BREAK
 case 838:
 YY_RULE_SETUP
-#line 2175 "bas.l"
-{	printf("_SCREENICON => %s\n", yytext); nchar += yyleng; return ENUM_QB__SCREENICON_STATEMENT; }
+#line 1044 "bas.l"
+{	printf("_SCREENICON => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__SCREENICON_STATEMENT; }
 	YY_BREAK
 case 839:
 YY_RULE_SETUP
-#line 2176 "bas.l"
-{	printf("_glInterleavedArrays => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glInterleavedArrays; }
+#line 1045 "bas.l"
+{	printf("_glInterleavedArrays => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glInterleavedArrays; }
 	YY_BREAK
 case 840:
 YY_RULE_SETUP
-#line 2177 "bas.l"
-{	printf("_CONNECTIONADDRESS$ => %s\n", yytext); nchar += yyleng; return ENUM_QB__CONNECTIONADDRESS_DS; }
+#line 1046 "bas.l"
+{	printf("_CONNECTIONADDRESS$ => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__CONNECTIONADDRESS_DS; }
 	YY_BREAK
 case 841:
 YY_RULE_SETUP
-#line 2178 "bas.l"
-{	printf("UNSIGNED BIT VARIABLE => %s\n", yytext); nchar += yyleng; return ENUM_QB_UNSIGNED_BIT_VARIABLE; }
+#line 1047 "bas.l"
+{	printf("UNSIGNED BIT VARIABLE => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_UNSIGNED_BIT_VARIABLE; }
 	YY_BREAK
 case 842:
 YY_RULE_SETUP
-#line 2179 "bas.l"
-{	printf("_glGetPolygonStipple => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glGetPolygonStipple; }
+#line 1048 "bas.l"
+{	printf("_glGetPolygonStipple => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glGetPolygonStipple; }
 	YY_BREAK
 case 843:
 YY_RULE_SETUP
-#line 2180 "bas.l"
-{	printf("_glCopyTexSubImage2D => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glCopyTexSubImage2D; }
+#line 1049 "bas.l"
+{	printf("_glCopyTexSubImage2D => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glCopyTexSubImage2D; }
 	YY_BREAK
 case 844:
 YY_RULE_SETUP
-#line 2181 "bas.l"
-{	printf("_FULLSCREEN => %s\n", yytext); nchar += yyleng; return ENUM_QB__FULLSCREEN_STATEMENT; }
+#line 1050 "bas.l"
+{	printf("_FULLSCREEN => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__FULLSCREEN_STATEMENT; }
 	YY_BREAK
 case 845:
 YY_RULE_SETUP
-#line 2182 "bas.l"
-{	printf("_CLEARCOLOR => %s\n", yytext); nchar += yyleng; return ENUM_QB__CLEARCOLOR_STATEMENT; }
+#line 1051 "bas.l"
+{	printf("_CLEARCOLOR => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__CLEARCOLOR_STATEMENT; }
 	YY_BREAK
 case 846:
 YY_RULE_SETUP
-#line 2183 "bas.l"
-{	printf("_glGetTexParameterfv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glGetTexParameterfv; }
+#line 1052 "bas.l"
+{	printf("_glGetTexParameterfv => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glGetTexParameterfv; }
 	YY_BREAK
 case 847:
 YY_RULE_SETUP
-#line 2184 "bas.l"
-{	printf("_MAPUNICODE => %s\n", yytext); nchar += yyleng; return ENUM_QB__MAPUNICODE_STATEMENT; }
+#line 1053 "bas.l"
+{	printf("_MAPUNICODE => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__MAPUNICODE_STATEMENT; }
 	YY_BREAK
 case 848:
 YY_RULE_SETUP
-#line 2185 "bas.l"
-{	printf("LESS THAN OR EQUAL TO => %s\n", yytext); nchar += yyleng; return ENUM_QB_LESS_THAN_OR_EQUAL_TO; }
+#line 1054 "bas.l"
+{	printf("LESS THAN OR EQUAL TO => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_LESS_THAN_OR_EQUAL_TO; }
 	YY_BREAK
 case 849:
 YY_RULE_SETUP
-#line 2186 "bas.l"
-{	printf("_glGetTexParameteriv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glGetTexParameteriv; }
+#line 1055 "bas.l"
+{	printf("_glGetTexParameteriv => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glGetTexParameteriv; }
 	YY_BREAK
 case 850:
 YY_RULE_SETUP
-#line 2187 "bas.l"
-{	printf("_glCopyTexSubImage1D => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glCopyTexSubImage1D; }
+#line 1056 "bas.l"
+{	printf("_glCopyTexSubImage1D => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glCopyTexSubImage1D; }
 	YY_BREAK
 case 851:
 YY_RULE_SETUP
-#line 2188 "bas.l"
-{	printf("_glEnableClientState => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glEnableClientState; }
+#line 1057 "bas.l"
+{	printf("_glEnableClientState => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glEnableClientState; }
 	YY_BREAK
 case 852:
 YY_RULE_SETUP
-#line 2189 "bas.l"
-{	printf("_CONTROLCHR => %s\n", yytext); nchar += yyleng; return ENUM_QB__CONTROLCHR_STATEMENT; }
+#line 1058 "bas.l"
+{	printf("_CONTROLCHR => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__CONTROLCHR_STATEMENT; }
 	YY_BREAK
 case 853:
 YY_RULE_SETUP
-#line 2190 "bas.l"
-{	printf("UNSIGNED LONG VARIABLE => %s\n", yytext); nchar += yyleng; return ENUM_QB_UNSIGNED_LONG_VARIABLE; }
+#line 1059 "bas.l"
+{	printf("UNSIGNED LONG VARIABLE => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_UNSIGNED_LONG_VARIABLE; }
 	YY_BREAK
 case 854:
 YY_RULE_SETUP
-#line 2191 "bas.l"
-{	printf("UNSIGNED BYTE VARIABLE => %s\n", yytext); nchar += yyleng; return ENUM_QB_UNSIGNED_BYTE_VARIABLE; }
+#line 1060 "bas.l"
+{	printf("UNSIGNED BYTE VARIABLE => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_UNSIGNED_BYTE_VARIABLE; }
 	YY_BREAK
 case 855:
 YY_RULE_SETUP
-#line 2192 "bas.l"
-{	printf("_glPrioritizeTextures => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glPrioritizeTextures; }
+#line 1061 "bas.l"
+{	printf("_glPrioritizeTextures => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glPrioritizeTextures; }
 	YY_BREAK
 case 856:
 YY_RULE_SETUP
-#line 2193 "bas.l"
-{	printf("_glDisableClientState => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glDisableClientState; }
+#line 1062 "bas.l"
+{	printf("_glDisableClientState => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glDisableClientState; }
 	YY_BREAK
 case 857:
 YY_RULE_SETUP
-#line 2194 "bas.l"
-{	printf("MULTI LINE COMMENT END => %s\n", yytext); nchar += yyleng; return ENUM_QB_MULTI_LINE_COMMENT_END; }
+#line 1063 "bas.l"
+{	printf("MULTI LINE COMMENT END => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_MULTI_LINE_COMMENT_END; }
 	YY_BREAK
 case 858:
 YY_RULE_SETUP
-#line 2195 "bas.l"
-{	printf("DECLARE DYNAMIC LIBRARY => %s\n", yytext); nchar += yyleng; return ENUM_QB_DECLARE_DYNAMIC_LIBRARY; }
+#line 1064 "bas.l"
+{	printf("DECLARE DYNAMIC LIBRARY => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_DECLARE_DYNAMIC_LIBRARY; }
 	YY_BREAK
 case 859:
 YY_RULE_SETUP
-#line 2196 "bas.l"
-{	printf("_CLIPBOARD$ => %s\n", yytext); nchar += yyleng; return ENUM_QB__CLIPBOARD_DS_STATEMENT; }
+#line 1065 "bas.l"
+{	printf("_CLIPBOARD$ => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__CLIPBOARD_DS_STATEMENT; }
 	YY_BREAK
 case 860:
 YY_RULE_SETUP
-#line 2197 "bas.l"
-{	printf("_glAreTexturesResident => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glAreTexturesResident; }
+#line 1066 "bas.l"
+{	printf("_glAreTexturesResident => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glAreTexturesResident; }
 	YY_BREAK
 case 861:
 YY_RULE_SETUP
-#line 2198 "bas.l"
-{	printf("_PALETTECOLOR => %s\n", yytext); nchar += yyleng; return ENUM_QB__PALETTECOLOR_STATEMENT; }
+#line 1067 "bas.l"
+{	printf("_PALETTECOLOR => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB__PALETTECOLOR_STATEMENT; }
 	YY_BREAK
 case 862:
 YY_RULE_SETUP
-#line 2199 "bas.l"
-{	printf("GREATER THAN OR EQUAL TO => %s\n", yytext); nchar += yyleng; return ENUM_QB_GREATER_THAN_OR_EQUAL_TO; }
+#line 1068 "bas.l"
+{	printf("GREATER THAN OR EQUAL TO => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_GREATER_THAN_OR_EQUAL_TO; }
 	YY_BREAK
 case 863:
 YY_RULE_SETUP
-#line 2200 "bas.l"
-{	printf("MULTI LINE COMMENT BEGIN => %s\n", yytext); nchar += yyleng; return ENUM_QB_MULTI_LINE_COMMENT_BEGIN; }
+#line 1069 "bas.l"
+{	printf("MULTI LINE COMMENT BEGIN => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_MULTI_LINE_COMMENT_BEGIN; }
 	YY_BREAK
 case 864:
 YY_RULE_SETUP
-#line 2201 "bas.l"
-{	printf("MULTI LINE COMMENT ERROR => %s\n", yytext); nchar += yyleng; return ENUM_QB_MULTI_LINE_COMMENT_ERROR; }
+#line 1070 "bas.l"
+{	printf("MULTI LINE COMMENT ERROR => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_MULTI_LINE_COMMENT_ERROR; }
 	YY_BREAK
 case 865:
 YY_RULE_SETUP
-#line 2202 "bas.l"
-{	printf("UNSIGNED OFFSET VARIABLE => %s\n", yytext); nchar += yyleng; return ENUM_QB_UNSIGNED_OFFSET_VARIABLE; }
+#line 1071 "bas.l"
+{	printf("UNSIGNED OFFSET VARIABLE => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_UNSIGNED_OFFSET_VARIABLE; }
 	YY_BREAK
 case 866:
 YY_RULE_SETUP
-#line 2203 "bas.l"
-{	printf("UNSIGNED INTEGER VARIABLE => %s\n", yytext); nchar += yyleng; return ENUM_QB_UNSIGNED_INTEGER_VARIABLE; }
+#line 1072 "bas.l"
+{	printf("UNSIGNED INTEGER VARIABLE => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_UNSIGNED_INTEGER_VARIABLE; }
 	YY_BREAK
 case 867:
 YY_RULE_SETUP
-#line 2204 "bas.l"
-{	printf("_glGetTexLevelParameterfv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glGetTexLevelParameterfv; }
+#line 1073 "bas.l"
+{	printf("_glGetTexLevelParameterfv => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glGetTexLevelParameterfv; }
 	YY_BREAK
 case 868:
 YY_RULE_SETUP
-#line 2205 "bas.l"
-{	printf("_glGetTexLevelParameteriv => %s\n", yytext); nchar += yyleng; return ENUM_OGL__glGetTexLevelParameteriv; }
+#line 1074 "bas.l"
+{	printf("_glGetTexLevelParameteriv => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_OGL__glGetTexLevelParameteriv; }
 	YY_BREAK
 case 869:
 YY_RULE_SETUP
-#line 2206 "bas.l"
-{	printf("UNSIGNED INTEGER64 VARIABLE => %s\n", yytext); nchar += yyleng; return ENUM_QB_UNSIGNED_INTEGER64_VARIABLE; }
+#line 1075 "bas.l"
+{	printf("UNSIGNED INTEGER64 VARIABLE => %s\n", yytext); nchar += yyleng; strcpy(yylval,yytext); return ENUM_QB_UNSIGNED_INTEGER64_VARIABLE; }
 	YY_BREAK
 /*	END LEX	*/
 /*	+++++	DO NOT REMOVE THE PREVIOUS LINE!!!	+++++	*/
 case 870:
 YY_RULE_SETUP
-#line 2211 "bas.l"
+#line 1080 "bas.l"
 {	printf("NEW LINE\n"); nline++; nchar++; return ENUM_QB_NEW_LINE; }
 	YY_BREAK
 case 871:
 YY_RULE_SETUP
-#line 2212 "bas.l"
+#line 1081 "bas.l"
 {	printf("WHITE SPACE\n"); ws++; return ENUM_QB_WHITE_SPACE; }
 	YY_BREAK
 case 872:
 YY_RULE_SETUP
-#line 2213 "bas.l"
+#line 1082 "bas.l"
 {	printf("UNKNOWN CHARACTER\n"); nchar++; return ENUM_QB_UNKNOWN_CHARACTER; }
 	YY_BREAK
 case 873:
 YY_RULE_SETUP
-#line 2216 "bas.l"
+#line 1085 "bas.l"
 YY_FATAL_ERROR( "flex scanner jammed" );
 	YY_BREAK
-#line 10982 "lex.yy.c"
+#line 9851 "lex.yy.c"
 
 	case YY_END_OF_BUFFER:
 		{
@@ -11862,7 +10731,7 @@ int main()
 	return 0;
 	}
 #endif
-#line 2216 "bas.l"
+#line 1085 "bas.l"
 
 	/*	Routines	*/
 
@@ -11871,13 +10740,15 @@ int main()
 */
 int main( void )
 {
-	int tok;
+	int tok,i;
 
 	while( tok = yylex() ){
-		printf( "--->RETURNED : %d\n", tok );
+		printf( "--->RETURNED : %d => %s\n", tok, yylval );
+		for( i=0; i<65536; i++ ){ yylval[i] = 0; }
 		}
 
 	printf( "\n\nCharacters : %d\nWords : %d\nLines : %d\nWhite Space : %d\n", nchar, nword, yylineno, ws );
 	return 0;
 }
+
 
