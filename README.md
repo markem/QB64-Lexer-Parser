@@ -21,3 +21,4 @@ This repsitory has the following items in it:
 8. TEST.BAS. This is the test basic program that is run against the lexer and parser.
 9. UPDATES.DAT. This is a simple update file which is updated each time I change the lexer or parser.
 10. Y.TAB.H. This is the include file for the lexer and parser.
+11. QB_ENUMS.H.  These are the extracted ENUMS used in the parser. They were extracted so they could be used in both the lexer and parser.
