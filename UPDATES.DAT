@@ -1,4 +1,16 @@
 
+#	Mark Manning			Simulacron I			Tue 03/01/2016 13:59:38.59 
+#	---------------------------------------------------------------------------
+#	
+
+Added in code to bas.l to handle yylval.  Set it to be a plain character array
+at this point.
+
+Added in code to the main program to display the returning yylval values.
+
+Added in code to bas.l to make all of the expressions handle the storage of
+the incoming text into the yylval variable.
+
 #	Mark Manning			Simulacron I			Fri 02/19/2016 12:21:05.74 
 #	---------------------------------------------------------------------------
 #	Release lexQB-0.2
@@ -106,3 +118,4 @@ like to have things deleted without notice.
 
 Removed the LEX.DAT file and the TEST.DAT file since they
 are no longer needed.
+
