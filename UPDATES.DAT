@@ -1,4 +1,9 @@
 
+#	Mark Manning			Simulacron I			Thu 03/10/2016  8:45:58.23 
+#	---------------------------------------------------------------------------
+#	
+Removed all of the printf commands and fixed the blank spaces being sent back.
+
 #	Mark Manning			Simulacron I			Tue 03/01/2016 13:59:38.59 
 #	---------------------------------------------------------------------------
 #	
