@@ -858,49 +858,48 @@ EOD;
 	$yylval =  "yylval";
 
 	$lex .= <<<EOD
-"+"							{	printf("ENUM_PLUS_SIGN => %s\\n", yytext); nchar += yyleng; strcpy($yylval,yytext); return ENUM_PLUS_SIGN; }
-"-"							{	printf("MINUS => %s\\n", yytext); nchar += yyleng; strcpy($yylval,yytext); return ENUM_MINUS_SIGN; }
-"*"							{	printf("MULTIPLY => %s\\n", yytext); nchar += yyleng; strcpy($yylval,yytext); return ENUM_ASTERIK; }
-"/"							{	printf("DIVIDE => %s\\n", yytext); nchar += yyleng; strcpy($yylval,yytext); return ENUM_SLASH_FORWARDS; }
-"\\\\"						{	printf("INTEGER DIVISION => %s\\n", yytext); nchar += yyleng; strcpy($yylval,yytext); return ENUM_SLASH_BACK; }
-"^"							{	printf("EXPONENTIAL => %s\\n", yytext); nchar += yyleng; strcpy($yylval,yytext); return ENUM_CARET; }
-"="							{	printf("EQUAL SIGN => %s\\n", yytext); nchar += yyleng; strcpy($yylval,yytext); return ENUM_EQUAL; }
-"<"							{	printf("LESS THAN => %s\\n", yytext); nchar += yyleng; strcpy($yylval,yytext); return ENUM_LESS_THAN; }
-">"							{	printf("GREATER THAN => %s\\n", yytext); nchar += yyleng; strcpy($yylval,yytext); return ENUM_GREATER_THAN; }
-"<="						{	printf("LESS THAN OR EQUAL TO => %s\\n", yytext);
-								nchar += yyleng; strcpy($yylval,yytext); return ENUM_QB_LESS_THAN_OR_EQUAL_TO; }
-">="						{	printf("GREATER THAN OR EQUAL TO => %s\\n", yytext); nchar += yyleng; strcpy($yylval,yytext); return ENUM_QB_GREATER_THAN_OR_EQUAL_TO; }
-"<>"						{	printf("NOT EQUAL TO => %s\\n", yytext); nchar += yyleng; strcpy($yylval,yytext); return ENUM_QB_NOT_EQUAL_TO; }
-"\\("						{	printf("OPEN PARENTHESIS => %s\\n", yytext); nchar += yyleng; strcpy($yylval,yytext); return ENUM_PAREN_OPEN; }
-"\\)"						{	printf("CLOSE PARENTHESIS => %s\\n", yytext); nchar += yyleng; strcpy($yylval,yytext); return ENUM_PAREN_CLOSED; }
-"&"b{binary}+				{	printf("BINARY NUMBER => %s\\n", yytext); nchar += yyleng; strcpy($yylval,yytext); return ENUM_QB_BINARY; }
-"&"o{octal}+				{	printf("OCTAL NUMBER => %s\\n", yytext); nchar += yyleng; strcpy($yylval,yytext); return ENUM_QB_OCTAL; }
-"&"h{xdigit}+				{	printf("HEXADECIMAL NUMBER => %s\\n", yytext); nchar += yyleng; strcpy($yylval,yytext); return ENUM_QB_HEXADECIMAL; }
-{alpha}{alnum}*\\$			{	printf("STRING VARIABLE => %s\\n", yytext); nchar += yyleng; strcpy($yylval,yytext); return ENUM_QB_STRING_VARIABLE; }
-{alpha}{alnum}*\!			{	printf("SINGLE VARIABLE => %s\\n", yytext); nchar += yyleng; strcpy($yylval,yytext); return ENUM_QB_SINGLE_VARIABLE; }
-{alpha}{alnum}*\#			{	printf("DOUBLE VARIABLE => %s\\n", yytext); nchar += yyleng; strcpy($yylval,yytext); return ENUM_QB_DOUBLE_VARIABLE; }
-{alpha}{alnum}*\#\#			{	printf("FLOAT VARIABLE => %s\\n", yytext); nchar += yyleng; strcpy($yylval,yytext); return ENUM_QB_FLOAT_VARIABLE; }
-{alpha}{alnum}*\%			{	printf("INTEGER VARIABLE => %s\\n", yytext); nchar += yyleng; strcpy($yylval,yytext); return ENUM_QB_INTEGER_VARIABLE; }
-{alpha}{alnum}*\&			{	printf("LONG VARIABLE => %s\\n", yytext); nchar += yyleng; strcpy($yylval,yytext); return ENUM_QB_LONG_VARIABLE; }
-{alpha}{alnum}*\&\&			{	printf("INTEGER64 VARIABLE => %s\\n", yytext); nchar += yyleng; strcpy($yylval,yytext); return ENUM_QB_INTEGER64_VARIABLE; }
-{alpha}{alnum}*\`			{	printf("BIT VARIABLE => %s\\n", yytext); nchar += yyleng; strcpy($yylval,yytext); return ENUM_QB_BIT_VARIABLE; }
-{alpha}{alnum}*\%\%			{	printf("BYTE VARIABLE => %s\\n", yytext); nchar += yyleng; strcpy($yylval,yytext); return ENUM_QB_BYTE_VARIABLE; }
-{alpha}{alnum}*\%\&			{	printf("OFFSET VARIABLE => %s\\n", yytext); nchar += yyleng; strcpy($yylval,yytext); return ENUM_QB_OFFSET_VARIABLE; }
-{alpha}{alnum}*\~			{	printf("UNSIGNED VARIABLE => %s\\n", yytext); nchar += yyleng; strcpy($yylval,yytext); return ENUM_QB_UNSIGNED_VARIABLE; }
-{alpha}{alnum}*\~\%			{	printf("UNSIGNED INTEGER VARIABLE => %s\\n", yytext); nchar += yyleng; strcpy($yylval,yytext); return ENUM_QB_UNSIGNED_INTEGER_VARIABLE; }
-{alpha}{alnum}*\~\&			{	printf("UNSIGNED LONG VARIABLE => %s\\n", yytext); nchar += yyleng; strcpy($yylval,yytext); return ENUM_QB_UNSIGNED_LONG_VARIABLE; }
-{alpha}{alnum}*\~\&\&		{	printf("UNSIGNED INTEGER64 VARIABLE => %s\\n", yytext); nchar += yyleng; strcpy($yylval,yytext); return ENUM_QB_UNSIGNED_INTEGER64_VARIABLE; }
-{alpha}{alnum}*\~\`			{	printf("UNSIGNED BIT VARIABLE => %s\\n", yytext); nchar += yyleng; strcpy($yylval,yytext); return
+"+"							{	nchar += yyleng; strcpy($yylval,yytext); return ENUM_PLUS_SIGN; }
+"-"							{	nchar += yyleng; strcpy($yylval,yytext); return ENUM_MINUS_SIGN; }
+"*"							{	nchar += yyleng; strcpy($yylval,yytext); return ENUM_ASTERIK; }
+"/"							{	nchar += yyleng; strcpy($yylval,yytext); return ENUM_SLASH_FORWARDS; }
+"\\\\"						{	nchar += yyleng; strcpy($yylval,yytext); return ENUM_SLASH_BACK; }
+"^"							{	nchar += yyleng; strcpy($yylval,yytext); return ENUM_CARET; }
+"="							{	nchar += yyleng; strcpy($yylval,yytext); return ENUM_EQUAL; }
+"<"							{	nchar += yyleng; strcpy($yylval,yytext); return ENUM_LESS_THAN; }
+">"							{	nchar += yyleng; strcpy($yylval,yytext); return ENUM_GREATER_THAN; }
+"<="						{	nchar += yyleng; strcpy($yylval,yytext); return ENUM_QB_LESS_THAN_OR_EQUAL_TO; }
+">="						{	nchar += yyleng; strcpy($yylval,yytext); return ENUM_QB_GREATER_THAN_OR_EQUAL_TO; }
+"<>"						{	nchar += yyleng; strcpy($yylval,yytext); return ENUM_QB_NOT_EQUAL_TO; }
+"\\("						{	nchar += yyleng; strcpy($yylval,yytext); return ENUM_PAREN_OPEN; }
+"\\)"						{	nchar += yyleng; strcpy($yylval,yytext); return ENUM_PAREN_CLOSED; }
+"&"b{binary}+				{	nchar += yyleng; strcpy($yylval,yytext); return ENUM_QB_BINARY; }
+"&"o{octal}+				{	nchar += yyleng; strcpy($yylval,yytext); return ENUM_QB_OCTAL; }
+"&"h{xdigit}+				{	nchar += yyleng; strcpy($yylval,yytext); return ENUM_QB_HEXADECIMAL; }
+{alpha}{alnum}*\\$			{	nchar += yyleng; strcpy($yylval,yytext); return ENUM_QB_STRING_VARIABLE; }
+{alpha}{alnum}*\!			{	nchar += yyleng; strcpy($yylval,yytext); return ENUM_QB_SINGLE_VARIABLE; }
+{alpha}{alnum}*\#			{	nchar += yyleng; strcpy($yylval,yytext); return ENUM_QB_DOUBLE_VARIABLE; }
+{alpha}{alnum}*\#\#			{	nchar += yyleng; strcpy($yylval,yytext); return ENUM_QB_FLOAT_VARIABLE; }
+{alpha}{alnum}*\%			{	nchar += yyleng; strcpy($yylval,yytext); return ENUM_QB_INTEGER_VARIABLE; }
+{alpha}{alnum}*\&			{	nchar += yyleng; strcpy($yylval,yytext); return ENUM_QB_LONG_VARIABLE; }
+{alpha}{alnum}*\&\&			{	nchar += yyleng; strcpy($yylval,yytext); return ENUM_QB_INTEGER64_VARIABLE; }
+{alpha}{alnum}*\`			{	nchar += yyleng; strcpy($yylval,yytext); return ENUM_QB_BIT_VARIABLE; }
+{alpha}{alnum}*\%\%			{	nchar += yyleng; strcpy($yylval,yytext); return ENUM_QB_BYTE_VARIABLE; }
+{alpha}{alnum}*\%\&			{	nchar += yyleng; strcpy($yylval,yytext); return ENUM_QB_OFFSET_VARIABLE; }
+{alpha}{alnum}*\~			{	nchar += yyleng; strcpy($yylval,yytext); return ENUM_QB_UNSIGNED_VARIABLE; }
+{alpha}{alnum}*\~\%			{	nchar += yyleng; strcpy($yylval,yytext); return ENUM_QB_UNSIGNED_INTEGER_VARIABLE; }
+{alpha}{alnum}*\~\&			{	nchar += yyleng; strcpy($yylval,yytext); return ENUM_QB_UNSIGNED_LONG_VARIABLE; }
+{alpha}{alnum}*\~\&\&		{	nchar += yyleng; strcpy($yylval,yytext); return ENUM_QB_UNSIGNED_INTEGER64_VARIABLE; }
+{alpha}{alnum}*\~\`			{	nchar += yyleng; strcpy($yylval,yytext); return
 ENUM_QB_UNSIGNED_BIT_VARIABLE; }
-{alpha}{alnum}*\~\%\%		{	printf("UNSIGNED BYTE VARIABLE => %s\\n", yytext); nchar += yyleng; strcpy($yylval,yytext); return ENUM_QB_UNSIGNED_BYTE_VARIABLE; }
-{alpha}{alnum}*\~\%\&		{	printf("UNSIGNED OFFSET VARIABLE => %s\\n", yytext); nchar += yyleng; strcpy($yylval,yytext); return ENUM_QB_UNSIGNED_OFFSET_VARIABLE; }
-{alpha}{alnum}*				{	printf("STANDARD QB VARIABLE => %s\\n", yytext); nchar += yyleng; strcpy($yylval,yytext); return ENUM_QB_STANDARD_VARIABLE; }
-{digit}+					{	printf("INTEGER NUMBER => %s\\n", yytext); nchar += yyleng; strcpy($yylval,yytext); return ENUM_QB_LONG_VARIABLE; }
-{float}						{	printf("FLOAT NUMBER => %s\\n", yytext); nchar += yyleng; strcpy($yylval,yytext); return ENUM_QB_FLOAT_VARIABLE; }
-^{ws}*rem{ws}+[^\$].*{nl}{1}	{	printf("REM => %s\\n", yytext); nchar += yyleng; strcpy($yylval,yytext); return ENUM_QB_REM; }
-^{ws}*'{ws}+[^\$].*{nl}{1}	{	printf("SQ => %s\\n", yytext); nchar += yyleng; strcpy($yylval,yytext); return ENUM_QB_REM; }
-:{ws}*rem{ws}+[^\$].*{nl}{1}	{	printf("REM => %s\\n", yytext); nchar += yyleng; strcpy($yylval,yytext); return ENUM_QB_REM; }
-:{ws}*'{ws}+[^\$].*{nl}{1}	{	printf("SQ => %s\\n", yytext); nchar += yyleng; strcpy($yylval,yytext); return ENUM_QB_REM; }
+{alpha}{alnum}*\~\%\%		{	nchar += yyleng; strcpy($yylval,yytext); return ENUM_QB_UNSIGNED_BYTE_VARIABLE; }
+{alpha}{alnum}*\~\%\&		{	nchar += yyleng; strcpy($yylval,yytext); return ENUM_QB_UNSIGNED_OFFSET_VARIABLE; }
+{alpha}{alnum}*				{	nchar += yyleng; strcpy($yylval,yytext); return ENUM_QB_STANDARD_VARIABLE; }
+{digit}+					{	nchar += yyleng; strcpy($yylval,yytext); return ENUM_QB_LONG_VARIABLE; }
+{float}						{	nchar += yyleng; strcpy($yylval,yytext); return ENUM_QB_FLOAT_VARIABLE; }
+^{ws}*rem{ws}+[^\$].*{nl}{1}	{	nchar += yyleng; strcpy($yylval,yytext); return ENUM_QB_REM; }
+^{ws}*'{ws}+[^\$].*{nl}{1}	{	nchar += yyleng; strcpy($yylval,yytext); return ENUM_QB_REM; }
+:{ws}*rem{ws}+[^\$].*{nl}{1}	{	nchar += yyleng; strcpy($yylval,yytext); return ENUM_QB_REM; }
+:{ws}*'{ws}+[^\$].*{nl}{1}	{	nchar += yyleng; strcpy($yylval,yytext); return ENUM_QB_REM; }
 
 EOD;
 
@@ -999,7 +998,8 @@ EOD;
 			$n = ((50 - strlen($cmd)) > 0) ? (50 - strlen($cmd)) : 10;
 			$v = preg_replace( "/(\w)_(\w)/", "$1 $2", $v );
 			$cmd .= str_repeat( ' ', $n );
-			$cmd .= "{	printf(\"$v => %s\\n\", yytext); nchar += yyleng; strcpy($yylval,yytext); return $tok; }\n";
+#			$cmd .= "{	printf(\"$v => %s\\n\", yytext); nchar += yyleng; strcpy($yylval,yytext); return $tok; }\n";
+			$cmd .= "{	nchar += yyleng; strcpy($yylval,yytext); return $tok; }\n";
 
 			$lex .= $cmd;
 #
@@ -1023,7 +1023,8 @@ EOD;
 				$n = ((50 - strlen($cmd)) > 0) ? (50 - strlen($cmd)) : 10;
 				$v = preg_replace( "/(\w)_(\w)/", "$1 $2", $v );
 				$cmd .= str_repeat( ' ', $n );
-				$cmd .= "{	printf(\"$v => %s\\n\", yytext); nchar += yyleng; strcpy($yylval,yytext); return $tok; }\n";
+#				$cmd .= "{	printf(\"$v => %s\\n\", yytext); nchar += yyleng; strcpy($yylval,yytext); return $tok; }\n";
+				$cmd .= "{	nchar += yyleng; strcpy($yylval,yytext); return $tok; }\n";
 
 				$lex .= $cmd;
 				$test .= "	a$ = $v\n";
